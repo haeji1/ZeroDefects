@@ -18,7 +18,7 @@ function OptionSection() {
     return (
         <div>
             <DataList />
-            <div className="flex flex-row ">
+            <div className="grid grid-cols-2 space-x-5">
                 <ParameterSelection />
                 <StepSelection />
             </div>
