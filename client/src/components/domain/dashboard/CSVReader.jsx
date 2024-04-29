@@ -27,11 +27,6 @@ function CSVReader({ setkwData }) {
   return (
     <div>
       <input type="file" accept=".csv" onChange={handleFileChange} />
-      {/* <div>
-        {data.map((item, index) => (
-          <div key={index}>{JSON.stringify(item)}</div>
-        ))}
-      </div> */}
     </div>
   );
 }
