@@ -1,7 +1,9 @@
+import UploadedFileSection from "@/components/domain/settings/UploadedFilesSection";
+
 function Settings() {
     return (
         <>
-            <h1>세팅입니다.</h1>
+            <UploadedFileSection></UploadedFileSection>
         </>
     )
 }
