@@ -1,4 +1,4 @@
-import GraphSection from "@/components/domain/dashboard/GraphSection";
+import MainSection from "@/components/domain/dashboard/MainSection";
 import OptionSection from "@/components/domain/dashboard/OptionSection";
 
 function Dashboard() {
@@ -7,10 +7,10 @@ function Dashboard() {
         <>
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: '9fr 3fr',
+                gridTemplateColumns: '8fr 4fr',
                 padding: '20px'
             }}>
-                <GraphSection />
+                <MainSection />
                 <OptionSection />
             </div>
         </>
