@@ -146,15 +146,3 @@ def get_bokeh_data(graph_data):
 
     return data
 
-
-class GraphDataItem(BaseModel):
-    facility: str
-    parameter: str
-    startDate: date
-    startTime: time
-    endDate: date
-    endTime: time
-
-
-class GraphData(BaseModel):
-    graph_data: List[GraphDataItem]

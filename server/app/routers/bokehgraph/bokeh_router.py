@@ -6,12 +6,6 @@ from fastapi.responses import JSONResponse
 
 # bokeh
 from bokeh.embed import json_item
-from datetime import date, time
-
-
-# post
-from pydantic import BaseModel
-from typing import List
 
 file_name = "F1492-ExhaustLog-240323-011325.CSV"
 
@@ -32,7 +26,7 @@ tg_columns = ["P.TG1Pwr[kW]","P.MF211Ar[sccm]","P.MF212Ar[sccm]","P.MF213Ar[sccm
     ,"P.Icp1PwrFwd[kW]","P.Icp2PwrFwd[kW]","P.Icp3PwrFwd[kW]","P.Icp4PwrFwd[kW]"
     ,"P.MF207Ar[sccm]","P.MF208O2[sccm]","P.MF209O2[sccm]","P.MF210N2[sccm]"]
 
-# df = load_file(file_name)
+
 df = bokeh_service.load_file(file_name)
 start = 1120
 end = 4948
@@ -44,18 +38,6 @@ router = APIRouter(
     prefix="/bokeh",
     tags=["bokeh"]
 )
-
-class GraphDataItem(BaseModel):
-    facility: str
-    parameter: str
-    startDate: date
-    startTime: time
-    endDate: date
-    endTime: time
-
-
-class GraphData(BaseModel):
-    graph_data: List[GraphDataItem]
 
 
 @router.get("/draw/graph")
@@ -78,9 +60,3 @@ async def draw_graph_endpoint():
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
     return JSONResponse(content=plot_json)
 
-
-@router.post("/graph/data")
-async def receive_graph_data(graph_data : GraphData):
-    # draw_request_graph(graph_data.graph_data)
-    bokeh_service.get_bokeh_data(graph_data.graph_data)
-    return graph_data.graph_data
