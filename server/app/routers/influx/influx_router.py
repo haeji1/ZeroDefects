@@ -84,3 +84,42 @@ async def write_influxdb(files: List[UploadFile] = File(...)):
         client.close()
 
     return {'message': 'File uploaded'}
+
+def info_measurements_query(b: str) -> str:
+    query = f"""
+        import "influxdata/influxdb/schema"
+        schema.measurements(bucket: "{b}")
+        """
+    return query
+def info_field_query(b: str, measurement: str) -> str:
+    query = f"""
+        import "influxdata/influxdb/schema"
+        schema.fieldKeys(
+        bucket: "{b}",
+        predicate: (r) => r._measurement == "{measurement}",
+        )
+        """
+
+    return query
+@influx_router.get("/info")
+async def get_info():
+    client = InfluxDBClient(url=url, token=token, org=organization)
+    query_api = client.query_api()
+
+    get_measurement_query = info_measurements_query(bucket)
+
+    try:
+        result = query_api.query(org=organization, query=get_measurement_query)
+        measurements = [record.get_value() for record in result[0].records]
+        facilities = defaultdict(list)
+        for measurement in measurements:
+
+            get_fields_query = info_field_query(bucket, measurement)
+
+            result = query_api.query(org=organization, query=get_fields_query)
+            fields = [record.get_value() for record in result[0].records]
+            facilities[measurement] = fields
+
+        return {"result": facilities}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
