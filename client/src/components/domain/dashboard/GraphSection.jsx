@@ -4,9 +4,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/base/card"
-import { useImage } from "./ImageContext";
-import CSVReader from './CSVReader'
-import ChartComponent from './ChartComponent'
 import { Chart } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import { useState, useEffect } from 'react'

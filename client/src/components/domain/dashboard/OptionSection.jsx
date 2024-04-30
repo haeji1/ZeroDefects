@@ -1,6 +1,6 @@
 import ParameterSelection from "./ParameterSelection";
 import StepSelection from "./StepSelection";
-import DataList from "./DataList";
+import BookmarkSection from "./BookmarkSection";
 function OptionSection() {
 
 
@@ -17,7 +17,7 @@ function OptionSection() {
     // </>
     return (
         <div>
-            <DataList />
+            <BookmarkSection />
             <div className="grid grid-cols-2 space-x-5">
                 <ParameterSelection />
                 <StepSelection />
