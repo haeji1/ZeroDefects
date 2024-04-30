@@ -15,11 +15,7 @@ end = 4948
 
 # bokeh
 from bokeh.models import ColumnDataSource, DatetimeTickFormatter
-from bokeh.palettes import Category10_10
-from datetime import date, time
 from bokeh.plotting import figure
-from pydantic import BaseModel
-from typing import List
 
 
 # data frame
@@ -29,15 +25,17 @@ import numpy as np
 def load_file(file_name):
     try:
         df = pd.read_csv(file_name)
-        print(df)
+        # print(df)
         return df
     except Exception as e:
         print("파일 불러오기 실패", e)
         return None
 
-
 file_name = "F1492-ExhaustLog-240323-011325.CSV"
 df = load_file(file_name)
+print(df)
+print("==============컬럼이름===============")
+print(df.columns)
 
 # 특정 그래프 그리는 함수
 def draw_graph(column, start, end):
@@ -47,6 +45,7 @@ def draw_graph(column, start, end):
     data_length = len(column_data)
 
     print('===============baboyuncheolbabo===============', column_data)
+    print("----------------------------------", column_data.size)
 
     # Bokeh에서는 ColumnDataSource를 사용하여 데이터를 전달
     source = ColumnDataSource(data=dict(x=np.linspace(start, end, data_length), y=column_data))
@@ -128,21 +127,7 @@ def draw_all_tg_graph(df, tg_start, tg_end):
             plots.append(p)
     return plots
 
-
-def get_bokeh_data(graph_data):
-
-    data = {
-        "start_time": [],
-        "end_time": [],
-        "facilities": [],
-        "parameters": []
-    }
-
-    for item in graph_data:
-        data["start_time"].append(item.startDate + " " + item.startTime)
-        data["end_time"].append(item.endDate + " " + item.endTime)
-        data["facilities"].append(item.facility)
-        data["parameters"].append(item.parameter)
-
-    return data
-
+# 가져온 DataFrame을 가지고 그래프 그리는 함수
+# def draw_dataframe_to_graph(df_list):
+    # 컬럼 이름 모두 알아내기
+    # plot
