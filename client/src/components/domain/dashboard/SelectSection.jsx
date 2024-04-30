@@ -12,12 +12,13 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
-import { useParameterStore } from "@/stores/ParameterList"
+import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
 import { useBookmark } from "@/stores/Bookmark";
+import axios from "axios";
 
 function SelectSection() {
 
@@ -29,10 +30,8 @@ function SelectSection() {
     const [endDate, setEndDate] = useState()
     const [endTime, setEndTime] = useState()
 
-
-    const { graphData, parameterData, setGraphData, setParameterData } = useGraphDataStore()
-    const { addParameter } = useParameterStore();
-    const { addBookmark } = useBookmark();
+    const { facilityList, updateFacility } = useFacilityStore();
+    const { bookmark, addBookmark } = useBookmark();
     // 시작 및 종료 시간을 설정하는 Input 핸들러
     const handleTime = (e) => {
         if (e.target.id === "startTime") {
@@ -43,19 +42,39 @@ function SelectSection() {
         }
     }
 
-    // 설비 목록
-    const facilityList = ["F1490", "F1491", "F1492"]
-    // 파라미터 목록
-    const paramList = ["L.PiG301Press[Pa]", "L.PiG402Press[Pa]", "P.PiG201Press[Pa]", "P.PiG202Press[Pa]", "P.PEG201Press[Pa]", "P.DG201Press[Pa]"
-        , "PFC.T(In)[C]", "PFC.T(Out)[C]", "Im_1[Times]", "dU_1[Times]", "Im_2[Times]", "dU_2[Times]", "Im_4[Times]",
-        "dU_4[Times]", "Im_5[Times]", "dU_5[Times]", "No1_P[V]", "No1_P[A]", "No1_P[kW]", "No2_P[V]", "No2_P[A]", "No2_P[kW]", "No4_P[V]", "No4_P[A]",
-        "No4_P[kW]", "No5_P[V]", "No5_P[A]", "No5_P[kW]", "No6_P1_Fwd[kW]", "No6_P1_Ref[KW]", "No6_P1_Vpp[V]", "No6_P1_Vdc[V]",
-        "No6_P2_Fwd[kW]", "No6_P2_Ref[KW]", "No6_P2_Vpp[V]", "No6_P2_Vdc[V]", "No6_P3_Fwd[kW]", "No6_P3_Ref[KW]", "No6_P3_Vpp[V]", "No6_P3_Vdc[V]", "No6_P4_Fwd[kW]", "No6_P4_Ref[KW]", "No6_P4_Vpp[V]", "No6_P4_Vdc[V]", "No6_A1[sccm]", "No6_O1[sccm]", "No6_O2[sccm]",
-        "No6_N1[sccm]", "No1_A1[sccm]", "No1_A2[sccm]", "No1_A3[sccm]", "No1_A4[sccm]", "No2_A1[sccm]", "No2_A2[sccm]", "No2_A3[sccm]", "No2_A4[sccm]",
-        "No4_A1[sccm]", "No4_A2[sccm]", "No4_A3[sccm]", "No4_A4[sccm]", "No5_A1[sccm]", "No5_A2[sccm]", "No5_A3[sccm]", "No5_A4[sccm]"]
+    // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('http://localhost:8000/facility/info');
+                // 응답 데이터 설비 리스트에 업데이트
+                //   updateFacility(data)
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+        fetchData(); // 데이터를 가져오는 함수 호출
+    }, []);
 
+    // 단일 그래프 데이터 가져오는 함수
+    const getGraphData = async () => {
+        const startParts = startTime.split(":");
+        const endParts = endTime.split(":");
+        axios.post('http://localhost:8000/facility/info', {
+            facility: facility,
+            parameter: parameter,
+            startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
+            endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
+        })
+            .then(response => {
+                console.log(response.data);
+            })
+            .catch(error => {
+                console.log(error);
+            })
+    }
 
-
+    console.log(bookmark)
 
     return (
         <div>
@@ -65,20 +84,20 @@ function SelectSection() {
                         <SelectValue placeholder="설비명" />
                     </SelectTrigger>
                     <SelectContent>
-                        {facilityList.map(facility => (
-                            <SelectItem key={facility} value={facility}>{facility}</SelectItem>
+                        {Object.keys(facilityList).map(facility => (
+                            <SelectItem key={facility} value={facility} >{facility}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
 
                 <Select onValueChange={setParameter}>
                     <SelectTrigger className="w-[180px] self-center">
-                        <SelectValue placeholder="파라미터 명" />
+                        <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
-                        {paramList.map((param) => (
+                        {facilityList[facility] !== undefined ? facilityList[facility].map((param) => (
                             <SelectItem key={param} value={param}>{param}</SelectItem>
-                        ))}
+                        )) : null}
                     </SelectContent>
                 </Select>
 
@@ -136,19 +155,23 @@ function SelectSection() {
                 <Button>그래프 조회</Button>
                 <Button
                     onClick={() => {
+
+                        const startParts = startTime.split(":");
+                        const endParts = endTime.split(":");
+                        console.log(new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]))
+
                         addBookmark(
                             {
                                 facility: facility,
                                 parameter: parameter,
-                                startDate: startDate,
-                                startTime: startTime,
-                                endDate: endDate,
-                                endTime: endTime,
+                                startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]),
+                                endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]),
                             }
                         )
                     }}
                 >
                     비교 목록 추가</Button>
+
             </Card>
 
         </div>

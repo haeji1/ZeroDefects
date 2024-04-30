@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns"
+import { format } from "date-fns";
 import {
     flexRender,
     getCoreRowModel,
@@ -8,25 +8,14 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import { useBookmark } from "@/stores/Bookmark";
 import { Button } from "@/components/base/button"
 import { Checkbox } from "@/components/base/checkbox"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/base/dialog"
-import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/base/dropdown-menu"
 import { Input } from "@/components/base/input"
@@ -38,11 +27,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { p } from "@bokeh/bokehjs/build/js/lib/core/dom";
 
 function BookmarkSection() {
 
-    const { bookmark, deleteBookmark, updateBookmark } = useBookmark();
+    const { bookmark, deleteBookmark } = useBookmark();
 
     const data = bookmark
 
@@ -95,15 +83,9 @@ function BookmarkSection() {
             header: () => <div className="text-center">시간대</div>,
             cell: ({ row }) => {
                 const data = row.original
-                console.log()
-
-
                 return <div className="text-center font-medium">
-                    {format(data.startDate, 'yy-MM-dd')} {" "}
-                    {data.startTime}
-                    {" "}~ {" "}
-                    {format(data.endDate, 'yy-MM-dd')} {" "}
-                    {data.endTime}</div>
+                    {format(data.startTime, "yy-MM-dd hh:mm") + " ~ " + format(data.endTime, "yy-MM-dd hh:mm")}
+                </div>
             },
         },
         {
@@ -121,15 +103,6 @@ function BookmarkSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>설정</DropdownMenuLabel>
-                            <DropdownMenuItem
-                                onClick={() => navigator.clipboard.writeText(payment.id)}
-                            >
-                                세팅값 텍스트로 복사
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                            >세팅값 수정</DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => {
                                     deleteBookmark(payment.id);
@@ -143,17 +116,9 @@ function BookmarkSection() {
         },
     ]
 
-
-
-
-
-
     const [sorting, setSorting] = useState([])
-    const [columnFilters, setColumnFilters] = useState(
-        []
-    )
-    const [columnVisibility, setColumnVisibility] =
-        useState({})
+    const [columnFilters, setColumnFilters] = useState([])
+    const [columnVisibility, setColumnVisibility] = useState({})
     const [rowSelection, setRowSelection] = useState({})
 
     const table = useReactTable({
@@ -262,7 +227,7 @@ function BookmarkSection() {
                     {table.getFilteredSelectedRowModel().rows.length}개 선택됨.
                 </div>
                 <div className="space-x-2">
-                    <Button className="ml-auto">
+                    <Button className="ml-auto" onClick={() => { console.log(table.getFilteredSelectedRowModel()) }}>
                         비교하기
                     </Button>
                 </div>
