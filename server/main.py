@@ -7,6 +7,9 @@ from fastapi.responses import JSONResponse
 from bokeh.plotting import figure
 from bokeh.embed import json_item
 
+# section
+from section import get_section_data
+
 from app.routers.bokehgraph import bokeh_router
 from app.routers.influx import influx_router
 
@@ -36,6 +39,10 @@ app.add_middleware(
 
 app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
+
+@app.get("/api/section/{filename}")
+async def section(filename: str):
+    return get_section_data(filename)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
