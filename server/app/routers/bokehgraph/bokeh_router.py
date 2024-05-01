@@ -44,11 +44,11 @@ async def draw_graph_endpoint():
     # plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
     # return JSONResponse(content=plot_json)
     return {'results': 'success'}
-@router.get("/draw/dataframe-to-graph")
-async def draw_graph_endpoint():
-    plots = bokeh_service.dataframe_to_graph(df_list)
-    plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-    return JSONResponse(content=plot_json)
+# @router.get("/draw/dataframe-to-graph")
+# async def draw_graph_endpoint():
+#     plots = bokeh_service.dataframe_to_graph(df_list)
+#     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
+#     return JSONResponse(content=plot_json)
 
 def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
     print("fields", fields)
