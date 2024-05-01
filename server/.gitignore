@@ -190,6 +190,7 @@ pip-selfcheck.json
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
+.idea
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
@@ -271,7 +272,7 @@ fabric.properties
 # modules.xml
 # .idea/misc.xml
 # *.ipr
-
+.idea/
 # Sonarlint plugin
 # https://plugins.jetbrains.com/plugin/7973-sonarlint
 .idea/**/sonarlint/
@@ -463,7 +464,6 @@ cython_debug/
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
 poetry.toml
-
 # ruff
 .ruff_cache/
 
