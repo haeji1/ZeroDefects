@@ -46,6 +46,7 @@ function SelectSection() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                console.log('DB에 존재하는 설비 및 파라미터 리스트 가져오기 시작')
                 const response = await axios.get('http://localhost:8000/facility/info');
                 // 응답 데이터 설비 리스트에 업데이트
                 //   updateFacility(data)
@@ -56,7 +57,7 @@ function SelectSection() {
         fetchData(); // 데이터를 가져오는 함수 호출
     }, []);
 
-    // 단일 그래프 데이터 가져오는 함수
+    // 그래프 조회 
     const getGraphData = async () => {
         const startParts = startTime.split(":");
         const endParts = endTime.split(":");
@@ -65,16 +66,16 @@ function SelectSection() {
             parameter: parameter,
             startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
             endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
+            cycle: null,
+            step: null,
         })
             .then(response => {
                 console.log(response.data);
             })
             .catch(error => {
-                console.log(error);
+                console.log(error, "그래프 받아오는 것 실패");
             })
     }
-
-    console.log(bookmark)
 
     return (
         <div>
@@ -152,7 +153,7 @@ function SelectSection() {
                     </PopoverContent>
                 </Popover>
                 <Input className="w-[130px]" type={"time"} id="endTime" onChange={handleTime} />
-                <Button>그래프 조회</Button>
+                <Button onClick={getGraphData}>그래프 조회</Button>
                 <Button
                     onClick={() => {
 

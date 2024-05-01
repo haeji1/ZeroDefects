@@ -10,7 +10,6 @@ import {
 } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 import { useBookmark } from "@/stores/Bookmark";
-import { Button } from "@/components/base/button"
 import { Checkbox } from "@/components/base/checkbox"
 import {
     DropdownMenu,
@@ -18,7 +17,18 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/base/dropdown-menu"
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardContent,
+} from "@/components/base/card";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { Separator } from "@/components/base/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/base/radio-group";
+import { Label } from "@/components/base/label";
 import { Input } from "@/components/base/input"
+import { Button } from "@/components/base/button";
 import {
     Table,
     TableBody,
@@ -27,13 +37,47 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
+import useDidMountEffect from "@/hooks/useDidMountEffect";
 
 function BookmarkSection() {
 
-    const { bookmark, deleteBookmark } = useBookmark();
+    const { bookmark, deleteBookmark, updateBookmark } = useBookmark();
 
+    // 테이블 관련 hook
+    // ==============================
     const data = bookmark
+    const [sorting, setSorting] = useState([])
+    const [columnFilters, setColumnFilters] = useState([])
+    const [columnVisibility, setColumnVisibility] = useState({})
+    const [rowSelection, setRowSelection] = useState({})
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 7,
+    });
+    // ==============================
+    const [cycles, setCycles] = useState([])
+    const stepList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    const [selectedBlock, setSelectedBlock] = useState({});
+    const [selectedCycleName, setSelectedCycleName] = useState(null);
+    const [selectedStep, setSelectedStep] = useState(null);
 
+    const handleBlockClick = (data) => {
+        setSelectedBlock(data) // 선택한 블럭으로 교체
+        setCycles(data.cycles) // 블럭의 사이클 리스트로 교체
+        setSelectedCycleName(data.cycleName)
+        setSelectedStep(data.step)
+    }
+
+    useDidMountEffect(() => {
+        updateBookmark(
+            {
+                ...selectedBlock,
+                cycleName: selectedCycleName,
+                step: selectedStep,
+            }
+        )
+
+    }, [selectedCycleName, selectedStep])
 
     const columns = [
         {
@@ -103,23 +147,13 @@ function BookmarkSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    deleteBookmark(payment.id);
-                                    console.log(bookmark)
-                                }}
-                            >세팅값 삭제</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteBookmark(payment.id)}>세팅값 삭제</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu >
                 )
             },
         },
     ]
-
-    const [sorting, setSorting] = useState([])
-    const [columnFilters, setColumnFilters] = useState([])
-    const [columnVisibility, setColumnVisibility] = useState({})
-    const [rowSelection, setRowSelection] = useState({})
 
     const table = useReactTable({
         data,
@@ -132,11 +166,13 @@ function BookmarkSection() {
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
+        onPaginationChange: setPagination,
         state: {
             sorting,
             columnFilters,
             columnVisibility,
             rowSelection,
+            pagination,
         },
     })
 
@@ -197,6 +233,7 @@ function BookmarkSection() {
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
+                                    onClick={() => handleBlockClick(row.original)}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -221,16 +258,64 @@ function BookmarkSection() {
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
+            {/* <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
                     총 {table.getFilteredRowModel().rows.length}개 중{" "}
                     {table.getFilteredSelectedRowModel().rows.length}개 선택됨.
                 </div>
-                <div className="space-x-2">
-                    <Button className="ml-auto" onClick={() => { console.log(table.getFilteredSelectedRowModel()) }}>
-                        비교하기
-                    </Button>
-                </div>
+            </div> */}
+            <div className="grid grid-cols-2 space-x-5 py-4">
+                <Card className="mb-3">
+                    <CardHeader>
+                        <CardTitle>
+                            Cycle Selection
+                        </CardTitle>
+                    </CardHeader>
+                    <ScrollArea className="h-48">
+                        <div className="p-4">
+                            <RadioGroup defalutValue={cycles[0]}>
+                                {cycles.map((cycle) => (
+                                    <>
+                                        <div key={cycle.cycleName} className="flex flex-row text-sm justify-between"
+                                            onClick={() => setSelectedCycleName(cycle.cycleName)}>
+                                            <Label htmlFor={cycle.cycleName}>{cycle.cycleName}</Label>
+                                            <RadioGroupItem value={cycle.cycleName} id={cycle.cycleName} />
+                                        </div>
+                                        <Separator className="my-2" />
+                                    </>
+                                ))}
+                            </RadioGroup>
+                        </div>
+                    </ScrollArea>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>
+                            Step Selection
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-5">
+                            {stepList.map((step) =>
+                                <Button key={step} className="m-[2px]" variant="outline" onClick={() => setSelectedStep(step)}>{step}</Button>
+                            )}
+
+                        </div>
+                        <Button variant="outline" className='w-full' onClick={() => setSelectedStep(null)}>전체</Button>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="space-x-2">
+                <Button
+                    className="ml-auto"
+                    onClick={() => {
+                        const selectedRows = table.getFilteredRowModel().rows
+                        const selectedRowData = selectedRows.map(row => row.original)
+                        console.log(selectedRowData)
+                    }}
+                >
+                    비교하기
+                </Button>
             </div>
         </div>
     )
