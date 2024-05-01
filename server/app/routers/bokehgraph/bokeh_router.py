@@ -16,7 +16,8 @@ from fastapi.responses import JSONResponse
 # bokeh
 from bokeh.embed import json_item
 
-
+from app.routers.influx.influx_model import FacilityData
+from app.routers.influx.influx_utils import influx_list_query
 
 router = APIRouter(
     prefix="/bokeh",
@@ -81,44 +82,12 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
         flag = False
 
     return factor_dictionary
-class FacilityData(BaseModel):
-    facility: str
-    parameter: str
-    startTime: str
-    endTime: str
+
 @router.get("/read")
 async def read_influxdb(conditions: List[FacilityData]):
 
-    url = os.getenv("INFLUXDB_URL")
-    token = os.getenv("INFLUXDB_TOKEN")
-    organization = os.getenv("INFLUXDB_ORGANIZATION")
-    bucket = os.getenv("INFLUXDB_BUCKET")
-
-    results = []
-    facility_list = []
-    prameter_list = []
-    df_list = []
-
-    client = InfluxDBClient(url=url, token=token, org=organization)
-    for condition in conditions:
-        query = influxdb_parameter_query(
-            bucket, condition.facility, condition.parameter, condition.startTime, condition.endTime)
-
-        try:
-            factor_dictionary = execute_query(client, organization, query)
-            df = pd.DataFrame(factor_dictionary)
-            df_list.append(df)
-
-            facility_list.append(condition.facility)
-            prameter_list.append(condition.parameter)
-            results.append(factor_dictionary)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    print('facility_list', facility_list)
-    print('prameter_list', prameter_list)
-    print('df_list', df_list)
-    # facility_list, parameter_list, df_list를 활용해서 bokeh 그리고 return 하면돼
+    # get facility, parameter, df from influxdb
+    facility_list, parameter_list, df_list = influx_list_query(conditions)
 
     plots = bokeh_service.draw_dataframe_to_graph(df_list)
     print("==================plot====================")
