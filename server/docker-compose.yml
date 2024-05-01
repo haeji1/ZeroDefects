@@ -1,0 +1,36 @@
+version: '3.7'
+services:
+  influxdb:
+    image: influxdb:2.7.5
+    restart: always
+    environment:
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_HTTP_FLUX_ENABLED=true
+      - INFLUXDB_ADMIN_USER=ssafy
+      - INFLUXDB_ADMIN_PASSWORD=12341234
+      - INFLUXDB_USER=ssafy
+      - INFLUXDB_USER_PASSWORD=12341234
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: always
+    container_name: grafana
+    depends_on:
+      - influxdb
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=ssafy
+      - GF_SECURITY_ADMIN_PASSWORD=ssafy
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+volumes:
+  influxdb_data:
+    driver: local
+  grafana_data:
+    driver: local
