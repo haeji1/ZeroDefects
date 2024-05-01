@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Query, Body
 
 from influxdb_client import Point, InfluxDBClient, WritePrecision, WriteOptions
 
@@ -8,22 +8,19 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
 
-url = 'http://localhost:8086'
+url = os.getenv('INFLUXDB_URL')
 token = os.getenv('INFLUXDB_TOKEN')
 organization = os.getenv('INFLUXDB_ORGANIZATION')
 bucket = os.getenv('INFLUXDB_BUCKET')
 
 influx_router = APIRouter(prefix="/facility", tags=['influx'])
-
-@influx_router.get("/tt")
-async def get_tt():
-    return {'success': True}
 
 def create_bucket_if_not_exists(client, bucket_name, org):
     bucket_api = client.buckets_api()
@@ -123,3 +120,69 @@ async def get_info():
         return {"result": facilities}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
+    print("fields", fields)
+    print("date", start_date, " ", end_date)
+    fields_filter = " or ".join([f'r["_field"] == "{field}"' for field in fields])
+
+    return f"""
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}") 
+            |> filter(fn: (r) => {fields_filter})
+            """
+def influxdb_parameter_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
+    return f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}") 
+            '''
+def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str, Any]]:
+    query_api = client.query_api()
+    result = query_api.query(org=org, query=query)
+    factor_dictionary = defaultdict(list)
+    flag = True
+    for records in result:
+        for record in records:
+            if flag:
+                iso_time = record.get_time().isoformat() + "Z"
+                factor_dictionary['Time'].append(iso_time)
+            factor_dictionary[record.get_field()].append(record.get_value())
+        flag = False
+
+    return factor_dictionary
+class FacilityData(BaseModel):
+    facility: str
+    parameter: str
+    startTime: str
+    endTime: str
+@influx_router.get("/read")
+async def read_influxdb(conditions: List[FacilityData]):
+    results = []
+    facility_list = []
+    prameter_list = []
+    df_list = []
+
+    client = InfluxDBClient(url=url, token=token, org=organization)
+    for condition in conditions:
+        query = influxdb_parameter_query(
+            bucket, condition.facility, condition.parameter, condition.startTime, condition.endTime)
+
+        try:
+            factor_dictionary = execute_query(client, organization, query)
+            df = pd.DataFrame(factor_dictionary)
+            df_list.append(df)
+
+            facility_list.append(condition.facility)
+            prameter_list.append(condition.parameter)
+            results.append(factor_dictionary)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    print('facility_list', facility_list)
+    print('prameter_list', prameter_list)
+    print('df_list', df_list)
+    # facility_list, parameter_list, df_list를 활용해서 bokeh 그리고 return 하면돼
+
+    return {'result': results}

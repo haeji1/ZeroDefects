@@ -1,4 +1,13 @@
 # service
+import os
+from collections import defaultdict
+from http.client import HTTPException
+from typing import List, Dict, Any
+
+import pandas as pd
+from influxdb_client import InfluxDBClient
+from pydantic import BaseModel
+
 import app.routers.bokehgraph.bokeh_service as bokeh_service
 
 from fastapi import APIRouter
@@ -8,7 +17,6 @@ from fastapi.responses import JSONResponse
 from bokeh.embed import json_item
 
 file_name = "F1492-ExhaustLog-240323-011325.CSV"
-
 column = "No1_P[kW]"
 columns = ["No1_P[kW]","No2_P[kW]","No4_P[kW]","No5_P[kW]"
     ,"No6_P1_Fwd[kW]","No6_P2_Fwd[kW]","No6_P3_Fwd[kW]", "No6_P4_Fwd[kW]"
@@ -46,13 +54,11 @@ async def draw_graph_endpoint():
     plot_json = json_item(plot, "my_plot")
     return JSONResponse(content=plot_json)
 
-
 @router.get("/draw/all-graph")
 async def draw_graph_endpoint():
     plots = bokeh_service.draw_all_graph(columns, start, end)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
     return JSONResponse(content=plot_json)
-
 
 @router.get("/draw/all/tg-graph")
 async def draw_graph_endpoint():
@@ -60,3 +66,74 @@ async def draw_graph_endpoint():
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
     return JSONResponse(content=plot_json)
 
+def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
+    print("fields", fields)
+    print("date", start_date, " ", end_date)
+    fields_filter = " or ".join([f'r["_field"] == "{field}"' for field in fields])
+
+    return f"""
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}") 
+            |> filter(fn: (r) => {fields_filter})
+            """
+def influxdb_parameter_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
+    return f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}") 
+            '''
+def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str, Any]]:
+    query_api = client.query_api()
+    result = query_api.query(org=org, query=query)
+    factor_dictionary = defaultdict(list)
+    flag = True
+    for records in result:
+        for record in records:
+            if flag:
+                iso_time = record.get_time().isoformat() + "Z"
+                factor_dictionary['Time'].append(iso_time)
+            factor_dictionary[record.get_field()].append(record.get_value())
+        flag = False
+
+    return factor_dictionary
+class FacilityData(BaseModel):
+    facility: str
+    parameter: str
+    startTime: str
+    endTime: str
+@router.get("/read")
+async def read_influxdb(conditions: List[FacilityData]):
+
+    url = os.getenv("INFLUXDB_URL")
+    token = os.getenv("INFLUXDB_TOKEN")
+    organization = os.getenv("INFLUXDB_ORGANIZATION")
+    bucket = os.getenv("INFLUXDB_BUCKET")
+
+    results = []
+    facility_list = []
+    prameter_list = []
+    df_list = []
+
+    client = InfluxDBClient(url=url, token=token, org=organization)
+    for condition in conditions:
+        query = influxdb_parameter_query(
+            bucket, condition.facility, condition.parameter, condition.startTime, condition.endTime)
+
+        try:
+            factor_dictionary = execute_query(client, organization, query)
+            df = pd.DataFrame(factor_dictionary)
+            df_list.append(df)
+
+            facility_list.append(condition.facility)
+            prameter_list.append(condition.parameter)
+            results.append(factor_dictionary)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    print('facility_list', facility_list)
+    print('prameter_list', prameter_list)
+    print('df_list', df_list)
+    # facility_list, parameter_list, df_list를 활용해서 bokeh 그리고 return 하면돼
+
+    return {'result': results}
