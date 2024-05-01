@@ -29,35 +29,36 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
+import { p } from "@bokeh/bokehjs/build/js/lib/core/dom";
 
 const data = [
     {
         id: "m5gr84i9",
-        times: 316,
+        times: "24-02-01 11:03 ~ 24-02-01 13:03",
         parameter: "No_1_P",
         facility: "F1490",
     },
     {
         id: "3u1reuv4",
-        times: 242,
+        times: "24-02-02 14:03 ~ 24-02-02 15:03",
         parameter: "No_2_P",
         facility: "F1491",
     },
     {
         id: "derv1ws0",
-        times: 837,
+        times: "24-02-02 14:03 ~ 24-02-02 15:03",
         parameter: "No_3_P",
         facility: "F1422",
     },
     {
         id: "5kma53ae",
-        times: 874,
+        times: "24-02-02 14:03 ~ 24-02-02 15:03",
         parameter: "No_4_P",
         facility: "F1221",
     },
     {
         id: "bhqecj4p",
-        times: 721,
+        times: "24-02-02 14:03 ~ 24-02-02 15:03",
         parameter: "No_5_A",
         facility: "F1111",
     },
@@ -89,31 +90,29 @@ const columns = [
     },
     {
         accessorKey: "facility",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    설비명
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            )
-        },
-        cell: ({ row }) => <div className="">{row.getValue("facility")}</div>,
+        header: () => <div className="text-center">설비명</div>,
+        cell: ({ row }) => {
+
+            const facility = row.getValue("facility")
+
+            return <div className="text-center">{facility}</div>
+        }
     },
     {
         accessorKey: "parameter",
-        header: "파라미터",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("parameter")}</div>
-        ),
+        header: () => <div className="text-center">파라미터</div>,
+        cell: ({ row }) => {
+
+            const parameter = row.getValue("parameter")
+
+            return <div className="text-center">{parameter}</div>
+        }
     },
     {
         accessorKey: "times",
-        header: () => <div className="text-right">시간대</div>,
+        header: () => <div className="text-center">시간대</div>,
         cell: ({ row }) => {
-            const times = parseFloat(row.getValue("times"))
+            const times = row.getValue("times")
 
             return <div className="text-center font-medium">{times}</div>
         },
@@ -133,15 +132,15 @@ const columns = [
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>설정</DropdownMenuLabel>
                         <DropdownMenuItem
                             onClick={() => navigator.clipboard.writeText(payment.id)}
                         >
-                            Copy payment ID
+                            세팅값 텍스트로 복사
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>View customer</DropdownMenuItem>
-                        <DropdownMenuItem>View payment details</DropdownMenuItem>
+                        <DropdownMenuItem>세팅값 수정</DropdownMenuItem>
+                        <DropdownMenuItem>세팅값 삭제</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
@@ -194,7 +193,7 @@ function DataList() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="ml-auto">
-                            Columns <ChevronDown className="ml-2 h-4 w-4" />
+                            칼럼 필터링 <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -270,8 +269,8 @@ function DataList() {
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                    총 {table.getFilteredRowModel().rows.length}개 중{" "}
+                    {table.getFilteredSelectedRowModel().rows.length}개 선택됨.
                 </div>
                 <div className="space-x-2">
                     <Button
@@ -280,7 +279,7 @@ function DataList() {
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
-                        Previous
+                        이전
                     </Button>
                     <Button
                         variant="outline"
@@ -288,7 +287,7 @@ function DataList() {
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
-                        Next
+                        다음
                     </Button>
                 </div>
             </div>

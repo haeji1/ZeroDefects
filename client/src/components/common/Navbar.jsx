@@ -6,9 +6,9 @@ function Navbar() {
         <>
             <div className="flex flex-row justify-between h-[80px] w-full bg-slate-700">
                 <img src={SamsungLogo} height='auto' alt="" />
-                <div className='flex flex-row text-[25px]'>
+                <div className='flex flex-row space-x-8 text-[25px] items-center mx-10'>
                     <Link to="dashboard">
-                        <p>대시보드       </p>
+                        <p>대시보드</p>
                     </Link>
                     <Link to="/analysis">
                         <p>분석</p>
