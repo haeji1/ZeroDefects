@@ -48,8 +48,7 @@ function SelectSection() {
             try {
                 console.log('DB에 존재하는 설비 및 파라미터 리스트 가져오기 시작')
                 const response = await axios.get('http://localhost:8000/facility/info');
-                // 응답 데이터 설비 리스트에 업데이트
-                //   updateFacility(data)
+                updateFacility(response.data.result)
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
