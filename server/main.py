@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from bokeh.plotting import figure
 from bokeh.embed import json_item
 
+from app.routers.influx.influx_model import FacilityData
 # section
 from app.routers.section.section import get_section_data
 
@@ -42,9 +43,10 @@ app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
 app.include_router(mongo_router.mongo_router)
 
-@app.get("/api/section/{filename}")
-async def section(filename: str):
-    return get_section_data(filename)
+@app.post("/api/section")
+async def section(conditon: FacilityData):
+    print('conditon', conditon)
+    return { "cycles": get_section_data(conditon) }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

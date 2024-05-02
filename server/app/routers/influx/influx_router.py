@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from app.routers.bokehgraph.bokeh_router import FacilityData
-from app.routers.influx.influx_utils import influx_list_query
+from app.routers.influx.influx_utils import influx_list_time_query
 
 load_dotenv()
 
@@ -128,10 +128,10 @@ async def get_info():
 @influx_router.post("/read")
 async def read_influxdb(conditions: List[FacilityData]):
 
-    facility_list, prameter_list, df_list = influx_list_query(conditions)
+    facility_list, parameter_list, df_list = influx_list_time_query(conditions)
 
     print('facility_list', facility_list)
-    print('prameter_list', prameter_list)
+    print('prameter_list', parameter_list)
     print('df_list', df_list)
     # facility_list, parameter_list, df_list를 활용해서 bokeh 그리고 return 하면돼
 
