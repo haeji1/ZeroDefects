@@ -3,11 +3,15 @@ from typing import List
 import pandas as pd
 import json
 
+from pymongo import MongoClient
+
 from app.routers.influx.influx_model import FacilityData
 from app.routers.influx.influx_utils import influx_get_all_data
 from app.routers.section.section_models import Cycle
 from app.routers.section.section_models import CycleSection
 
+client = MongoClient("mongodb://admin:Delos@localhost:27017/")
+db = client["section"]
 
 def get_section_data(condition: FacilityData) -> [CycleSection]:
 
@@ -96,5 +100,12 @@ def get_section_data(condition: FacilityData) -> [CycleSection]:
                                              steps=steps_dict))
         except TypeError as e:
             print(f"Error appending to cycle_list: {e}")
+
+    # section_list 를 mongodb에 저장
+    print(condition.facility)
+    section = db[condition.facility]
+    for s in section_list:
+        print(dict(s))
+        section.insert_one(dict(s))
 
     return section_list
