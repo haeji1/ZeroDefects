@@ -1,10 +1,16 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 
+load_dotenv()
+url = os.getenv('MONGO_FURL')
+
 # MongoDB client
-client = MongoClient("mongodb://admin:Delos@localhost:27017/")
+client = MongoClient(url)
 # database name is setting
 setting = client["setting"]
 
