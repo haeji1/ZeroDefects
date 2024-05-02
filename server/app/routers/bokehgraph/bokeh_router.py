@@ -83,7 +83,7 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
 
     return factor_dictionary
 
-@router.get("/read")
+@router.post("/read")
 async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
