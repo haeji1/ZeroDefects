@@ -8,7 +8,7 @@ from bokeh.plotting import figure
 from bokeh.embed import json_item
 
 # section
-from section import get_section_data
+from app.routers.section.section import get_section_data
 
 from app.routers.bokehgraph import bokeh_router
 from app.routers.influx import influx_router

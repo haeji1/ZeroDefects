@@ -83,17 +83,23 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
 
     return factor_dictionary
 
-@router.get("/read")
+@router.post("/read")
 async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
     facility_list, parameter_list, df_list = influx_list_query(conditions)
+    print("==========facility_list=============")
+    print(facility_list)
+    print("==========parameter_list=============")
+    print(parameter_list)
+    print("=============df_list================")
+    print(df_list)
 
-    plots = bokeh_service.draw_dataframe_to_graph(df_list)
-    print("==================plot====================")
-    print(plots)
+    plots = bokeh_service.draw_dataframe_to_graph(df_list, facility_list)
+    # print("==================plot====================")
+    # print(plots)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-    print("=========plot_json==========")
-    print(plot_json)
+    # print("=========plot_json==========")
+    # print(plot_json)
     return JSONResponse(content=plot_json)
     # return {'result': results}
