@@ -53,29 +53,25 @@ function GraphSection() {
     }, []); // 빈 배열을 전달하여 컴포넌트가 마운트될 때만 실행되도록 함
 
     return (
-        <div className="flex flex-col">
-            <Card className='mr-5'>
+        <div className="flex flex-col ">
+            <Card className='mr-5 min-h-[800px]'>
                 <CardHeader>
                     <CardTitle>Graph Overview</CardTitle>
                 </CardHeader>
-                <CardContent>
-
+                <CardContent className="">
                     {graphData.length != 0 ?
-                        <div>
-                            {graphData.map((data, index) => (
-                                <div key={index}>
-                                    <h2>Plot {index + 1}</h2>
-                                    <BokehPlot data={graphData} /> {/* BokehPlot 컴포넌트에 JSON 데이터를 전달 */}
-                                </div>
-                            ))}
-                        </div> :
+                        graphData.map((data, index) => (
+                            <div key={index}>
+                                <h2>Plot {index + 1}</h2>
+                                <BokehPlot data={graphData} />
+                            </div>
+                        )) :
                         <p style={{
                             marginTop: '30vh',
                             textAlign: 'center',
                             fontSize: '42px',
                         }}>로딩 중입니다. 잠시만 기다려 주세요.</p>
                     }
-                    {/* {image ? <img src={image} alt="Uploaded" /> : <h1>먼저 데이터를 첨부해주세요</h1>} */}
                 </CardContent>
             </Card >
         </div>

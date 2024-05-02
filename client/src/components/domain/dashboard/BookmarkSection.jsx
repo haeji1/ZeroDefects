@@ -174,10 +174,15 @@ function BookmarkSection() {
             rowSelection,
             pagination,
         },
+        defaultColumn: {
+            size: 200, //starting column size
+            minSize: 50, //enforced during column resizing
+            maxSize: 500, //enforced during column resizing
+        },
     })
 
     return (
-        <div className="w-full">
+        <div>
             <div className="flex items-center py-4">
                 <Input
                     placeholder="설비명으로 검색"
@@ -207,7 +212,7 @@ function BookmarkSection() {
                     </Button>
                 </div>
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border h-[500px]">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
