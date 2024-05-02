@@ -35,6 +35,7 @@ async def write_influxdb(files: List[UploadFile] = File(...)):
     print('token', os.getenv('INFLUXDB_TOKEN'))
     for file in files:
         # csv to data frame
+        print(file.filename)
         df = pd.read_csv(file.file)
         df['Previous_Time'] = df['Time'].shift(1)  # 이전 시간을 새 컬럼으로 추가
         measurement = file.filename.split('-')[0]
@@ -76,8 +77,12 @@ async def write_influxdb(files: List[UploadFile] = File(...)):
 
             for column in df.columns:
                 if column != 'Previous_Time' and column != 'Time' and column[0] != '-':
-                    print('column ', column)
-                    point = point.field(column, row[column])
+                    # print('column ', column)
+                    try:
+                        value = float(row[column])
+                        point = point.field(column, value)
+                    except ValueError:
+                        print(f"Value conversion error for column {column}: {row[column]} : {type(row[column])}")
             points.append(point)
 
         write_api.write(bucket=bucket, record=points)
