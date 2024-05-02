@@ -144,18 +144,89 @@ import numpy as np
 # #     return plots
 #
 #
-def draw_dataframe_to_graph(df_list):
+
+# def draw_dataframe_to_graph(df_list, facility_list):
+#     # figure 객체 생성
+#     p = figure(title="facility", x_axis_label='Time', y_axis_label='Value',
+#                width=1200, height=400)
+#
+#     # 전체 데이터를 담을 빈 리스트 생성
+#     all_data = {}
+#
+#     print("========facility 출력========")
+#     for df, facility in zip(df_list, facility_list):
+#         print(facility)
+#         print("======길이=======")
+#         print(len(facility_list))
+#         print("======facility=====")
+#         print(facility_list)
+#
+#         # 컬럼 이름 모두 알아내기
+#         columns = df.columns.tolist()
+#
+#         # "Z" 제거
+#         df["Time"] = df["Time"].str.replace("Z", "")
+#
+#         # pd.to_datetime을 사용하여 변환
+#         time_values = pd.to_datetime(df["Time"], utc=True)
+#
+#         for column_name in columns[1:]:  # 첫 번째 컬럼은 'Time'이므로 제외합니다
+#             column_data = df[column_name]
+#             if column_name not in all_data:
+#                 all_data[column_name] = []
+#             all_data[column_name].extend(column_data.values)
+#
+#     # 각 컬럼 데이터를 하나의 ColumnDataSource로 결합
+#     combined_data = dict(x=time_values)
+#     for column_name, data in all_data.items():
+#         combined_data[column_name] = data
+#     source = ColumnDataSource(data=combined_data)
+#
+#     # 각 컬럼 데이터를 그래프에 추가하면서 다른 색상 지정
+#     for i, column_name in enumerate(all_data.keys()):
+#         p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
+#
+#     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
+#     # 범례 표시
+#     p.legend.location = "top_left"
+#     print("=========legend============")
+#     print(p.legend)
+#
+#     return [p]
+
+def draw_dataframe_to_graph(df_list, facility_list):
     plots = []
 
     # 전체 데이터를 담을 빈 리스트 생성
     all_data = []
 
+    # print("========facility 출력========")
+    # for facility in facility_list:
+    #     print(facility)
+    #     print("======길이=======")
+    #     print(len(facility_list))
+    #     print("======facility=====")
+    #     print(facility_list)
+
     # 컬럼 이름 모두 알아내기
     for df in df_list:
         columns = df.columns.tolist()
-        print("------------columns-----------")
-        print(columns)
-        time_values = pd.to_datetime(df["Time"])
+        # print("------------columns-----------")
+        # print(columns)
+        # print("==========dfTime==============")
+        # print(df["Time"])
+        # print(type(df["Time"].iloc[0]))
+        # print("=====dfTimetype=======")
+        # print(type(df["Time"]))
+
+        # "Z" 제거
+        df["Time"] = df["Time"].str.replace("Z", "")
+
+        # pd.to_datetime을 사용하여 변환
+        time_values = pd.to_datetime(df["Time"], utc=True)
+        # print("===============")
+        # print("==========Z 제거하고 dattime으로 변환==============")
+        # print(time_values)
 
         # 각 컬럼 데이터를 하나의 ColumnDataSource로 결합
         combined_data = dict(x=time_values)
@@ -170,16 +241,65 @@ def draw_dataframe_to_graph(df_list):
         source = ColumnDataSource(data=combined_data)
 
         # figure 객체 생성
-        p = figure(title='Line Plot of Data in Columns', x_axis_label='Time', y_axis_label='Value',
-                   width=None, height=400)
+        p = figure(title="facility", x_axis_label='Time', y_axis_label='Value',
+                   width=1200, height=400)
 
         # 각 컬럼 데이터를 그래프에 추가하면서 다른 색상 지정
         for i, column_name in enumerate(columns[1:]):  # 첫 번째 컬럼은 'Time'이므로 제외합니다
             p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
 
+        p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
         # 범례 표시
         p.legend.location = "top_left"
+        # print("=========legend============")
+        # print(p.legend)
 
         plots.append(p)
 
     return plots
+
+
+# def draw_dataframe_to_graph(df_list, facility_list):
+#     # 전체 그래프를 담을 리스트 생성
+#     plots = []
+#
+#     # figure 객체 생성
+#     p = figure(title="facility", x_axis_label='Time', y_axis_label='Value',
+#                width=1200, height=400)
+#
+#     # 모든 데이터를 담을 빈 리스트 생성
+#     all_data = []
+#
+#     for df, facility in zip(df_list, facility_list):
+#         # 컬럼 이름 모두 알아내기
+#         columns = df.columns.tolist()
+#
+#         # "Z" 제거
+#         df["Time"] = df["Time"].str.replace("Z", "")
+#
+#         # pd.to_datetime을 사용하여 변환
+#         time_values = pd.to_datetime(df["Time"], utc=True)
+#
+#         # 각 컬럼 데이터를 하나의 ColumnDataSource로 결합
+#         combined_data = dict(x=time_values)
+#
+#         for column_name in columns[1:]:  # 첫 번째 컬럼은 'Time'이므로 제외합니다
+#             column_data = df[column_name]
+#             all_data.append(column_data)
+#             combined_data[column_name] = column_data.values
+#
+#         # ColumnDataSource 생성
+#         source = ColumnDataSource(data=combined_data)
+#
+#         # 각 컬럼 데이터를 그래프에 추가하면서 다른 색상 지정
+#         for i, column_name in enumerate(columns[1:]):
+#             p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i], muted_alpha=0.2)
+#
+#     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
+#     # 범례 표시
+#     p.legend.location = "top_left"
+#     p.legend.click_policy = "mute"  # 범례 클릭으로 해당 라인 뮤트 설정
+#
+#     plots.append(p)
+#
+#     return plots
