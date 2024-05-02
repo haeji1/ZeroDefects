@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from bokeh.embed import json_item
 
 from app.routers.influx.influx_model import FacilityData
-from app.routers.influx.influx_utils import influx_list_query
+from app.routers.influx.influx_utils import influx_list_time_query
 
 router = APIRouter(
     prefix="/bokeh",
@@ -87,7 +87,7 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
 async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
-    facility_list, parameter_list, df_list = influx_list_query(conditions)
+    facility_list, parameter_list, df_list = influx_list_time_query(conditions)
 
     plots = bokeh_service.draw_dataframe_to_graph(df_list)
     print("==================plot====================")

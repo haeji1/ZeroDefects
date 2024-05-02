@@ -1,16 +1,17 @@
+from typing import List
+
 import pandas as pd
 import json
 
-def get_section_data(filename):
-    # CSV 파일 경로 설정
-    file_path = filename
+from app.routers.influx.influx_model import FacilityData
+from app.routers.influx.influx_utils import influx_get_all_data
+from app.routers.section.section_models import Cycle
+from app.routers.section.section_models import CycleSection
 
-    # CSV 파일 읽기
-    df = pd.read_csv(file_path)
 
-    # 날짜 시간 형식 변환 ('Time' 컬럼에 대해)
-    df['Time'] = pd.to_datetime(df['Time']).dt.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-7] + 'Z'
-    # df['Time'] = pd.to_datetime(df['Time'], format='%y-%m-%d %H:%M:%S').dt.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-7] + 'Z'
+def get_section_data(condition: FacilityData) -> [CycleSection]:
+
+    df = influx_get_all_data(condition)
 
     # 사이클 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
     cycle_starts = []
@@ -22,6 +23,7 @@ def get_section_data(filename):
 
     # 'RcpReq[]' 컬럼과 'CoatingLayerN[Layers]' 컬럼을 기준으로 사이클 및 스텝의 시작과 끝 찾기
     for i in range(len(df)):
+
         # 사이클 시작 검사
         if df['RcpReq[]'][i] == 1:
             if i == 0 or (i > 0 and df['RcpReq[]'][i - 1] == 0):
@@ -47,14 +49,18 @@ def get_section_data(filename):
         step_ends.append(len(df) - 1)  # 마지막 스텝의 끝 처리
 
     # 파일명에서 설비명과 날짜 추출
-    equipment_name, log_type, date, log_start_time = file_path.split('-')
+    # equipment_name, log_type, date, log_start_time = file_path.split('-')
+    equipment_name = condition.facility
 
     # JSON 구조 생성
     output = {"cycles": []}
 
+    cycle_list = []
+    section_list = []
+
     # 각 사이클 및 스텝의 이름 생성 및 출력
     for cycle_start, cycle_end in zip(cycle_starts, cycle_ends):
-        cycle_name = f"cycle-{equipment_name}-{date}-{df['Time'][cycle_start]}"
+        cycle_name = f"cycle-{equipment_name}-{df['Time'][cycle_start][0:19]}"
         cycle_dict = {
             "cycle_name": cycle_name,
             "cycle_start_time": df['Time'][cycle_start],
@@ -64,6 +70,7 @@ def get_section_data(filename):
 
         # 해당 사이클 내의 스텝들 출력
         step_index = 0
+        steps_dict = []
         for start, end in zip(step_starts, step_ends):
             if start >= cycle_start and end <= cycle_end:
                 step_dict = {
@@ -75,7 +82,19 @@ def get_section_data(filename):
                 cycle_dict["steps"].append(step_dict)
                 step_index += 1
 
+                steps_dict.append(step_dict)
+
         output["cycles"].append(cycle_dict)
 
-    # JSON 출력
-    # print(json.dumps(output, indent=4, ensure_ascii=False))
+        try:
+            cycle_list.append(Cycle(cycle_name=cycle_name,
+                                    cycle_start_time=str(df['Time'][cycle_start]),
+                                    cycle_end_time=str(df['Time'][cycle_end])))
+
+            section_list.append(CycleSection(cycle_name=cycle_name,
+                                             cycle_start_time=str(df['Time'][cycle_start]), cycle_end_time=str(df['Time'][cycle_end]),
+                                             steps=steps_dict))
+        except TypeError as e:
+            print(f"Error appending to cycle_list: {e}")
+
+    return section_list

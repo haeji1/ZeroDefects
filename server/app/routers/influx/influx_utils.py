@@ -16,6 +16,15 @@ token = os.getenv('INFLUXDB_TOKEN')
 organization = os.getenv('INFLUXDB_ORG')
 bucket = os.getenv('INFLUXDB_BUCKET')
 
+
+def influxdb_measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
+    return f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
+            '''
+
+
 def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
     print("fields", fields)
     print("date", start_date, " ", end_date)
@@ -27,12 +36,25 @@ def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, en
             |> filter(fn: (r) => r["_measurement"] == "{facility}") 
             |> filter(fn: (r) => {fields_filter})
             """
+
+
 def influxdb_parameter_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
     return f'''
             from(bucket: "{b}")
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}") 
             '''
+
+
+def influxdb_cycle_query(b: str, facility: str, start_date: str, end_date: str) -> str:
+    return f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}")
+            |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]") 
+            '''
+
+
 def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str, Any]]:
     query_api = client.query_api()
     result = query_api.query(org=org, query=query)
@@ -47,15 +69,17 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
         flag = False
 
     return factor_dictionary
-def influx_list_query(conditions: List[FacilityData]) -> []:
+
+
+def influx_list_time_query(conditions: List[FacilityData]) -> []:
     facility_list = []
     prameter_list = []
     df_list = []
 
     client = InfluxDBClient(url=url, token=token, org=organization)
     for condition in conditions:
-        query = influxdb_parameter_query(
-            bucket, condition.facility, condition.parameter, condition.startTime, condition.endTime)
+        query = influxdb_cycle_query(
+            bucket, condition.facility, condition.startTime, condition.endTime)
 
         try:
             factor_dictionary = execute_query(client, organization, query)
@@ -67,3 +91,23 @@ def influx_list_query(conditions: List[FacilityData]) -> []:
             raise HTTPException(status_code=500, detail=str(e))
 
     return [facility_list, prameter_list, df_list]
+
+
+def influx_get_all_data(condition: FacilityData):
+    client = InfluxDBClient(url=url, token=token, org=organization)
+    query = influxdb_cycle_query(bucket, facility=condition.facility,
+                                 start_date=condition.startTime, end_date=condition.endTime)
+
+    try:
+        factor_dictionary = execute_query(client, organization, query)
+        return pd.DataFrame(factor_dictionary)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def influx_list_cycle_query(conditions: List[FacilityData]) -> []:
+    return []
+
+
+def influx_list_section_query(conditions: List[FacilityData]) -> []:
+    return []
