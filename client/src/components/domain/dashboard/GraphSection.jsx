@@ -9,12 +9,16 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 import { useState, useEffect } from 'react'
 import { useGraphDataStore } from "@/stores/GraphData";
 import BokehPlot from "@/components/common/BokehPlot";
+import Lottie from "lottie-react";
+import ChartLoadingGIF from "@/assets/chartloading.json"
+import { div } from "@bokeh/bokehjs/build/js/lib/core/dom";
+import SamsungLogo from "@/assets/images/Logo_BLUE.png"
 
 Chart.register(zoomPlugin);
 
 function GraphSection() {
 
-    const { graphData } = useGraphDataStore()
+    const { graphData, isFetching } = useGraphDataStore()
 
     useEffect(() => {
         const fetchData = async () => {
@@ -65,16 +69,20 @@ function GraphSection() {
                                 <h2>Plot {index + 1}</h2>
                                 <BokehPlot data={graphData} />
                             </div>
-                        )) :
-                        <p style={{
-                            marginTop: '30vh',
-                            textAlign: 'center',
-                            fontSize: '42px',
-                        }}>로딩 중입니다. 잠시만 기다려 주세요.</p>
+                        )) : isFetching ?
+                            <div className="flex flex-col items-center">
+                                <Lottie animationData={ChartLoadingGIF} style={{ width: 400 }} />
+                                <p className="text-[42px]">그래프를 조회하고 있습니다.</p>
+                            </div> :
+                            <div className="flex flex-col items-center my-[100px]">
+                                <img src={SamsungLogo} width={800} alt="" />
+                                <p className="text-[40px]">GLOBAL TECHNOLOGY RESEARCH</p>
+                                <p className="text-[40px] my-[50px]">그래프를 조회해주세요.</p>
+                            </div>
                     }
                 </CardContent>
             </Card >
-        </div>
+        </div >
     )
 }
 
