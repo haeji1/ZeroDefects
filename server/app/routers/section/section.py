@@ -102,9 +102,9 @@ def get_section_data(condition: FacilityData) -> [CycleSection]:
                                     cycleStartTime=df['Time'][cycle_start],
                                     cycleEndTime=df['Time'][cycle_end]))
 
-            # section_list.append(CycleSection(cycleName=cycle_name,
-            #                                  cycleStartTime=str(df['Time'][cycle_start]), cycleEndTime=str(df['Time'][cycle_end]),
-            #                                  steps=steps_dict))
+            section_list.append(CycleSection(cycleName=cycle_name,
+                                             cycleStartTime=str(df['Time'][cycle_start]), cycleEndTime=str(df['Time'][cycle_end]),
+                                             steps=steps_dict))
         except TypeError as e:
             print(f"Error appending to cycle_list: {e}")
 
