@@ -24,7 +24,6 @@ def influxdb_measurement_query(b: str, measurement: str, start_date: str, end_da
             |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
             '''
 
-
 def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
     print("fields", fields)
     print("date", start_date, " ", end_date)
@@ -37,14 +36,12 @@ def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, en
             |> filter(fn: (r) => {fields_filter})
             """
 
-
 def influxdb_parameter_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
     return f'''
             from(bucket: "{b}")
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}") 
             '''
-
 
 def influxdb_cycle_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -53,7 +50,6 @@ def influxdb_cycle_query(b: str, facility: str, start_date: str, end_date: str) 
             |> filter(fn: (r) => r["_measurement"] == "{facility}")
             |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]") 
             '''
-
 
 def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str, Any]]:
     query_api = client.query_api()
@@ -105,9 +101,18 @@ def influx_get_all_data(condition: FacilityData):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def get_cycle_query(b: str, facility: str, start_date: str, end_date: str) -> str:
+    return  f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}")
+            |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]") 
+            '''
 def influx_list_cycle_query(conditions: List[FacilityData]) -> []:
+    # cycle not null, step null
     return []
 
 
 def influx_list_section_query(conditions: List[FacilityData]) -> []:
+    # step not null
     return []
