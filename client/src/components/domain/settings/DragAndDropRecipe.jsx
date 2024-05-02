@@ -5,13 +5,13 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/base/resizable";
-import FileDataForSettings from "@/stores/FileDataForSettingStore";
-import FileList from "./FileList";
+import FileDataForRecipe from "@/stores/FileDataForRecipe";
+import FileListForRecipe from "./FileListForRecipe";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import {useState} from "react";
+import { useState } from "react";
 
-function DragAndDropFileUpload() {
-  const { files, addFiles, clearFiles, addOrUpdateFiles } = FileDataForSettings(
+function DragAndDropFileRecipe() {
+  const { files, addFiles, clearFiles, addOrUpdateFiles } = FileDataForRecipe(
     (state) => ({
       addFiles: state.addFiles,
       files: state.files,
@@ -21,7 +21,7 @@ function DragAndDropFileUpload() {
   );
 
   const [loading, setLoding] = useState(true);
-  
+
   const handleDragOver = (e) => {
     e.preventDefault(); // 기본 이벤트를 방지합니다.
   };
@@ -45,12 +45,15 @@ function DragAndDropFileUpload() {
     //     file : file,
     //   }));
     const validFiles = Array.from(uploadedFiles).filter(
-      (file) => file.type === "text/csv"
+      (file) =>
+        file.type === "application/vnd.ms-excel" ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
 
     if (validFiles.length < uploadedFiles.length) {
       alert(
-        "유효하지 않은 파일 형식이 포함되어 있습니다. CSV 파일만 업로드해주세요."
+        "유효하지 않은 파일 형식이 포함되어 있습니다. xls 혹은 xlsx 파일만 업로드해주세요."
       );
     }
 
@@ -98,9 +101,10 @@ function DragAndDropFileUpload() {
 
     // 수정
     axios
-      .post("http://localhost:8000/facility/write", formData, {
+      .post("http://localhost:8000/setting", formData, {
         headers: {
-          "Content-Type": "text/csv"
+          //   "Content-Type": "multipart/form-data",
+          "Content-Type": "application/vnd.ms-excel" || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         },
       })
       .then((res) => {
@@ -115,7 +119,7 @@ function DragAndDropFileUpload() {
   };
   return (
     <div>
-      설계
+      레시피
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel>
           <div
@@ -133,10 +137,9 @@ function DragAndDropFileUpload() {
             <input
               id="fileInput"
               type="file"
-              multiple={true}
               style={{ display: "none" }}
               onChange={handleFileSelect}
-              accept=".csv"
+              accept=".xls, .xlsx"
             />
 
             <h2>여기에 파일을 끌어다 놓거나 클릭하여 선택하세요.</h2>
@@ -145,7 +148,7 @@ function DragAndDropFileUpload() {
         {/* <ResizableHandle withHandle /> */}
         <ResizablePanel>
           <ScrollArea className="h-[auto] w-[auto] rounded-md border p-4">
-            <FileList></FileList>
+            <FileListForRecipe></FileListForRecipe>
           </ScrollArea>
           <Button onClick={uploadFiles}>저장</Button>
         </ResizablePanel>
@@ -154,4 +157,4 @@ function DragAndDropFileUpload() {
   );
 }
 
-export default DragAndDropFileUpload;
+export default DragAndDropFileRecipe;
