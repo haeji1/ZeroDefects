@@ -12,7 +12,6 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
-
 import { useState, useEffect } from "react";
 import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
@@ -30,7 +29,6 @@ function SelectSection() {
     const [startTime, setStartTime] = useState()
     const [endDate, setEndDate] = useState()
     const [endTime, setEndTime] = useState()
-
 
     const { facilityList, updateFacility } = useFacilityStore();
     const { bookmark, addBookmark } = useBookmark();
@@ -174,6 +172,7 @@ function SelectSection() {
                     }}
                 >
                     비교 목록 추가</Button>
+
             </Card>
 
         </div>
