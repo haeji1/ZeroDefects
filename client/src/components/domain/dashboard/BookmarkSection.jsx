@@ -38,10 +38,13 @@ import {
     TableRow,
 } from "@/components/base/table"
 import useDidMountEffect from "@/hooks/useDidMountEffect";
+import axios from "axios";
+import { useGraphDataStore } from "@/stores/GraphData";
 
 function BookmarkSection() {
 
     const { bookmark, deleteBookmark, updateBookmark } = useBookmark();
+    const { setIsFetching, setGraphData } = useGraphDataStore();
 
     // 테이블 관련 hook
     // ==============================
@@ -78,6 +81,21 @@ function BookmarkSection() {
         )
 
     }, [selectedCycleName, selectedStep])
+
+    // 그래프 조회 
+    const getGraphData = async (datas) => {
+
+        setIsFetching(true)
+        axios.post('http://localhost:8000/bokeh/read', datas)
+            .then(response => {
+                console.log("성공")
+                setGraphData(response.data)
+                setIsFetching(false)
+            })
+            .catch(error => {
+                console.log(error, "그래프 받아오는 것 실패");
+            })
+    }
 
     const columns = [
         {
@@ -312,11 +330,12 @@ function BookmarkSection() {
             </div>
             <div className="space-x-2">
                 <Button
-                    className="ml-auto"
+                    className="ml-auto my-[100px]"
                     onClick={() => {
                         const selectedRows = table.getFilteredRowModel().rows
                         const selectedRowData = selectedRows.map(row => row.original)
                         console.log(selectedRowData)
+                        getGraphData(selectedRowData)
                     }}
                 >
                     비교하기
