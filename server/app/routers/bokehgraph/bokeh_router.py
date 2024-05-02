@@ -1,14 +1,8 @@
 # service
-import os
-from collections import defaultdict
-from http.client import HTTPException
-from typing import List, Dict, Any
-
-import pandas as pd
-from influxdb_client import InfluxDBClient
-from pydantic import BaseModel
-
 import app.routers.bokehgraph.bokeh_service as bokeh_service
+from collections import defaultdict
+from typing import List, Dict, Any
+from influxdb_client import InfluxDBClient
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -23,33 +17,6 @@ router = APIRouter(
     prefix="/bokeh",
     tags=["bokeh"]
 )
-
-
-@router.get("/draw/graph")
-async def draw_graph_endpoint():
-    # plot = bokeh_service.draw_graph(column, start, end)
-    # plot_json = json_item(plot, "my_plot")
-    # return JSONResponse(content=plot_json)
-    return {'results': 'success'}
-
-@router.get("/draw/all-graph")
-async def draw_graph_endpoint():
-    # plots = bokeh_service.draw_all_graph(columns, start, end)
-    # plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-    # return JSONResponse(content=plot_json)
-    return {'results': 'success'}
-
-@router.get("/draw/all/tg-graph")
-async def draw_graph_endpoint():
-    # plots = bokeh_service.draw_all_tg_graph(df, tg_start, tg_end)
-    # plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-    # return JSONResponse(content=plot_json)
-    return {'results': 'success'}
-# @router.get("/draw/dataframe-to-graph")
-# async def draw_graph_endpoint():
-#     plots = bokeh_service.dataframe_to_graph(df_list)
-#     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-#     return JSONResponse(content=plot_json)
 
 def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
     print("fields", fields)
@@ -88,18 +55,7 @@ async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
     facility_list, parameter_list, df_list = influx_list_time_query(conditions)
-    print("==========facility_list=============")
-    print(facility_list)
-    print("==========parameter_list=============")
-    print(parameter_list)
-    print("=============df_list================")
-    print(df_list)
-
-    plots = bokeh_service.draw_dataframe_to_graph(df_list, facility_list)
-    # print("==================plot====================")
-    # print(plots)
+    plots = bokeh_service.draw_dataframe_to_graph(df_list)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-    # print("=========plot_json==========")
-    # print(plot_json)
+
     return JSONResponse(content=plot_json)
-    # return {'result': results}
