@@ -121,5 +121,3 @@ def influx_list_cycle_query(conditions: List[FacilityData]) -> []:
 def influx_list_section_query(conditions: List[FacilityData]) -> []:
     # step not null
     return []
-
-    return [facility_list, parameter_list, df_list]
