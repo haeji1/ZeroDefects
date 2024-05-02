@@ -36,6 +36,7 @@ def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, en
             |> filter(fn: (r) => {fields_filter})
             """
 
+# for bokeh
 def influxdb_parameter_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
     return f'''
             from(bucket: "{b}")
@@ -43,6 +44,7 @@ def influxdb_parameter_query(b: str, facility: str, field: str, start_date: str,
             |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}") 
             '''
 
+# for cycle, section
 def influxdb_cycle_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
             from(bucket: "{b}")
@@ -51,6 +53,7 @@ def influxdb_cycle_query(b: str, facility: str, start_date: str, end_date: str) 
             |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]") 
             '''
 
+# for bokeh
 def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str, Any]]:
     query_api = client.query_api()
     result = query_api.query(org=org, query=query)
@@ -67,6 +70,7 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
     return factor_dictionary
 
 
+# for bokeh basic graph
 def influx_list_time_query(conditions: List[FacilityData]) -> []:
     facility_list = []
     prameter_list = []
@@ -74,8 +78,8 @@ def influx_list_time_query(conditions: List[FacilityData]) -> []:
 
     client = InfluxDBClient(url=url, token=token, org=organization)
     for condition in conditions:
-        query = influxdb_cycle_query(
-            bucket, condition.facility, condition.startTime, condition.endTime)
+        query = influxdb_parameter_query(
+            bucket, condition.facility, condition.parameter, condition.startTime, condition.endTime)
 
         try:
             factor_dictionary = execute_query(client, organization, query)
@@ -89,6 +93,7 @@ def influx_list_time_query(conditions: List[FacilityData]) -> []:
     return [facility_list, prameter_list, df_list]
 
 
+# for cycle, section
 def influx_get_all_data(condition: FacilityData):
     client = InfluxDBClient(url=url, token=token, org=organization)
     query = influxdb_cycle_query(bucket, facility=condition.facility,
