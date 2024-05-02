@@ -93,15 +93,3 @@ async def upload_excel_file(files: list[UploadFile] = File(...)):
             responses.append({"filename": file.filename, "message": str(e)})
 
     return JSONResponse(status_code=200, content=responses)
-
-# mongodb read test
-@mongo_router.put("/point")
-def update_point():
-    test = client["test"]
-    testedtest = test["testedtest"]
-    john_doe_doc = testedtest.find_one({"name": "John Doe"})
-    if john_doe_doc:
-        email = john_doe_doc.get("email")
-        return {"email": email}
-    else:
-        return {"message": "John Doe의 도큐먼트를 찾을 수 없습니다."}
