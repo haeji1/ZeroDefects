@@ -1,16 +1,16 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException
 from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
-
-app = FastAPI()
 
 # MongoDB client
 client = MongoClient("mongodb://admin:Delos@localhost:27017/")
 # database name is setting
 setting = client["setting"]
 
-@app.post("/setting")
+mongo_router = APIRouter(prefix="/facility", tags=['mongo'])
+
+@mongo_router.post("/setting")
 async def upload_excel_file(files: list[UploadFile] = File(...)):
     # read setting_facility.xls files
     responses = []
@@ -89,7 +89,7 @@ async def upload_excel_file(files: list[UploadFile] = File(...)):
     return JSONResponse(status_code=200, content=responses)
 
 # mongodb read test
-@app.put("/point")
+@mongo_router.put("/point")
 def update_point():
     test = client["test"]
     testedtest = test["testedtest"]

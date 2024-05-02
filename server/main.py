@@ -12,6 +12,7 @@ from app.routers.section.section import get_section_data
 
 from app.routers.bokehgraph import bokeh_router
 from app.routers.influx import influx_router
+from app.routers.mongo import mongo_router
 
 # postgreSQL
 from database import engine
@@ -39,6 +40,7 @@ app.add_middleware(
 
 app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
+app.include_router(mongo_router.mongo_router)
 
 @app.get("/api/section/{filename}")
 async def section(filename: str):
