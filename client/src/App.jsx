@@ -5,9 +5,8 @@ import Analysis from '@/pages/Analysis'
 import Notification from '@/pages/Notification'
 import {
   createBrowserRouter,
+  Navigate,
   RouterProvider,
-  Route,
-  Link,
 } from 'react-router-dom'
 import Navbar from './components/common/Navbar'
 
@@ -18,6 +17,10 @@ function App() {
       path: "/",
       element: <Navbar />,
       children: [
+        {
+          index: true,
+          element: <Navigate to="/dashboard" replace />
+        },
         {
           path: "/dashboard",
           element: <Dashboard />,
