@@ -125,7 +125,7 @@ async def get_info():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@influx_router.get("/read")
+@influx_router.post("/read")
 async def read_influxdb(conditions: List[FacilityData]):
 
     facility_list, prameter_list, df_list = influx_list_query(conditions)
