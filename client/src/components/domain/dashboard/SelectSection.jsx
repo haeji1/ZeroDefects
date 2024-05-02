@@ -32,6 +32,8 @@ function SelectSection() {
 
     const { facilityList, updateFacility } = useFacilityStore();
     const { bookmark, addBookmark } = useBookmark();
+    const { setGraphData, setIsFetching } = useGraphDataStore()
+
     // 시작 및 종료 시간을 설정하는 Input 핸들러
     const handleTime = (e) => {
         if (e.target.id === "startTime") {
@@ -48,8 +50,7 @@ function SelectSection() {
             try {
                 console.log('DB에 존재하는 설비 및 파라미터 리스트 가져오기 시작')
                 const response = await axios.get('http://localhost:8000/facility/info');
-                // 응답 데이터 설비 리스트에 업데이트
-                //   updateFacility(data)
+                updateFacility(response.data.result)
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -61,16 +62,19 @@ function SelectSection() {
     const getGraphData = async () => {
         const startParts = startTime.split(":");
         const endParts = endTime.split(":");
-        axios.post('http://localhost:8000/facility/info', {
+        setIsFetching(true)
+        axios.post('http://localhost:8000/bokeh/read', [{
             facility: facility,
             parameter: parameter,
             startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
             endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
             cycle: null,
             step: null,
-        })
+        }])
             .then(response => {
-                console.log(response.data);
+                console.log("성공")
+                setGraphData(response.data)
+                setIsFetching(false)
             })
             .catch(error => {
                 console.log(error, "그래프 받아오는 것 실패");
