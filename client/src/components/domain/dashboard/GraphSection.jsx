@@ -13,6 +13,7 @@ import BokehPlot from "@/components/common/BokehPlot";
 Chart.register(zoomPlugin);
 
 function GraphSection() {
+
     const { graphData } = useGraphDataStore()
 
     useEffect(() => {
