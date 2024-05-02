@@ -73,7 +73,7 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
 # for bokeh basic graph
 def influx_list_time_query(conditions: List[FacilityData]) -> []:
     facility_list = []
-    prameter_list = []
+    parameter_list = []
     df_list = []
 
     client = InfluxDBClient(url=url, token=token, org=organization)
@@ -86,11 +86,11 @@ def influx_list_time_query(conditions: List[FacilityData]) -> []:
             df = pd.DataFrame(factor_dictionary)
             df_list.append(df)
             facility_list.append(condition.facility)
-            prameter_list.append(condition.parameter)
+            parameter_list.append(condition.parameter)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-    return [facility_list, prameter_list, df_list]
+    return [facility_list, parameter_list, df_list]
 
 
 # for cycle, section
@@ -121,3 +121,5 @@ def influx_list_cycle_query(conditions: List[FacilityData]) -> []:
 def influx_list_section_query(conditions: List[FacilityData]) -> []:
     # step not null
     return []
+
+    return [facility_list, parameter_list, df_list]
