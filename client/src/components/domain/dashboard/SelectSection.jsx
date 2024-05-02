@@ -7,64 +7,100 @@ import {
 } from "@/components/base/select";
 import { Card } from "@/components/base/card";
 import { format } from "date-fns"
+import { ko } from "date-fns/locale"
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
-import { Label } from "@/components/base/label";
-import { useParameterStore } from "@/stores/ParameterList"
+import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
+import { useBookmark } from "@/stores/Bookmark";
+import axios from "axios";
 
 function SelectSection() {
-    const [date, setDate] = useState()
 
+    // 그래프 조회에 필요한 인자들
+    const [facility, setFacility] = useState()
+    const [parameter, setParameter] = useState()
     const [startDate, setStartDate] = useState()
     const [startTime, setStartTime] = useState()
     const [endDate, setEndDate] = useState()
     const [endTime, setEndTime] = useState()
 
 
+    const { facilityList, updateFacility } = useFacilityStore();
+    const { bookmark, addBookmark } = useBookmark();
+    // 시작 및 종료 시간을 설정하는 Input 핸들러
+    const handleTime = (e) => {
+        if (e.target.id === "startTime") {
+            setStartTime(e.target.value)
+        }
+        else if (e.target.id === "endTime") {
+            setEndTime(e.target.value)
+        }
+    }
 
+    // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                console.log('DB에 존재하는 설비 및 파라미터 리스트 가져오기 시작')
+                const response = await axios.get('http://localhost:8000/facility/info');
+                // 응답 데이터 설비 리스트에 업데이트
+                //   updateFacility(data)
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+        fetchData(); // 데이터를 가져오는 함수 호출
+    }, []);
 
-    const [facility, setFacility] = useState()
-    const [parameter, setParameter] = useState()
-    const [times, setTimes] = useState()
-
-
-    const facilityList = ["F1490", "F1491", "F1492"]
-
-
-    const { graphData, parameterData, setGraphData, setParameterData } = useGraphDataStore()
-
-
-    const { addParameter } = useParameterStore();
+    // 그래프 조회 
+    const getGraphData = async () => {
+        const startParts = startTime.split(":");
+        const endParts = endTime.split(":");
+        axios.post('http://localhost:8000/facility/info', {
+            facility: facility,
+            parameter: parameter,
+            startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
+            endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
+            cycle: null,
+            step: null,
+        })
+            .then(response => {
+                console.log(response.data);
+            })
+            .catch(error => {
+                console.log(error, "그래프 받아오는 것 실패");
+            })
+    }
 
     return (
         <div>
             <Card className="h-[80px] mr-5 mb-5 items-center flex flex-row px-3 space-x-3">
-                <Select>
+                <Select onValueChange={setFacility}>
                     <SelectTrigger className="w-[180px] self-center">
                         <SelectValue placeholder="설비명" />
                     </SelectTrigger>
                     <SelectContent>
-                        {facilityList.map(facility => (
-                            <SelectItem key={facility} value={facility}>{facility}</SelectItem>
+                        {Object.keys(facilityList).map(facility => (
+                            <SelectItem key={facility} value={facility} >{facility}</SelectItem>
                         ))}
-
                     </SelectContent>
                 </Select>
 
-                <Select>
+                <Select onValueChange={setParameter}>
                     <SelectTrigger className="w-[180px] self-center">
-                        <SelectValue placeholder="파라미터 명" />
+                        <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
-                        {parameterData.map((param) => (
-                            <SelectItem key={param.index} value={param.index}>{param.index}</SelectItem>
-                        ))}
+                        {facilityList[facility] !== undefined ? facilityList[facility].map((param) => (
+                            <SelectItem key={param} value={param}>{param}</SelectItem>
+                        )) : null}
                     </SelectContent>
                 </Select>
 
@@ -78,7 +114,7 @@ function SelectSection() {
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? format(startDate, "PPP") : <span>시작 날짜</span>}
+                            {startDate ? format(startDate, "yyyy년 MM월 dd일") : <span>시작 날짜</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -86,11 +122,12 @@ function SelectSection() {
                             mode="single"
                             selected={startDate}
                             onSelect={setStartDate}
+                            locale={ko}
                             initialFocus
                         />
                     </PopoverContent>
                 </Popover>
-                <Input className="w-[130px]" type={"time"} />
+                <Input className="w-[130px]" type={"time"} id="startTime" onChange={handleTime} />
                 <h1>
                     ~
                 </h1>
@@ -104,7 +141,7 @@ function SelectSection() {
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? format(endDate, "PPP") : <span>종료 날짜</span>}
+                            {endDate ? format(endDate, "yyyy년 MM월 dd일") : <span>종료 날짜</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -112,24 +149,31 @@ function SelectSection() {
                             mode="single"
                             selected={endDate}
                             onSelect={setEndDate}
+                            locale={ko}
                             initialFocus
                         />
                     </PopoverContent>
                 </Popover>
-                <Input className="w-[130px]" type={"time"} />
-                <Button>그래프 조회</Button>
+                <Input className="w-[130px]" type={"time"} id="endTime" onChange={handleTime} />
+                <Button onClick={getGraphData}>그래프 조회</Button>
                 <Button
-                // onClick={addParameter(
-                //     {
-                //         facility:facility,
-                //         parameter:parameter,
-                //     }
-                // )}
+                    onClick={() => {
+
+                        const startParts = startTime.split(":");
+                        const endParts = endTime.split(":");
+                        console.log(new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]))
+
+                        addBookmark(
+                            {
+                                facility: facility,
+                                parameter: parameter,
+                                startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]),
+                                endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]),
+                            }
+                        )
+                    }}
                 >
                     비교 목록 추가</Button>
-                <div className=" max-w-sm items-center gap-1.5">
-                    {/* <Input type="file" onChange={ } /> */}
-                </div>
             </Card>
 
         </div>

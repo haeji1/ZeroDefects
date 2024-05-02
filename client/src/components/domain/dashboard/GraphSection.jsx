@@ -4,9 +4,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/base/card"
-import { useImage } from "./ImageContext";
-import CSVReader from './CSVReader'
-import ChartComponent from './ChartComponent'
 import { Chart } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import { useState, useEffect } from 'react'
@@ -16,8 +13,7 @@ import BokehPlot from "@/components/common/BokehPlot";
 Chart.register(zoomPlugin);
 
 function GraphSection() {
-
-    const { graphData, setGraphData, setParameterData } = useGraphDataStore()
+    const { graphData } = useGraphDataStore()
 
     useEffect(() => {
         const fetchData = async () => {
@@ -55,7 +51,6 @@ function GraphSection() {
         fetchData(); // 데이터를 가져오는 함수 호출
     }, []); // 빈 배열을 전달하여 컴포넌트가 마운트될 때만 실행되도록 함
 
-
     return (
         <div className="flex flex-col">
             <Card className='mr-5'>
@@ -69,7 +64,7 @@ function GraphSection() {
                             {graphData.map((data, index) => (
                                 <div key={index}>
                                     <h2>Plot {index + 1}</h2>
-                                    <BokehPlot data={data} /> {/* BokehPlot 컴포넌트에 JSON 데이터를 전달 */}
+                                    <BokehPlot data={graphData} /> {/* BokehPlot 컴포넌트에 JSON 데이터를 전달 */}
                                 </div>
                             ))}
                         </div> :
