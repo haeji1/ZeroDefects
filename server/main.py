@@ -9,6 +9,7 @@ from bokeh.embed import json_item
 
 from app.routers.bokehgraph import bokeh_router
 from app.routers.influx import influx_router
+from app.routers.mongo import mongo_router
 
 # postgreSQL
 from database import engine
@@ -36,6 +37,7 @@ app.add_middleware(
 
 app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
+app.include_router(mongo_router.mongo_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
