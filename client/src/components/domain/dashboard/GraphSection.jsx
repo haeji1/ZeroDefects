@@ -9,12 +9,16 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 import { useState, useEffect } from 'react'
 import { useGraphDataStore } from "@/stores/GraphData";
 import BokehPlot from "@/components/common/BokehPlot";
+import Lottie from "lottie-react";
+import ChartLoadingGIF from "@/assets/chartloading.json"
+import { div } from "@bokeh/bokehjs/build/js/lib/core/dom";
+import SamsungLogo from "@/assets/images/Logo_BLUE.png"
 
 Chart.register(zoomPlugin);
 
 function GraphSection() {
 
-    const { graphData } = useGraphDataStore()
+    const { graphData, isFetching } = useGraphDataStore()
 
     useEffect(() => {
         const fetchData = async () => {
@@ -53,32 +57,32 @@ function GraphSection() {
     }, []); // 빈 배열을 전달하여 컴포넌트가 마운트될 때만 실행되도록 함
 
     return (
-        <div className="flex flex-col">
-            <Card className='mr-5'>
+        <div className="flex flex-col ">
+            <Card className='mr-5 min-h-[800px]'>
                 <CardHeader>
                     <CardTitle>Graph Overview</CardTitle>
                 </CardHeader>
-                <CardContent>
-
+                <CardContent className="">
                     {graphData.length != 0 ?
-                        <div>
-                            {graphData.map((data, index) => (
-                                <div key={index}>
-                                    <h2>Plot {index + 1}</h2>
-                                    <BokehPlot data={graphData} /> {/* BokehPlot 컴포넌트에 JSON 데이터를 전달 */}
-                                </div>
-                            ))}
-                        </div> :
-                        <p style={{
-                            marginTop: '30vh',
-                            textAlign: 'center',
-                            fontSize: '42px',
-                        }}>로딩 중입니다. 잠시만 기다려 주세요.</p>
+                        graphData.map((data, index) => (
+                            <div key={index}>
+                                <h2>Plot {index + 1}</h2>
+                                <BokehPlot data={graphData} />
+                            </div>
+                        )) : isFetching ?
+                            <div className="flex flex-col items-center">
+                                <Lottie animationData={ChartLoadingGIF} style={{ width: 400 }} />
+                                <p className="text-[42px]">그래프를 조회하고 있습니다.</p>
+                            </div> :
+                            <div className="flex flex-col items-center my-[100px]">
+                                <img src={SamsungLogo} width={800} alt="" />
+                                <p className="text-[40px]">GLOBAL TECHNOLOGY RESEARCH</p>
+                                <p className="text-[40px] my-[50px]">그래프를 조회해주세요.</p>
+                            </div>
                     }
-                    {/* {image ? <img src={image} alt="Uploaded" /> : <h1>먼저 데이터를 첨부해주세요</h1>} */}
                 </CardContent>
             </Card >
-        </div>
+        </div >
     )
 }
 

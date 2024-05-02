@@ -81,7 +81,7 @@ function SelectSection() {
         <div>
             <Card className="h-[80px] mr-5 mb-5 items-center flex flex-row px-3 space-x-3">
                 <Select onValueChange={setFacility}>
-                    <SelectTrigger className="w-[180px] self-center">
+                    <SelectTrigger className="w-[200px] self-center">
                         <SelectValue placeholder="설비명" />
                     </SelectTrigger>
                     <SelectContent>
@@ -92,7 +92,7 @@ function SelectSection() {
                 </Select>
 
                 <Select onValueChange={setParameter}>
-                    <SelectTrigger className="w-[180px] self-center">
+                    <SelectTrigger className="w-[200px] self-center">
                         <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
