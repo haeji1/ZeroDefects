@@ -7,7 +7,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from influxdb_client import InfluxDBClient
 
-from app.routers.bokehgraph.bokeh_router import FacilityData
+from .influx_model import FacilityData
 
 load_dotenv()
 
