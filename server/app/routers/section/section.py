@@ -87,14 +87,14 @@ def get_section_data(condition: FacilityData) -> [CycleSection]:
         output["cycles"].append(cycle_dict)
 
         try:
-            cycle_list.append(Cycle(cycle_name=cycle_name,
-                                    cycle_start_time=str(df['Time'][cycle_start]),
-                                    cycle_end_time=str(df['Time'][cycle_end])))
+            cycle_list.append(Cycle(cycleName=cycle_name,
+                                    cycleStartTime=df['Time'][cycle_start],
+                                    cycleEndTime=df['Time'][cycle_end]))
 
-            section_list.append(CycleSection(cycle_name=cycle_name,
-                                             cycle_start_time=str(df['Time'][cycle_start]), cycle_end_time=str(df['Time'][cycle_end]),
-                                             steps=steps_dict))
+            # section_list.append(CycleSection(cycleName=cycle_name,
+            #                                  cycleStartTime=str(df['Time'][cycle_start]), cycleEndTime=str(df['Time'][cycle_end]),
+            #                                  steps=steps_dict))
         except TypeError as e:
             print(f"Error appending to cycle_list: {e}")
 
-    return section_list
+    return cycle_list
