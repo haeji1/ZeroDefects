@@ -7,7 +7,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from influxdb_client import InfluxDBClient
 
-from .influx_model import FacilityData
+from app.models.influx.influx_models import FacilityData
 
 load_dotenv()
 

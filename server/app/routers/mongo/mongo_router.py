@@ -6,15 +6,16 @@ from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-load_dotenv()
-url = os.getenv('MONGO_FURL')
+from config import settings
+
+url = settings.mongo_furl
 
 # MongoDB client
 client = MongoClient(url)
 # database name is setting
 setting = client["setting"]
 
-mongo_router = APIRouter(prefix="/facility", tags=['mongo'])
+mongo_router = APIRouter(prefix="/facility", tags=['section'])
 
 @mongo_router.post("/setting")
 async def upload_excel_file(files: list[UploadFile] = File(...)):
