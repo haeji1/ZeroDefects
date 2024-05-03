@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, File, UploadFile, HTTPException, Query, Body
+from fastapi import APIRouter, File, UploadFile, HTTPException
 
 from influxdb_client import Point, InfluxDBClient, WritePrecision, WriteOptions
 
@@ -8,22 +8,19 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from collections import defaultdict
-from typing import List, Dict, Any
+from typing import List
 
-from dotenv import load_dotenv
-from pydantic import BaseModel
+from app.routers.bokeh.bokeh_router import FacilityData
+from app.utils.functions.influx_functions import influx_list_time_query
 
-from app.routers.bokehgraph.bokeh_router import FacilityData
-from app.routers.influx.influx_utils import influx_list_time_query
+from config import settings
 
-load_dotenv()
+url = settings.influx_url
+token = settings.influx_token
+organization = settings.influx_org
+bucket = settings.influx_bucket
 
-url = os.getenv('INFLUXDB_URL')
-token = os.getenv('INFLUXDB_TOKEN')
-organization = os.getenv('INFLUXDB_ORG')
-bucket = os.getenv('INFLUXDB_BUCKET')
-
-influx_router = APIRouter(prefix="/facility", tags=['influx'])
+influx_router = APIRouter(prefix="/facility", tags=['request'])
 
 def create_bucket_if_not_exists(client, bucket_name, org):
     bucket_api = client.buckets_api()

@@ -1,5 +1,5 @@
 # service
-import app.routers.bokehgraph.bokeh_service as bokeh_service
+import app.service.bokeh.bokeh_service as bokeh_service
 from collections import defaultdict
 from typing import List, Dict, Any
 from influxdb_client import InfluxDBClient
@@ -10,8 +10,8 @@ from fastapi.responses import JSONResponse
 # bokeh
 from bokeh.embed import json_item
 
-from app.routers.influx.influx_model import FacilityData
-from app.routers.influx.influx_utils import influx_list_time_query
+from app.models.influx.influx_models import FacilityData
+from app.utils.functions.influx_functions import influx_list_time_query
 
 ##############################
 import os
@@ -25,7 +25,7 @@ client = MongoClient(url)
 # database name is setting
 section = client["section"]
 
-mongo_router = APIRouter(prefix="/facility", tags=['mongo'])
+mongo_router = APIRouter(prefix="/facility", tags=['section'])
 ##############################
 
 router = APIRouter(
@@ -70,7 +70,7 @@ async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
     facility_list, parameter_list, df_list = influx_list_time_query(conditions)
-    plots = bokeh_service.draw_dataframe_to_graph(df_list,facility_list)
+    plots = bokeh_service.draw_dataframe_to_graph(df_list, facility_list)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
     return JSONResponse(content=plot_json)
