@@ -328,9 +328,9 @@ function BookmarkSection() {
                     </CardContent>
                 </Card>
             </div>
-            <div className="space-x-2">
+            <div className="flex flex-row-reverse space-x-2">
                 <Button
-                    className="ml-auto my-[100px]"
+                    className="ml-auto"
                     onClick={() => {
                         const selectedRows = table.getFilteredRowModel().rows
                         const selectedRowData = selectedRows.map(row => row.original)
