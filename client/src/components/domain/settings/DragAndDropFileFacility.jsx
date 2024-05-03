@@ -8,9 +8,9 @@ import {
 import FileDataForSettings from "@/stores/FileDataForSettingStore";
 import FileList from "./FileList";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import {useState} from "react";
+import { useState } from "react";
 
-function DragAndDropFileUpload() {
+function DragAndDropFileFacility() {
   const { files, addFiles, clearFiles, addOrUpdateFiles } = FileDataForSettings(
     (state) => ({
       addFiles: state.addFiles,
@@ -21,7 +21,7 @@ function DragAndDropFileUpload() {
   );
 
   const [loading, setLoding] = useState(true);
-  
+
   const handleDragOver = (e) => {
     e.preventDefault(); // 기본 이벤트를 방지합니다.
   };
@@ -35,15 +35,6 @@ function DragAndDropFileUpload() {
   };
 
   const handleFiles = (uploadedFiles) => {
-    // 유효한 파일을 필터링하고 나면,
-    // const validFiles = Array.from(uploadedFiles)
-    //   .filter((file) => file.type === "text/csv")
-    //   .map((file) => ({
-    //     ...file,
-    //     name: file.name,
-    //     size: file.size,
-    //     file : file,
-    //   }));
     const validFiles = Array.from(uploadedFiles).filter(
       (file) => file.type === "text/csv"
     );
@@ -100,7 +91,7 @@ function DragAndDropFileUpload() {
     axios
       .post("http://localhost:8000/facility/write", formData, {
         headers: {
-          "Content-Type": "text/csv"
+          "Content-Type": "text/csv",
         },
       })
       .then((res) => {
@@ -114,44 +105,35 @@ function DragAndDropFileUpload() {
       });
   };
   return (
-    <div>
+    <div style={{ marginLeft: "100px", marginRight: "100px" }}>
       설계
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel>
-          <div
-            style={{
-              border: "2px dashed #ccc",
-              padding: "90px",
-              marginLeft: "10px",
-              cursor: "pointer",
-            }}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById("fileInput").click()}
-          >
-            <DragAndDropAni></DragAndDropAni>
-            <input
-              id="fileInput"
-              type="file"
-              multiple={true}
-              style={{ display: "none" }}
-              onChange={handleFileSelect}
-              accept=".csv"
-            />
-
-            <h2>여기에 파일을 끌어다 놓거나 클릭하여 선택하세요.</h2>
-          </div>
-        </ResizablePanel>
-        {/* <ResizableHandle withHandle /> */}
-        <ResizablePanel>
-          <ScrollArea className="h-[auto] w-[auto] rounded-md border p-4">
-            <FileList></FileList>
-          </ScrollArea>
-          <Button onClick={uploadFiles}>저장</Button>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      <div
+        style={{
+          border: "2px dashed #ccc",
+          padding: "30px",
+          cursor: "pointer",
+        }}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onClick={() => document.getElementById("fileInput").click()}
+      >
+        <DragAndDropAni></DragAndDropAni>
+        <input
+          id="fileInput"
+          type="file"
+          multiple={true}
+          style={{ display: "none" }}
+          onChange={handleFileSelect}
+          accept=".csv"
+        />
+        <h2>여기에 파일을 끌어다 놓거나 클릭하여 선택하세요.</h2>
+      </div>
+      <div style={{ paddingTop: "20px" }} />
+      <FileList />
+      <div style={{ paddingTop: "20px" }} />
+      <Button onClick={uploadFiles}>저장</Button>
     </div>
   );
 }
 
-export default DragAndDropFileUpload;
+export default DragAndDropFileFacility;

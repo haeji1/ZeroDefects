@@ -1,10 +1,6 @@
 import { Button } from "@/components/base/button";
 import axios from "axios";
 import DragAndDropAni from "./DragandDropFileGif";
-import {
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/base/resizable";
 import FileDataForRecipe from "@/stores/FileDataForRecipe";
 import FileListForRecipe from "./FileListForRecipe";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
@@ -35,15 +31,6 @@ function DragAndDropFileRecipe() {
   };
 
   const handleFiles = (uploadedFiles) => {
-    // 유효한 파일을 필터링하고 나면,
-    // const validFiles = Array.from(uploadedFiles)
-    //   .filter((file) => file.type === "text/csv")
-    //   .map((file) => ({
-    //     ...file,
-    //     name: file.name,
-    //     size: file.size,
-    //     file : file,
-    //   }));
     const validFiles = Array.from(uploadedFiles).filter(
       (file) =>
         file.type === "application/vnd.ms-excel" ||
@@ -93,7 +80,7 @@ function DragAndDropFileRecipe() {
     let formData = new FormData();
 
     files.forEach((file) => {
-      formData.append("files", file); // 이제 file은 실제 File 객체를 포함하고 있습니다.
+      formData.append("files", file);
     });
 
     console.log(Array.from(formData));
@@ -103,8 +90,9 @@ function DragAndDropFileRecipe() {
     axios
       .post("http://localhost:8000/setting", formData, {
         headers: {
-          //   "Content-Type": "multipart/form-data",
-          "Content-Type": "application/vnd.ms-excel" || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Type":
+            "application/vnd.ms-excel" ||
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         },
       })
       .then((res) => {
@@ -118,41 +106,32 @@ function DragAndDropFileRecipe() {
       });
   };
   return (
-    <div>
+    <div style={{ marginLeft: "100px", marginRight: "100px" }}>
       레시피
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel>
-          <div
-            style={{
-              border: "2px dashed #ccc",
-              padding: "90px",
-              marginLeft: "10px",
-              cursor: "pointer",
-            }}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById("fileInput").click()}
-          >
-            <DragAndDropAni></DragAndDropAni>
-            <input
-              id="fileInput"
-              type="file"
-              style={{ display: "none" }}
-              onChange={handleFileSelect}
-              accept=".xls, .xlsx"
-            />
-
-            <h2>여기에 파일을 끌어다 놓거나 클릭하여 선택하세요.</h2>
-          </div>
-        </ResizablePanel>
-        {/* <ResizableHandle withHandle /> */}
-        <ResizablePanel>
-          <ScrollArea className="h-[auto] w-[auto] rounded-md border p-4">
-            <FileListForRecipe></FileListForRecipe>
-          </ScrollArea>
-          <Button onClick={uploadFiles}>저장</Button>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      <div
+        style={{
+          border: "2px dashed #ccc",
+          padding: "30px",
+          cursor: "pointer",
+        }}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onClick={() => document.getElementById("fileInput").click()}
+      >
+        <DragAndDropAni></DragAndDropAni>
+        <input
+          id="fileInput"
+          type="file"
+          style={{ display: "none" }}
+          onChange={handleFileSelect}
+          accept=".xls, .xlsx"
+        />
+        <h2>여기에 파일을 끌어다 놓거나 클릭하여 선택하세요.</h2>
+      </div>
+      <div style={{ paddingTop: "20px" }} />
+      <FileListForRecipe />
+      <div style={{ paddingTop: "20px" }} />
+      <Button onClick={uploadFiles}>저장</Button>
     </div>
   );
 }
