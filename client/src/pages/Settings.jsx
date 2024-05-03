@@ -16,7 +16,7 @@ function Settings() {
           데이터 관리
         </h1>
         <div style={{ padding: 15 }} />
-        <Tabs defaultValue="tabs">
+        <Tabs defaultValue="facilityData">
           <TabsList>
             <TabsTrigger value="facilityData">설계 데이터</TabsTrigger>
             <TabsTrigger value="receipeData">레시피 데이터</TabsTrigger>
