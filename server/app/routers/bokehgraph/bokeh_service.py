@@ -8,40 +8,46 @@ from bokeh.plotting import figure
 import pandas as pd
 
 
-def draw_dataframe_to_graph(df_list):
+def draw_dataframe_to_graph(df_list,facility_list):
     if len(df_list) == 1:  # 데이터프레임이 하나일 때
         return draw_single_dataframe_to_graph(df_list[0])
     else:  # 데이터프레임이 여러 개일 때
         plots = []
 
-        # 각 데이터프레임의 시작 시간을 추출하여 가장 빠른 시작 시간을 구합니다.
-        start_times = [pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True).min() for df in df_list]
-        min_start_time = min(start_times)
+        # figure 객체 생성
+        p = figure(title="Facility Comparison", sizing_mode="stretch_width", x_axis_label='Time (seconds)', y_axis_label='Value',
+                    height=400)
 
-        # 각 데이터프레임의 시간 정보를 조정하여 모든 선이 같은 출발점에서 시작되도록 합니다.
-        for df, start_time in zip(df_list, start_times):
+        # 색상 리스트
+        colors = Category10_10
+
+        for i, df in enumerate(df_list):
+            # 각 데이터프레임의 시작 시간을 추출하여 가장 빠른 시작 시간을 구합니다.
+            start_time = pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True).min()
+
+            # 데이터프레임의 이름을 가져옵니다.
+            df_name = facility_list[i]
+
+            # 시간 정보를 조정하여 모든 선이 같은 출발점에서 시작되도록 합니다.
             df["Time"] = (pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True) - start_time).dt.total_seconds()
 
-        # 모든 데이터프레임을 하나의 데이터프레임으로 합칩니다.
-        combined_df = pd.concat(df_list, ignore_index=True)
+            # 색상 선택
+            color = colors[i % len(colors)]
 
-        # ColumnDataSource 생성
-        source = ColumnDataSource(data=combined_df)
+            # ColumnDataSource 생성
+            source = ColumnDataSource(data=df)
 
-        # figure 객체 생성
-        p = figure(title="facility", x_axis_label='Time (seconds)', y_axis_label='Value',
-                   width=1200, height=400)
-
-        # 각 컬럼 데이터를 그래프에 추가하면서 다른 색상 지정
-        for i, column_name in enumerate(combined_df.columns[1:]):  # 첫 번째 컬럼은 'Time'이므로 제외합니다
-            p.line(x='Time', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
+            # 각 컬럼 데이터를 그래프에 추가하면서 다른 색상 지정
+            for j, column_name in enumerate(df.columns[1:]):
+                p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}", color=color)
 
         # 범례 표시
         p.legend.location = "top_left"
 
-        plots.append(p)
+        plots.append(p)  # 리스트에 그래프 추가
 
-        return plots
+        return plots  # 그래프 리스트 반환
+
 
 def draw_single_dataframe_to_graph(df):
     plots = []
