@@ -156,6 +156,7 @@ function BookmarkSection() {
             cell: ({ row }) => {
                 const payment = row.original
 
+
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -166,7 +167,9 @@ function BookmarkSection() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => deleteBookmark(payment.id)}>세팅값 삭제</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBlockClick(payment)}>사이클/스텝 선택</DropdownMenuItem>
                         </DropdownMenuContent>
+
                     </DropdownMenu >
                 )
             },
@@ -256,7 +259,6 @@ function BookmarkSection() {
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
-                                    onClick={() => handleBlockClick(row.original)}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -328,13 +330,13 @@ function BookmarkSection() {
                     </CardContent>
                 </Card>
             </div>
-            <div className="space-x-2">
+            <div className="flex flex-row-reverse space-x-2">
                 <Button
-                    className="ml-auto my-[100px]"
+                    className="ml-auto"
                     onClick={() => {
-                        const selectedRows = table.getFilteredRowModel().rows
+                        const selectedRows = table.getSelectedRowModel().rows
                         const selectedRowData = selectedRows.map(row => row.original)
-                        console.log(selectedRowData)
+                        // console.log(selectedRowData)
                         getGraphData(selectedRowData)
                     }}
                 >
