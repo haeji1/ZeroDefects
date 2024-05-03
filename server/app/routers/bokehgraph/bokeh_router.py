@@ -70,7 +70,7 @@ async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
     facility_list, parameter_list, df_list = influx_list_time_query(conditions)
-    plots = bokeh_service.draw_dataframe_to_graph(df_list)
+    plots = bokeh_service.draw_dataframe_to_graph(df_list,facility_list)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
     return JSONResponse(content=plot_json)
