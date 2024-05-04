@@ -40,11 +40,8 @@ import {
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 import axios from "axios";
 import { useGraphDataStore } from "@/stores/GraphData";
-import Addlist from "@/components/domain/dashboard/AddList";
-import GetGraph from "@/components/domain/dashboard/GetGraph";
-import BookmarkTable from "./BookmarkTable";
 
-function BookmarkSection() {
+function BookmarkTable() {
 
     const { bookmark, deleteBookmark, updateBookmark } = useBookmark();
     const { setIsFetching, setGraphData } = useGraphDataStore();
@@ -58,7 +55,7 @@ function BookmarkSection() {
     const [rowSelection, setRowSelection] = useState({})
     const [pagination, setPagination] = useState({
         pageIndex: 0,
-        pageSize: 7,
+        pageSize: 5,
     });
     // ==============================
     const [cycles, setCycles] = useState([])
@@ -74,6 +71,8 @@ function BookmarkSection() {
         setSelectedStep(data.step)
     }
 
+
+
     useDidMountEffect(() => {
         updateBookmark(
             {
@@ -84,21 +83,6 @@ function BookmarkSection() {
         )
 
     }, [selectedCycleName, selectedStep])
-
-    // 그래프 조회 
-    const getGraphData = async (datas) => {
-
-        setIsFetching(true)
-        axios.post('http://localhost:8000/bokeh/read', datas)
-            .then(response => {
-                console.log("성공")
-                setGraphData(response.data)
-                setIsFetching(false)
-            })
-            .catch(error => {
-                console.log(error, "그래프 받아오는 것 실패");
-            })
-    }
 
     const columns = [
         {
@@ -145,11 +129,11 @@ function BookmarkSection() {
         },
         {
             accessorKey: "times",
-            header: () => <div className="text-center">시간대</div>,
+            header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
                 const data = row.original
                 return <div className="text-center font-medium">
-                    {format(data.startTime, "yy-MM-dd hh:mm") + " ~ " + format(data.endTime, "yy-MM-dd hh:mm")}
+                    ㅇ
                 </div>
             },
         },
@@ -199,14 +183,13 @@ function BookmarkSection() {
             pagination,
         },
         defaultColumn: {
-            size: 200, //starting column size
+            size: 180, //starting column size
             minSize: 50, //enforced during column resizing
             maxSize: 500, //enforced during column resizing
         },
     })
-
     return (
-        <div>
+        <>
             <div className="flex items-center py-4">
                 <Input
                     placeholder="설비명으로 검색"
@@ -236,7 +219,7 @@ function BookmarkSection() {
                     </Button>
                 </div>
             </div>
-            <div className="rounded-md border h-[500px]">
+            <div className="rounded-md border h-[400px]">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -286,71 +269,8 @@ function BookmarkSection() {
                     </TableBody>
                 </Table>
             </div>
-            {/* <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    총 {table.getFilteredRowModel().rows.length}개 중{" "}
-                    {table.getFilteredSelectedRowModel().rows.length}개 선택됨.
-                </div>
-            </div> */}
-            <div className="grid grid-cols-2 space-x-5 py-4">
-                <Card className="mb-3">
-                    <CardHeader>
-                        <CardTitle>
-                            Cycle Selection
-                        </CardTitle>
-                    </CardHeader>
-                    <ScrollArea className="h-48">
-                        <div className="p-4">
-                            <RadioGroup defalutValue={cycles[0]}>
-                                {cycles.map((cycle) => (
-                                    <>
-                                        <div key={cycle.cycleName} className="flex flex-row text-sm justify-between"
-                                            onClick={() => setSelectedCycleName(cycle.cycleName)}>
-                                            <Label htmlFor={cycle.cycleName}>{cycle.cycleName}</Label>
-                                            <RadioGroupItem value={cycle.cycleName} id={cycle.cycleName} />
-                                        </div>
-                                        <Separator className="my-2" />
-                                    </>
-                                ))}
-                            </RadioGroup>
-                        </div>
-                    </ScrollArea>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Step Selection
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-5">
-                            {stepList.map((step) =>
-                                <Button key={step} className="m-[2px]" variant="outline" onClick={() => setSelectedStep(step)}>{step}</Button>
-                            )}
-
-                        </div>
-                        <Button variant="outline" className='w-full' onClick={() => setSelectedStep(null)}>전체</Button>
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="flex flex-row-reverse space-x-2">
-                <Button
-                    className="ml-auto"
-                    onClick={() => {
-                        const selectedRows = table.getSelectedRowModel().rows
-                        const selectedRowData = selectedRows.map(row => row.original)
-                        // console.log(selectedRowData)
-                        getGraphData(selectedRowData)
-                    }}
-                >
-                    비교하기
-                </Button>
-            </div>
-            <BookmarkTable />
-            <GetGraph />
-            <Addlist />
-        </div>
+        </>
     )
 }
 
-export default BookmarkSection;
+export default BookmarkTable;

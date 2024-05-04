@@ -1,6 +1,10 @@
 import SelectSection from "@/components/domain/dashboard/SelectSection";
 import GraphSection from "@/components/domain/dashboard/GraphSection";
 import BookmarkSection from "@/components/domain/dashboard/BookmarkSection";
+import BookmarkTable from "@/components/domain/dashboard/BookmarkTable";
+import { Card } from "@/components/base/card";
+import Addlist from "@/components/domain/dashboard/AddList";
+import GetGraph from "@/components/domain/dashboard/GetGraph";
 
 function Dashboard() {
 
@@ -10,7 +14,11 @@ function Dashboard() {
                 <SelectSection />
                 <GraphSection />
             </div>
-            <BookmarkSection />
+            <Card>
+                <Addlist />
+                <BookmarkTable />
+                <GetGraph />
+            </Card>
         </div>
     )
 }
