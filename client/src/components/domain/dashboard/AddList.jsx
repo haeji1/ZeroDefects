@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import { Label } from "@/components/base/label";
 import { useFacilityStore } from "@/stores/Facility"
 import { fetchFacilityInfos } from "@/apis/api/api";
+import { Card } from "@/components/base/card";
 
 
 function Addlist() {
@@ -41,7 +42,7 @@ function Addlist() {
         fetchData();
     }, []);
     return (
-        <div className="flex flex-col m-3 gap-3">
+        <Card className="flex flex-col m-3 gap-5 px-5 py-5">
             <Label htmlFor="" className="font-bold text-[20px]">목록 추가</Label>
             <div className="grid grid-cols-5 gap-3">
                 <div className="col-span-2 grid w-full items-center gap-1.5">
@@ -106,7 +107,7 @@ function Addlist() {
             <div className="ml-auto">
                 <Button onClick={() => { console.log(facility); console.log(parameter) }}>추가</Button>
             </div>
-        </div >
+        </Card >
     )
 }
 
