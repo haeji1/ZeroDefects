@@ -1,6 +1,8 @@
 # bokeh
 from bokeh.models import (ColumnDataSource, DatetimeTickFormatter, HoverTool)
 from bokeh.models.formatters import NumeralTickFormatter
+from bokeh.models import Span
+
 from bokeh.palettes import Category10_10
 from bokeh.plotting import figure
 
@@ -11,7 +13,7 @@ import pandas as pd
 def draw_dataframe_to_graph(df_list, facility_list):
 
     if len(df_list) == 1:
-        return draw_single_dataframe_to_graph(df_list[0])
+        return draw_single_dataframe_to_graph(df_list[0], facility_list[0])
     else:
         plots = []
         p = figure(title="Facility Comparison", sizing_mode="stretch_width", x_axis_label='Time (seconds)',
@@ -49,7 +51,7 @@ def draw_dataframe_to_graph(df_list, facility_list):
         return plots
 
 
-def draw_single_dataframe_to_graph(df):
+def draw_single_dataframe_to_graph(df, facility):
 
     plots = []
     all_data = []
@@ -66,15 +68,28 @@ def draw_single_dataframe_to_graph(df):
 
     source = ColumnDataSource(data=combined_data)
 
-    p = figure(title="facility", x_axis_label='Time', y_axis_label='Value',
-               width=1200, height=400)
+    p = figure(title="facility",sizing_mode="stretch_width", x_axis_label='Time', y_axis_label='Value',
+               height=400)
 
     for i, column_name in enumerate(df.columns[1:]):
-        p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
+        line = p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
+
+        hover = HoverTool(renderers=[line], tooltips=[
+            ('facility', f'{facility}'),
+            ('time', '@x{%H:%M:%S}'),
+            ('Value', '$y')
+        ],  formatters={'@x': 'datetime'})
+
+    p.add_tools(hover)
 
     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
     p.legend.location = "top_left"
     plots.append(p)
 
     return plots
+
+
+
+
+
 
