@@ -1,4 +1,4 @@
-import DragAndDropFileUpload from "@/components/domain/settings/DragAndDrop";
+import DragAndDropFileFacility from "@/components/domain/settings/DragAndDropFileFacility";
 import {
   Tabs,
   TabsContent,
@@ -10,19 +10,16 @@ import DragAndDropFileRecipe from "@/components/domain/settings/DragAndDropRecip
 function Settings() {
   return (
     <>
-      <div style={{ padding: 10 }} />
+      <div style={{ padding: 3 }} />
       <div className="text-center">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          데이터 관리
-        </h1>
-        <div style={{ padding: 15 }} />
+        <div style={{ padding: 10 }} />
         <Tabs defaultValue="facilityData">
           <TabsList>
             <TabsTrigger value="facilityData">설계 데이터</TabsTrigger>
             <TabsTrigger value="receipeData">레시피 데이터</TabsTrigger>
           </TabsList>
           <TabsContent value="facilityData">
-          <DragAndDropFileUpload></DragAndDropFileUpload>
+          <DragAndDropFileFacility></DragAndDropFileFacility>
           </TabsContent>
           <TabsContent value="receipeData">
             <DragAndDropFileRecipe></DragAndDropFileRecipe>
