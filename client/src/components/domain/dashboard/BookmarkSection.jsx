@@ -40,6 +40,7 @@ import {
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 import axios from "axios";
 import { useGraphDataStore } from "@/stores/GraphData";
+import Addlist from "@/components/domain/dashboard/AddList";
 
 function BookmarkSection() {
 
@@ -343,6 +344,7 @@ function BookmarkSection() {
                     비교하기
                 </Button>
             </div>
+            <Addlist />
         </div>
     )
 }
