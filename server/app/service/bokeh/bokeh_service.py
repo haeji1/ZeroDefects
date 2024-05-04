@@ -14,7 +14,7 @@ def draw_dataframe_to_graph(df_list, facility_list):
         return draw_single_dataframe_to_graph(df_list[0], facility_list[0])
     else:
         plots = []
-        p = figure(title="Facility Comparison", sizing_mode="stretch_width", x_axis_label='Time (seconds)',
+        p = figure(title="Facility Comparison",sizing_mode="scale_both", x_axis_label='Time (seconds)',
                    y_axis_label='Value',
                    height=400)
 
@@ -92,8 +92,8 @@ def draw_single_dataframe_to_graph(df, facility):
 
     source = ColumnDataSource(data=combined_data)
 
-    p = figure(title="facility",sizing_mode="stretch_width", x_axis_label='Time', y_axis_label='Value',
-               height=400)
+    p = figure(title="facility", sizing_mode="scale_both", x_axis_label='Time', y_axis_label='Value',
+               height=800)
 
     for i, column_name in enumerate(df.columns[1:]):
         line = p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
