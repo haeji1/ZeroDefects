@@ -25,8 +25,8 @@ def influxdb_measurement_query(b: str, measurement: str, start_date: str, end_da
             '''
 
 def influxdb_parameters_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
-    print("fields", fields)
-    print("date", start_date, " ", end_date)
+    # print("fields", fields)
+    # print("date", start_date, " ", end_date)
     fields_filter = " or ".join([f'r["_field"] == "{field}"' for field in fields])
 
     return f"""

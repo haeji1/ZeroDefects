@@ -1,8 +1,6 @@
 # bokeh
 from bokeh.models import (ColumnDataSource, DatetimeTickFormatter, HoverTool)
 from bokeh.models.formatters import NumeralTickFormatter
-from bokeh.models import Span
-
 from bokeh.palettes import Category10_10
 from bokeh.plotting import figure
 
@@ -41,7 +39,22 @@ def draw_dataframe_to_graph(df_list, facility_list):
                     ('Value', '$y')
                 ])
 
+                # max_value, min_value, average = calc_df_values(source, df_name, column_name)
+                # average_line = Span(location=average, dimension='width', line_color=color, line_width=1)
+                # p.add_layout(average_line)
+                # average_hover = HoverTool(renderers=[line], tooltips=[
+                #     ('facility', f'{df_name}'),
+                #     ('Value', f'{average}')
+                # ])
+                # p.add_tools(average_hover)
+
+
             p.add_tools(hover)
+
+
+            # # 최댓값과 최솟값 텍스트 추가
+            # p.text(x=[0], y=[0], text=[f'Min: {min_value}, Max: {max_value}'], text_font_size="10pt",
+            #        text_baseline="bottom", text_align="left", text_color="black")
 
         p.x_range.start = 0
         p.xaxis.formatter = NumeralTickFormatter(format="0")
@@ -89,7 +102,18 @@ def draw_single_dataframe_to_graph(df, facility):
     return plots
 
 
-
+# ColumnDataSource의 max, min, 평균 값 구하기
+def calc_df_values(source, df_name,column_name):
+    print("========== source 테스트 ===========")
+    print(f'source : {source} facility : {df_name} column : {column_name}')
+    max_value = max(source.data[column_name])
+    min_value = min(source.data[column_name])
+    average = source.data[column_name].mean()
+    print(f'{df_name} 의 최댓값 {max_value}')
+    print(f'{df_name} 의 최솟값 {min_value}')
+    print(f'{df_name} 의 평균값 {average}')
+    print("===================================")
+    return max_value, min_value, average
 
 
 
