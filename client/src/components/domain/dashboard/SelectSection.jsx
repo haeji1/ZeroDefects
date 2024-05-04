@@ -19,6 +19,7 @@ import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
 import { useBookmark } from "@/stores/Bookmark";
 import axios from "axios";
+import { fetchFacilityInfos } from "@/apis/api/api";
 
 function SelectSection() {
 
@@ -47,15 +48,10 @@ function SelectSection() {
     // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                console.log('DB에 존재하는 설비 및 파라미터 리스트 가져오기 시작')
-                const response = await axios.get('http://localhost:8000/facility/info');
-                updateFacility(response.data.result)
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
+            const res = await fetchFacilityInfos();
+            updateFacility(res.data.result)
         };
-        fetchData(); // 데이터를 가져오는 함수 호출
+        fetchData();
     }, []);
 
     // 그래프 조회 
