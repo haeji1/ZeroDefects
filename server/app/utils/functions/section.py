@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 
 from app.models.influx.influx_models import FacilityData
-from app.utils.functions.influx_functions import influx_get_all_data
+from app.utils.functions.influx_functions import get_section
 from app.models.section.section_models import Cycle
 from app.models.section.section_models import CycleSection
 
@@ -18,7 +18,7 @@ db = client["section"]
 
 def get_section_data(condition: FacilityData) -> [CycleSection]:
 
-    df = influx_get_all_data(condition)
+    df = get_section(condition)
 
     # 사이클 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
     cycle_starts = []
