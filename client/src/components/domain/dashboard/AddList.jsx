@@ -22,15 +22,12 @@ import { useFacilityStore } from "@/stores/Facility"
 import { fetchFacilityInfos } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
 
-
 function Addlist() {
 
-    // 그래프 조회에 필요한 인자들
     const [facility, setFacility] = useState()
-    const [parameter, setParameter] = useState()
-
+    const [selectedParameter, setSelectedParameter] = useState()
+    const [isButtonEnabled, setIsButtonEnabled] = useState(false);
     const { facilityList, updateFacility } = useFacilityStore();
-
     const [open, setOpen] = useState(false)
 
     // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
@@ -41,13 +38,24 @@ function Addlist() {
         };
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const handleAddButtonEnability = () => {
+            facility && selectedParameter ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+        }
+        handleAddButtonEnability();
+    }, [facility, selectedParameter]);
+
     return (
         <Card className="flex flex-col m-3 gap-5 px-5 py-5">
             <Label htmlFor="" className="font-bold text-[20px]">목록 추가</Label>
             <div className="grid grid-cols-5 gap-3">
                 <div className="col-span-2 grid w-full items-center gap-1.5">
                     <Label htmlFor="facility">설비명</Label>
-                    <Select onValueChange={setFacility}>
+                    <Select onValueChange={(val) => {
+                        setFacility(val);
+                        setSelectedParameter(null);
+                    }}>
                         <SelectTrigger className="w-full self-center">
                             <SelectValue placeholder="설비명" />
                         </SelectTrigger>
@@ -68,8 +76,7 @@ function Addlist() {
                                 aria-expanded={open}
                                 className="w-full justify-between"
                             >
-                                {facility ? facilityList[facility].find((param) => param === parameter) ? "있다" : " 없다"
-                                    : "설비를 먼저 선택해주세요."}
+                                {facility ? selectedParameter ? selectedParameter : "선택된 파라미터가 없습니다." : "설비를 먼저 선택해주세요."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -83,15 +90,15 @@ function Addlist() {
                                         <CommandItem
                                             key={param}
                                             value={param}
-                                            onSelect={(currentValue) => {
-                                                setParameter(currentValue)
+                                            onSelect={() => {
+                                                setSelectedParameter(param)
                                                 setOpen(false)
                                             }}
                                         >
                                             <Check
                                                 className={cn(
                                                     "mr-2 h-4 w-4",
-                                                    parameter === param ? "opacity-100" : "opacity-0"
+                                                    selectedParameter === param ? "opacity-100" : "opacity-0"
                                                 )}
                                             />
                                             {param}
@@ -105,7 +112,7 @@ function Addlist() {
                 </div>
             </div>
             <div className="ml-auto">
-                <Button onClick={() => { console.log(facility); console.log(parameter) }}>추가</Button>
+                <Button disabled={!isButtonEnabled} onClick={() => { console.log(facility); console.log(selectedParameter) }}>추가</Button>
             </div>
         </Card >
     )
