@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.models.influx.influx_models import FacilityData
 from app.utils.functions.influx_functions import get_section
-from app.models.section.section_models import BatchInfo
+from app.models.section.section_models import BatchInfo, FacilityInfo
 
 load_dotenv()
 
@@ -100,9 +100,9 @@ def save_section_data(facility: str, condition: FacilityData):
         section.insert_one(dict(s))
 
 
-def get_batches_info(facility: str) -> []:
+def get_batches_info(facility: FacilityInfo) -> []:
     # facility를 기반으로 해당 컬렉션 선택
-    collection = db[facility]
+    collection = db[facility.facility]
 
     # 컬렉션에서 모든 문서(배치 정보) 조회
     batches = list(collection.find({}))
