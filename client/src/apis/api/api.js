@@ -26,15 +26,15 @@ export const getGraph = async (facilityList) => {
     }
 }
 
-// 설비명, 파라미터명, 조회 구간을 통해 해당 구간 내에 싸이클 정보들을 받아오는 요청
-export const getCycles = async (facilityInfo) => {
+// 설비명, 파라미터명, 조회 구간을 통해 해당 구간 내에 배치 정보들을 받아오는 요청
+export const getBatches = async (facilityInfo) => {
     try {
-        console.log("싸이클 데이터를 요청합니다.");
+        console.log("배치 데이터를 요청합니다.");
         const res = await axios.post("http://localhost:8000/api/section", facilityInfo)
-        console.log("싸이클 데이터 가져오기 완료.");
+        console.log("배치 데이터 가져오기 완료.");
         return res;
     } catch (err) {
-        console.log("싸이클 데이터를 가져오는 데에 실패하였습니다.", err);
+        console.log("배치 데이터를 가져오는 데에 실패하였습니다.", err);
         // 에러 처리
     }
 }

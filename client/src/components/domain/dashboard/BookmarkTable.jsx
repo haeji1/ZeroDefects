@@ -9,7 +9,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
-import { useBookmark } from "@/stores/Bookmark";
+import { useBookmarkStore } from "@/stores/Bookmark";
 import { Checkbox } from "@/components/base/checkbox"
 import {
     DropdownMenu,
@@ -43,7 +43,7 @@ import { useGraphDataStore } from "@/stores/GraphData";
 
 function BookmarkTable() {
 
-    const { bookmark, deleteBookmark, updateBookmark } = useBookmark();
+    const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
     const { setIsFetching, setGraphData } = useGraphDataStore();
 
     // 테이블 관련 hook
@@ -183,7 +183,7 @@ function BookmarkTable() {
             pagination,
         },
         defaultColumn: {
-            size: 180, //starting column size
+            size: 150, //starting column size
             minSize: 50, //enforced during column resizing
             maxSize: 500, //enforced during column resizing
         },

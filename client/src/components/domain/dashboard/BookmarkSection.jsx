@@ -9,7 +9,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
-import { useBookmark } from "@/stores/Bookmark";
+import { useBookmarkStore } from "@/stores/Bookmark";
 import { Checkbox } from "@/components/base/checkbox"
 import {
     DropdownMenu,
@@ -46,7 +46,7 @@ import BookmarkTable from "./BookmarkTable";
 
 function BookmarkSection() {
 
-    const { bookmark, deleteBookmark, updateBookmark } = useBookmark();
+    const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
     const { setIsFetching, setGraphData } = useGraphDataStore();
 
     // 테이블 관련 hook

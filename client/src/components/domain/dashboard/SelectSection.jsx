@@ -17,7 +17,7 @@ import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
 import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
-import { useBookmark } from "@/stores/Bookmark";
+import { useBookmarkStore } from "@/stores/Bookmark";
 import axios from "axios";
 import { fetchFacilityInfos } from "@/apis/api/api";
 
@@ -32,7 +32,7 @@ function SelectSection() {
     const [endTime, setEndTime] = useState()
 
     const { facilityList, updateFacility } = useFacilityStore();
-    const { bookmark, addBookmark } = useBookmark();
+    const { bookmark, addBookmark } = useBookmarkStore();
     const { setGraphData, setIsFetching } = useGraphDataStore()
 
     // 시작 및 종료 시간을 설정하는 Input 핸들러

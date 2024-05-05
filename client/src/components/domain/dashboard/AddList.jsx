@@ -19,15 +19,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popov
 import { useState, useEffect } from "react";
 import { Label } from "@/components/base/label";
 import { useFacilityStore } from "@/stores/Facility"
-import { fetchFacilityInfos } from "@/apis/api/api";
+import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
+import { useBookmarkStore } from "@/stores/Bookmark";
 
 function Addlist() {
 
-    const [facility, setFacility] = useState()
+    const [selectedFacility, setSelectedFacility] = useState()
     const [selectedParameter, setSelectedParameter] = useState()
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-    const { facilityList, updateFacility } = useFacilityStore();
+    const { facilityList, batchList, addBatch, updateFacility } = useFacilityStore();
+    const { addBookmark } = useBookmarkStore()
     const [open, setOpen] = useState(false)
 
     // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
@@ -41,10 +43,25 @@ function Addlist() {
 
     useEffect(() => {
         const handleAddButtonEnability = () => {
-            facility && selectedParameter ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+            selectedFacility && selectedParameter ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
         }
         handleAddButtonEnability();
-    }, [facility, selectedParameter]);
+    }, [selectedFacility, selectedParameter]);
+
+    const handleAddButton = () => {
+        if (batchList[selectedFacility] === undefined) {
+            const res = getBatches(selectedFacility)
+            const newBatch = {
+                [selectedFacility]: res.batches,
+            }
+            addBatch(newBatch)
+        }
+        const newBookmark = {
+            facility: selectedFacility,
+            parameter: selectedParameter,
+        }
+        addBookmark(newBookmark);
+    }
 
     return (
         <Card className="flex flex-col m-3 gap-5 px-5 py-5">
@@ -53,7 +70,7 @@ function Addlist() {
                 <div className="col-span-2 grid w-full items-center gap-1.5">
                     <Label htmlFor="facility">설비명</Label>
                     <Select onValueChange={(val) => {
-                        setFacility(val);
+                        setSelectedFacility(val);
                         setSelectedParameter(null);
                     }}>
                         <SelectTrigger className="w-full self-center">
@@ -76,7 +93,7 @@ function Addlist() {
                                 aria-expanded={open}
                                 className="w-full justify-between"
                             >
-                                {facility ? selectedParameter ? selectedParameter : "선택된 파라미터가 없습니다." : "설비를 먼저 선택해주세요."}
+                                {selectedFacility ? selectedParameter ? selectedParameter : "선택된 파라미터가 없습니다." : "설비를 먼저 선택해주세요."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -86,7 +103,7 @@ function Addlist() {
                                 <CommandEmpty>검색된 파라미터 없음</CommandEmpty>
                                 <CommandGroup>
 
-                                    {facility ? facilityList[facility].map((param) => (
+                                    {selectedFacility ? facilityList[selectedFacility].map((param) => (
                                         <CommandItem
                                             key={param}
                                             value={param}
@@ -112,7 +129,7 @@ function Addlist() {
                 </div>
             </div>
             <div className="ml-auto">
-                <Button disabled={!isButtonEnabled} onClick={() => { console.log(facility); console.log(selectedParameter) }}>추가</Button>
+                <Button disabled={!isButtonEnabled} onClick={handleAddButton}>추가</Button>
             </div>
         </Card >
     )

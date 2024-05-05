@@ -17,7 +17,7 @@ import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
 import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
-import { useBookmark } from "@/stores/Bookmark";
+import { useBookmarkStore } from "@/stores/Bookmark";
 import axios from "axios";
 import { fetchFacilityInfos } from "@/apis/api/api";
 import { Label } from "@/components/base/label";
@@ -34,7 +34,7 @@ function GetGraph() {
     const [endStep, setEndStep] = useState();
 
     const { facilityList, updateFacility } = useFacilityStore();
-    const { bookmark, addBookmark } = useBookmark();
+    const { bookmark, addBookmark } = useBookmarkStore();
     const { setGraphData, setIsFetching } = useGraphDataStore()
 
 
