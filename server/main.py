@@ -2,6 +2,7 @@
 import uvicorn
 from fastapi import FastAPI
 
+from app.dbtest import timescale
 # bokeh
 
 from app.models.influx.influx_models import FacilityData
@@ -12,6 +13,7 @@ from app.routers.bokeh import bokeh_router
 from app.routers.influx import influx_router
 from app.routers.mongo import mongo_router
 from app.routers.section import section_router
+from app.dbtest import timescale
 
 # postgreSQL
 
