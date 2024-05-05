@@ -77,6 +77,7 @@ class InfluxGTRClient:
             print('time: ', time.time() - start_time)
             print('-----------------------')
 
+
         write_api.close()
         print('total time: ', time.time() - total_time)
         return JSONResponse(status_code=200, content=response)
@@ -105,6 +106,47 @@ class InfluxGTRClient:
 
             save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
             # print("write_df:", df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+
+            df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
+            float_cols = df_modified.columns.drop('DateTime')
+            df_modified[float_cols] = df_modified[float_cols].astype(float)
+
+            data = data_frame_to_list_of_points(data_frame=df_modified,
+                                                data_frame_measurement_name=measurement,
+                                                data_frame_timestamp_column='DateTime',
+                                                point_settings=PointSettings())
+
+            write_api.write(bucket=settings.influx_bucket, record=data)
+            return {"filename": file.filename, "message": "file successfully written"}
+        except Exception as e:
+            logger.error(f"Error fetching item : {e}", exc_info=True)
+            return {"filename": file.filename, "message": str(e)}
+
+    @classmethod  # 현재 사용 안함
+    def write_df(cls, write_api, file: File(), batch_size=1000):
+        print('write csv', file.filename)
+
+        # check file format
+        if not file.content_type == 'text/csv':
+            return {"filename": file.filename, "message": "Invalid CSV file"}
+        # check file name
+        if len(file.filename.split('-')) < 3:
+            return {"filename": file.filename, "message": "Invalid file name"}
+
+        measurement = file.filename.rsplit('-')[0]
+        date_string = file.filename.rsplit('-')[2]
+        ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
+
+        try:
+            df = pd.read_csv(file.file)
+
+            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'])
+            df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
+            df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
+
+            # How to use? -> 1. 주석 해제, 2. 함수 import
+            # get_section_data(df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+            # print(df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
 
             df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
             float_cols = df_modified.columns.drop('DateTime')

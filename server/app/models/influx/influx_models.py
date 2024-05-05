@@ -10,3 +10,8 @@ class FacilityData(BaseModel):
     endTime: str
     cycleName: Optional[str] = None
     step: Optional[int] = None
+
+class TRCData(BaseModel):
+    facility: str
+    startTime: str
+    endTime: str
