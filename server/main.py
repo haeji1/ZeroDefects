@@ -6,6 +6,8 @@ from app.dbtest import timescale
 # bokeh
 
 from app.models.influx.influx_models import FacilityData
+# section
+from app.utils.functions.section import get_section_data
 
 from app.routers.bokeh import bokeh_router
 from app.routers.influx import influx_router
@@ -36,3 +38,4 @@ app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
 app.include_router(mongo_router.mongo_router)
 app.include_router(section_router.section_router)
+app.include_router(timescale.timescale_router)
