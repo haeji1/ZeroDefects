@@ -11,7 +11,7 @@ db = client["section"]
 
 
 # 파일이 업로드되면 파일의 전 구간에서 배치와 사이클 구간 찾아서 MongoDB에 저장
-async def save_section_data(facility: str, df):
+def save_section_data(facility: str, df):
     # 배치 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
     batch_starts = []
     batch_ends = []
