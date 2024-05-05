@@ -11,9 +11,8 @@ class BatchInfo(BaseModel):
         arbitrary_types_allowed = True
 
 
-class SectionModel(BaseModel):
-    startTime: str
-    endTime: str
+class FacilityInfo(BaseModel):
+    facility: str
 
     class Config:
         arbitrary_types_allowed = True

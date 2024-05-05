@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
-from app.models.influx.influx_models import FacilityData
-from app.utils.functions.section import save_section_data, get_batches_info
+from app.models.section.section_models import FacilityInfo
+from app.utils.functions.section import get_batches_info
 from config import settings
 
 url = settings.mongo_furl
@@ -16,7 +16,7 @@ section_router = APIRouter(prefix="/api", tags=['section'])
 
 
 @section_router.post("/batches")
-async def get_batches(facility: str):
+async def get_batches(facility: FacilityInfo):
     batches = get_batches_info(facility)
     if not batches:
         raise HTTPException(status_code=404, detail="Batches not found")
