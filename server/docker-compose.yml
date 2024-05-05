@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   influxdb:
-    image: influxdb:2.7.5
+    image: influxdb:latest
     restart: always
     environment:
       - INFLUXDB_HTTP_AUTH_ENABLED=true
