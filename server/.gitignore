@@ -494,3 +494,7 @@ $RECYCLE.BIN/
 *.msp
 
 # End of https://www.toptal.com/developers/gitignore/api/venv,python
+
+# pyc
+*.pyc
+__pycache__/

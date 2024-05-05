@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.models.influx.influx_models import FacilityData
-from app.utils.functions.influx_functions import influx_get_all_data
+from app.utils.functions.influx_functions import get_section
 from app.models.section.section_models import BatchAndStepsSection
 
 load_dotenv()
@@ -11,10 +11,9 @@ url = os.getenv('MONGO_FURL')
 client = MongoClient(url)
 db = client["section"]
 
-
 # 파일이 업로드되면 파일의 전 구간에서 배치와 사이클 구간 찾아서 MongoDB에 저장
 def get_section_data(condition: FacilityData):
-    df = influx_get_all_data(condition)
+    df = get_section(condition)
 
     # 배치 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
     batch_starts = []

@@ -1,16 +1,23 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+import os
+
+from dotenv import load_dotenv
+from fastapi import APIRouter, File, UploadFile, HTTPException
 from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-app = FastAPI()
+from config import settings
+
+url = settings.mongo_furl
 
 # MongoDB client
-client = MongoClient("mongodb://admin:Delos@localhost:27017/")
+client = MongoClient(url)
 # database name is setting
 setting = client["setting"]
 
-@app.post("/setting")
+mongo_router = APIRouter(prefix="/facility", tags=['section'])
+
+@mongo_router.post("/setting")
 async def upload_excel_file(files: list[UploadFile] = File(...)):
     # read setting_facility.xls files
     responses = []
@@ -87,15 +94,3 @@ async def upload_excel_file(files: list[UploadFile] = File(...)):
             responses.append({"filename": file.filename, "message": str(e)})
 
     return JSONResponse(status_code=200, content=responses)
-
-# mongodb read test
-@app.put("/point")
-def update_point():
-    test = client["test"]
-    testedtest = test["testedtest"]
-    john_doe_doc = testedtest.find_one({"name": "John Doe"})
-    if john_doe_doc:
-        email = john_doe_doc.get("email")
-        return {"email": email}
-    else:
-        return {"message": "John Doe의 도큐먼트를 찾을 수 없습니다."}
