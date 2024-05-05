@@ -15,7 +15,7 @@ client = MongoClient(url)
 # database name is setting
 setting = client["setting"]
 
-mongo_router = APIRouter(prefix="/facility", tags=['section'])
+mongo_router = APIRouter(prefix="/facility", tags=['setting'])
 
 @mongo_router.post("/setting")
 async def upload_excel_file(files: list[UploadFile] = File(...)):

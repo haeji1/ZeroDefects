@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.models.influx.influx_models import FacilityData
 from app.utils.functions.influx_functions import get_section
-from app.models.section.section_models import BatchAndStepsSection
+from app.models.section.section_models import BatchInfo
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ db = client["section"]
 
 
 # 파일이 업로드되면 파일의 전 구간에서 배치와 사이클 구간 찾아서 MongoDB에 저장
-def get_section_data(condition: FacilityData):
+def save_section_data(facility: str, condition: FacilityData):
     df = get_section(condition)
 
     # 배치 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
@@ -52,7 +52,7 @@ def get_section_data(condition: FacilityData):
         batch_ends.append(len(df) - 1)
         step_ends.append(len(df) - 1)  # 마지막 스텝의 끝 처리
 
-    equipment_name = condition.facility
+    equipment_name = facility
 
     # JSON 구조 생성
     output = {"batches": []}
@@ -87,14 +87,28 @@ def get_section_data(condition: FacilityData):
                 steps_dict.append(step_dict)
 
         try:
-            section_list.append(BatchAndStepsSection(batchName=batch_name,
-                                                     batchStartTime=df['Time'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
-                                                     batchEndTime=df['Time'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
-                                                     steps=steps_dict))
+            section_list.append(BatchInfo(batchName=batch_name,
+                                          batchStartTime=df['Time'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
+                                          batchEndTime=df['Time'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
+                                          steps=steps_dict))
         except TypeError as e:
             print(f"Error appending to batch_list: {e}")
 
     # section_list를 mongodb에 저장
-    section = db[condition.facility]
+    section = db[facility]
     for s in section_list:
         section.insert_one(dict(s))
+
+
+def get_batches_info(facility: str) -> []:
+    # facility를 기반으로 해당 컬렉션 선택
+    collection = db[facility]
+
+    # 컬렉션에서 모든 문서(배치 정보) 조회
+    batches = list(collection.find({}))
+
+    # MongoDB의 ObjectId를 문자열로 변환 (선택적)
+    for batch in batches:
+        batch.pop('_id', None)  # '_id' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
+        batch.pop('steps', None)  # 'steps' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
+    return batches
