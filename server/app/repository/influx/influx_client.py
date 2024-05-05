@@ -6,13 +6,15 @@ from io import StringIO
 import pandas as pd
 from fastapi import UploadFile, File
 from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS, WriteOptions, ASYNCHRONOUS
+from influxdb_client.client.write_api import SYNCHRONOUS, WriteOptions, ASYNCHRONOUS, PointSettings
 from influxdb_client.client.write.dataframe_serializer import data_frame_to_list_of_points
 
 from typing import List, Any
 from loguru import logger
 from starlette.responses import JSONResponse
 from urllib3.exceptions import NewConnectionError
+
+from app.utils.functions.section import save_section_data
 from config import settings
 
 # from influxapi.schemas import InfluxWaveRecord
@@ -21,6 +23,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class InfluxNotAvailableException(Exception):
     STATUS_CODE = 503
@@ -47,7 +50,7 @@ class InfluxGTRClient:
     # constructor
     def __init__(self, url: str, token: str, org: str, bucket_name: str) -> None:
         self.bucket_name = bucket_name
-        self.client = InfluxDBClient(url=url, token=token, org=org)
+        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=60000)
 
     # write
     async def write_csv(self, files: List[UploadFile] = File(...), batch_size=900) -> JSONResponse:
@@ -74,12 +77,51 @@ class InfluxGTRClient:
             print('time: ', time.time() - start_time)
             print('-----------------------')
 
-
         write_api.close()
         print('total time: ', time.time() - total_time)
         return JSONResponse(status_code=200, content=response)
 
     @classmethod
+    def write_df(cls, write_api, file: File(), batch_size=1000):
+        print('write csv', file.filename)
+
+        # check file format
+        if not file.content_type == 'text/csv':
+            return {"filename": file.filename, "message": "Invalid CSV file"}
+        # check file name
+        if len(file.filename.split('-')) < 3:
+            return {"filename": file.filename, "message": "Invalid file name"}
+
+        measurement = file.filename.rsplit('-')[0]
+        date_string = file.filename.rsplit('-')[2]
+        ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
+
+        try:
+            df = pd.read_csv(file.file)
+
+            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'])
+            df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
+            df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
+
+            save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+            # print("write_df:", df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+
+            df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
+            float_cols = df_modified.columns.drop('DateTime')
+            df_modified[float_cols] = df_modified[float_cols].astype(float)
+
+            data = data_frame_to_list_of_points(data_frame=df_modified,
+                                                data_frame_measurement_name=measurement,
+                                                data_frame_timestamp_column='DateTime',
+                                                point_settings=PointSettings())
+
+            write_api.write(bucket=settings.influx_bucket, record=data)
+            return {"filename": file.filename, "message": "file successfully written"}
+        except Exception as e:
+            logger.error(f"Error fetching item : {e}", exc_info=True)
+            return {"filename": file.filename, "message": str(e)}
+
+    @classmethod  # 현재 사용 안함
     async def write_not_df(cls, write_api, file: File(), batch_size=1000):
         global point
         print('write csv', file.filename)
@@ -125,101 +167,6 @@ class InfluxGTRClient:
             return {"filename": file.filename, "message": str(e)}
 
         return {"filename": file.filename, "message": "Data written"}
-
-    @classmethod
-    def write_df(cls, write_api, file: File(), batch_size=1000):
-        print('write csv', file.filename)
-        start_time = time.time()
-
-        # check file format
-        if not file.content_type == 'text/csv':
-            return {"filename": file.filename, "message": "Invalid CSV file"}
-        # check file name
-        if not cls.checkFileName(file.filename):
-            return {"filename": file.filename, "message": "Invalid file name"}
-
-        measurement = file.filename.rsplit('-')[0]
-        date_string = file.filename.rsplit('-')[2]
-        ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
-
-        try:
-            df = pd.read_csv(file.file)
-            # df['Previous_Time'] = df['Time'].shift(1)  # 이전 시간을 새 컬럼으로 추가
-            # df['Date_Time'] = df['Time']
-
-            # points = []
-            # cnt = 0
-
-            df['DateTime'] = pd.to_datetime(ymd_string + df['Time'])
-            df['Day_Shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
-            df['Adjusted_DateTime'] = df.apply(lambda x: x['DateTime'] + pd.DateOffset(days=x['Day_Shift']), axis=1)
-
-            point_settings = {
-                "data_frame_measurement_name": measurement,
-                "data_frame_tag_columns": [],
-                "data_frame_timestamp_column": "Adjusted_DateTime",
-                "data_frame_timestamp_timezone": "UTC",
-                "defaultTags": {'samsam'}
-            }
-
-            df_modified = df.drop(columns=['DateTime', 'Time', 'Day_Shift'])
-            data = data_frame_to_list_of_points(data_frame=df_modified,
-                                                point_settings=point_settings,
-                                                data_frame_measurement_name=measurement,
-                                                data_frame_tag_columns=[],
-                                                defaultTags={'samsam'},
-                                                data_frame_timestamp_column='Adjusted_DateTime',
-                                                data_frame_timestamp_timezone="UTC",
-                                                precision=WritePrecision.S)
-            write_api.write(data, point_settings=point_settings, bucket=settings.influx_bucket, org=settings.influx_org)
-
-            # for _, row in df.iterrows():
-            #     cnt += 1
-            #
-            #     if pd.notna(row['Previous_Time']) and row['Time'] < row['Previous_Time']:
-            #         date_obj = datetime.strptime(ymd_string + row['Time'], '%Y-%m-%d %H:%M:%S') + timedelta(days=1)
-            #         row['Date_Time'] = datetime.strftime(date_obj, '%Y-%m-%d %H:%M:%S')
-            #     else:
-            #         date_obj = datetime.strptime(ymd_string + row['Time'], '%Y-%m-%d %H:%M:%S')
-            #         row['Date_Time'] = datetime.strftime(date_obj, '%Y-%m-%d %H:%M:%S')
-
-
-                # point = Point(measurement).time(
-                #             datetime.strftime(date_obj, '%Y-%m-%d %H:%M:%S')
-                #             , write_precision=WritePrecision.S)
-
-                # InfluxDB에 데이터를 씁니다.
-                # write_api.write(data, bucket=settings.influx_bucket, org=settings.influx_org)
-                # for column in df.columns:
-                #     if column != 'Previous_Time' and column != 'Time':
-                #         try:
-                #             value = float(row[column])
-                #             point = point.field(column, value)
-                #         except ValueError:
-                #             print(f"Value conversion error for column {column}: {row[column]} : {type(row[column])}")
-
-                # points.append(point)
-
-                # if (cnt % batch_size) == 0:
-                #     write_api.write(settings.influx_bucket, settings.influx_org, points)
-                #     points.clear()
-
-            # write_api.write(data, point_settings=point_settings, bucket=settings.influx_bucket, org=settings.influx_org)
-
-        except Exception as e:
-            logger.error(f"Error fetching item : {e}", exc_info=True)
-            return {"filename": file.filename, "message": str(e)}
-
-        # end time
-        print('time: ', time.time() - start_time)
-        print('-----------------------')
-
-        return {"filename": file.filename, "message": "Data written"}
-
-    @classmethod
-    def checkFileName(cls, filename: str) -> bool:
-        if len(filename.split('-')) > 2:
-            return True
 
     @classmethod
     def createBucket(cls, client: InfluxDBClient):
