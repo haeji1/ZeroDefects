@@ -107,9 +107,6 @@ async def write_influxdb(files: List[UploadFile] = File(...)):
                 write_api.write(bucket, organization, points)
                 points.clear()
 
-
-
-
         # write_api.write(bucket=bucket, record=points)
         write_api.close()
         client.close()
