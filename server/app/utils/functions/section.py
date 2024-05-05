@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from pymongo import MongoClient, ReplaceOne
@@ -39,6 +40,7 @@ def save_section_data(facility: str, df):
                 # 배치가 끝나는 지점 처리
                 batch_ends.append(i - 1)
                 step_ends.append(i - 1)  # 현재 스텝의 끝 인덱스 추가
+                current_step = None  # 스텝 초기화
 
     # 마지막 배치의 끝 처리
     if df['RcpReq[]'].iloc[-1] == 1:
@@ -74,6 +76,8 @@ def save_section_data(facility: str, df):
                 step_index += 1
 
                 steps_dict.append(step_dict)
+
+        output["cycles"].append(cycle_dict)
 
         try:
             section_list.append(BatchInfo(batchName=batch_name,
