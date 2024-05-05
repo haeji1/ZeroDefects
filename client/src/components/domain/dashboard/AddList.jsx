@@ -48,19 +48,19 @@ function Addlist() {
         handleAddButtonEnability();
     }, [selectedFacility, selectedParameter]);
 
-    const handleAddButton = () => {
-        if (batchList[selectedFacility] === undefined) {
-            const res = getBatches(selectedFacility)
-            const newBatch = {
-                [selectedFacility]: res.batches,
-            }
-            addBatch(newBatch)
-        }
+    const handleAddButton = async () => {
+
         const newBookmark = {
             facility: selectedFacility,
             parameter: selectedParameter,
         }
-        addBookmark(newBookmark);
+
+        if (batchList[selectedFacility] === undefined) {
+            const res = await getBatches(selectedFacility)
+            addBatch(selectedFacility, res.data.batches);
+            addBookmark(newBookmark);
+        }
+        else { addBookmark(newBookmark) }
         setSelectedFacility(null);
         setSelectedParameter(null);
     }

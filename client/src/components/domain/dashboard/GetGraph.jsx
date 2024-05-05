@@ -12,30 +12,78 @@ import { Calendar as CalendarIcon, ListOrdered as StepIcon, Clock as TimeIcon } 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
 import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
-import { useBookmarkStore } from "@/stores/Bookmark";
+import { useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
 import axios from "axios";
 import { fetchFacilityInfos } from "@/apis/api/api";
 import { Label } from "@/components/base/label";
+import { getGraph } from "@/apis/api/api";
 
 function GetGraph() {
     // 그래프 조회에 필요한 인자들
-    const [facility, setFacility] = useState()
-    const [parameter, setParameter] = useState()
     const [startDate, setStartDate] = useState()
     const [startTime, setStartTime] = useState()
     const [endDate, setEndDate] = useState()
     const [endTime, setEndTime] = useState()
     const [startStep, setStartStep] = useState();
     const [endStep, setEndStep] = useState();
+    const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+    const { selectedBookmark } = useSelectedBookmarkStore();
+    const { setIsFetching } = useGraphDataStore()
 
-    const { facilityList, updateFacility } = useFacilityStore();
-    const { bookmark, addBookmark } = useBookmarkStore();
-    const { setGraphData, setIsFetching } = useGraphDataStore()
+    const [selectedButton, setSelectedButton] = useState('time');
+
+
+    const [isTimeButtonSelected, setTimeButtonSelected] = useState(true);
+
+
+    const handleButtonClick = (id) => {
+        setSelectedButton(id)
+        setTimeButtonSelected(id === 'time')
+    };
+
+    const buttonStyle = (buttonName) => ({
+        border: selectedButton === buttonName ? '1px solid black' : '',
+    });
+
+
+    const handleGetGraph = async () => {
+
+        const startParts = startTime.split(":");
+        const endParts = endTime.split(":");
+
+        const step = [];
+        for (let i = startStep; i <= endStep; i++) {
+            step.push(i);
+        }
+
+        setIsFetching(true)
+        const data = {
+            queryType: selectedButton,
+            queryCondition: {
+                startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
+                endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
+                step: step,
+            },
+            queryData:
+                selectedBookmark.map((val) => {
+                    return {
+                        facility: val.facility,
+                        parameter: val.parameter,
+                        batchName: val.selectedBatchName,
+                    }
+                })
+        }
+
+        console.log(data)
+        // const res = await getGraph(data)
+        // setGraphData(res);
+    }
+
 
 
     // 시작 및 종료 시간을 설정하는 Input 핸들러
@@ -50,7 +98,7 @@ function GetGraph() {
 
     const handleStep = (e) => {
         if (e.target.id === "startStep") {
-            setStartStep(e.target.value)
+            setStartStep(Number(e.target.value))
         }
         else if (e.target.id === "endStep") {
             setEndStep(e.target.value)
@@ -63,11 +111,13 @@ function GetGraph() {
             <Label htmlFor="" className="font-bold text-[20px]">조회</Label>
             <div className="grid grid-cols-10 gap-5">
                 <div className="col-span-3 flex flex-col gap-2 h-[200px]">
-                    <Button variant="outline" className="h-full flex-col gap-1">
+                    <Button id="time" variant="outline" className="h-full flex-col gap-1" onClick={() => handleButtonClick('time')}
+                        style={buttonStyle('time')}>
                         <TimeIcon />
                         <p>시간대로 조회</p>
                     </Button>
-                    <Button variant="outline" className="h-full flex-col gap-1">
+                    <Button id="step" variant="outline" className="h-full flex-col gap-1" onClick={() => handleButtonClick('step')}
+                        style={buttonStyle('step')}>
                         <StepIcon />
                         <p>스텝으로 조회</p>
                     </Button>
@@ -86,6 +136,7 @@ function GetGraph() {
                                             "w-[180px] justify-start text-left font-normal",
                                             !startDate && "text-muted-foreground"
                                         )}
+                                        disabled={!isTimeButtonSelected}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
                                         {startDate ? format(startDate, "yyyy년 MM월 dd일") : <span>시작 날짜</span>}
@@ -101,7 +152,7 @@ function GetGraph() {
                                     />
                                 </PopoverContent>
                             </Popover>
-                            <Input className="w-[130px]" type={"time"} id="startTime" onChange={handleTime} />
+                            <Input className="w-[130px]" type={"time"} id="startTime" onChange={handleTime} disabled={!isTimeButtonSelected} />
                         </div>
                         <div className="flex flex-row gap-3 items-center">
                             <p>
@@ -115,6 +166,7 @@ function GetGraph() {
                                             "w-[180px] justify-start text-left font-normal",
                                             !endDate && "text-muted-foreground"
                                         )}
+                                        disabled={!isTimeButtonSelected}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
                                         {endDate ? format(endDate, "yyyy년 MM월 dd일") : <span>종료 날짜</span>}
@@ -130,7 +182,7 @@ function GetGraph() {
                                     />
                                 </PopoverContent>
                             </Popover>
-                            <Input className="w-[130px]" type={"time"} id="endTime" onChange={handleTime} />
+                            <Input className="w-[130px]" type="time" id="endTime" onChange={handleTime} disabled={!isTimeButtonSelected} />
                         </div>
 
                     </div>
@@ -138,11 +190,11 @@ function GetGraph() {
                         <div className="flex flex-row gap-3">
                             <div>
                                 <Label>시작 스텝</Label>
-                                <Input id="startStep" onChange={handleStep} />
+                                <Input id="startStep" type="number" onChange={handleStep} disabled={isTimeButtonSelected} />
                             </div>
                             <div>
                                 <Label>종료 스텝</Label>
-                                <Input id="endStep" onChange={handleStep} />
+                                <Input id="endStep" type="number" onChange={handleStep} disabled={isTimeButtonSelected} />
                             </div>
                         </div>
                     </div>
@@ -150,98 +202,8 @@ function GetGraph() {
             </div>
 
             <div className="ml-auto">
-                <Button onClick={() => {
-
-                    console.log(startStep);
-                    console.log(endStep);
-                    console.log()
-                }}>조회</Button>
+                <Button disabled={!isButtonEnabled} onClick={handleGetGraph}>조회</Button>
             </div>
-
-            {/* <div className="col-span-2 grid w-full items-center gap-1.5">
-                <Label htmlFor="facility">임의 시간</Label>
-                <div className="flex flex-col">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
-                                    !startDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {startDate ? format(startDate, "yyyy년 MM월 dd일") : <span>시작 날짜</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={startDate}
-                                onSelect={setStartDate}
-                                locale={ko}
-                                initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <Input className="w-[130px]" type={"time"} id="startTime" onChange={handleTime} />
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
-                                    !endDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {endDate ? format(endDate, "yyyy년 MM월 dd일") : <span>종료 날짜</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={endDate}
-                                onSelect={setEndDate}
-                                locale={ko}
-                                initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <Input className="w-[130px]" type={"time"} id="endTime" onChange={handleTime} />
-
-                </div>
-
-            </div>
-            <div className="col-span-2 grid w-full items-center gap-1.5">
-                <Label htmlFor="facility">스텝 구간</Label>
-                <div className="flex flex-row">
-                    <Select onValueChange={setFacility}>
-                        <SelectTrigger className="w-full self-center">
-                            <SelectValue placeholder="시작 스텝" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Object.keys(facilityList).map(facility => (
-                                <SelectItem key={facility} value={facility} >{facility}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    ~
-                    <Select onValueChange={setFacility}>
-                        <SelectTrigger className="w-full self-center">
-                            <SelectValue placeholder="종료 스텝" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Object.keys(facilityList).map(facility => (
-                                <SelectItem key={facility} value={facility} >{facility}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-            <div className="ml-auto">
-                <Button onClick={() => { }}>조회</Button>
-            </div> */}
         </Card>
     )
 }

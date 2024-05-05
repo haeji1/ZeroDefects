@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     flexRender,
     getCoreRowModel,
@@ -8,7 +8,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table"
 import { MoreHorizontal, ChevronsUpDown, Check } from "lucide-react"
-import { useBookmarkStore } from "@/stores/Bookmark";
+import { useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
 import { Checkbox } from "@/components/base/checkbox";
 import {
     Select,
@@ -39,6 +39,7 @@ import { useFacilityStore } from "@/stores/Facility";
 function BookmarkTable() {
 
     const { bookmark, deleteBookmark } = useBookmarkStore();
+    const { setSelectedBookmark } = useSelectedBookmarkStore();
     const { batchList } = useFacilityStore();
 
     // 테이블 관련 hook
@@ -154,7 +155,10 @@ function BookmarkTable() {
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
+        onRowSelectionChange: async (row) => {
+            await setRowSelection(row)
+            setSelectedBookmark(table.getSelectedRowModel().rows.map((row) => row.original))
+        },
         onPaginationChange: setPagination,
         state: {
             sorting,

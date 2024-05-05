@@ -35,11 +35,19 @@ export const useFacilityStore = create(
         updateFacility: (data) => set({ facilityList: data }),
         batchList: {},
 
-        addBatch: (newBatch) => set((state) => ({
-            batchList: {
-                ...state.batchList,
-                newBatch
-            }
-        })),
+        addBatch: (facility, newBatch) => {
+
+            console.log({ [facility]: newBatch })
+            set((state) => (
+
+
+                {
+                    batchList: {
+                        ...state.batchList,
+                        [facility]: newBatch,
+                    }
+                }
+            ))
+        },
     })
 );
