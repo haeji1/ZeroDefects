@@ -144,8 +144,7 @@ class InfluxGTRClient:
             df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
             df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
 
-            # How to use? -> 1. 주석 해제, 2. 함수 import
-            # get_section_data(df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+            save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
             # print(df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
 
             df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
