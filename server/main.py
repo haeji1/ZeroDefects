@@ -1,26 +1,21 @@
 # fastapi
 import uvicorn
-from fastapi import FastAPI, HTTPException, File, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 # bokeh
-from bokeh.plotting import figure
-from bokeh.embed import json_item
 
+from app.models.influx.influx_models import FacilityData
 # section
-from section import get_section_data
+from app.utils.functions.section import get_section_data
 
-from app.routers.bokehgraph import bokeh_router
+from app.routers.bokeh import bokeh_router
 from app.routers.influx import influx_router
+from app.routers.mongo import mongo_router
+from app.routers.section import section_router
 
 # postgreSQL
-from database import engine
-from psycopg2 import IntegrityError
-from datetime import datetime, timedelta
 
 # data frame
-import pandas as pd
-import numpy as np
 
 # cors
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,10 +34,5 @@ app.add_middleware(
 
 app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
-
-@app.get("/api/section/{filename}")
-async def section(filename: str):
-    return get_section_data(filename)
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+app.include_router(mongo_router.mongo_router)
+app.include_router(section_router.section_router)
