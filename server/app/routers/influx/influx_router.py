@@ -31,10 +31,6 @@ def create_bucket_if_not_exists(client, bucket_name, org):
 @influx_router.post("/write")
 async def write_influxdb(files: List[UploadFile] = File(...)):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-
-    # How to use? - for gold money
-    # /app.repository.influx.influx_client.py -> method name: write_df (105 line)
-
     return await client.write_csv(files, 1000)
 
 @influx_router.post("/write-test")
