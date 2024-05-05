@@ -2,7 +2,10 @@
 import uvicorn
 from fastapi import FastAPI
 
+from app.dbtest import timescale
 # bokeh
+from bokeh.plotting import figure
+from bokeh.embed import json_item
 
 from app.models.influx.influx_models import FacilityData
 # section
@@ -13,8 +16,13 @@ from app.routers.influx import influx_router
 from app.routers.mongo import mongo_router
 
 # postgreSQL
+from database import engine
+from psycopg2 import IntegrityError
+from datetime import datetime, timedelta
 
 # data frame
+import pandas as pd
+import numpy as np
 
 # cors
 from fastapi.middleware.cors import CORSMiddleware
