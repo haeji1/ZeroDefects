@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { format } from "date-fns";
 import {
     flexRender,
     getCoreRowModel,
@@ -8,25 +7,23 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, ChevronsUpDown, Check } from "lucide-react"
 import { useBookmarkStore } from "@/stores/Bookmark";
-import { Checkbox } from "@/components/base/checkbox"
+import { Checkbox } from "@/components/base/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/base/select";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/base/dropdown-menu"
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-} from "@/components/base/card";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Separator } from "@/components/base/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/base/radio-group";
-import { Label } from "@/components/base/label";
 import { Input } from "@/components/base/input"
 import { Button } from "@/components/base/button";
 import {
@@ -37,14 +34,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import useDidMountEffect from "@/hooks/useDidMountEffect";
-import axios from "axios";
-import { useGraphDataStore } from "@/stores/GraphData";
+import { useFacilityStore } from "@/stores/Facility";
 
 function BookmarkTable() {
 
-    const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
-    const { setIsFetching, setGraphData } = useGraphDataStore();
+    const { bookmark, deleteBookmark } = useBookmarkStore();
+    const { batchList } = useFacilityStore();
 
     // 테이블 관련 hook
     // ==============================
@@ -58,31 +53,6 @@ function BookmarkTable() {
         pageSize: 5,
     });
     // ==============================
-    const [cycles, setCycles] = useState([])
-    const stepList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-    const [selectedBlock, setSelectedBlock] = useState({});
-    const [selectedCycleName, setSelectedCycleName] = useState(null);
-    const [selectedStep, setSelectedStep] = useState(null);
-
-    const handleBlockClick = (data) => {
-        setSelectedBlock(data) // 선택한 블럭으로 교체
-        setCycles(data.cycles) // 블럭의 사이클 리스트로 교체
-        setSelectedCycleName(data.cycleName)
-        setSelectedStep(data.step)
-    }
-
-
-
-    useDidMountEffect(() => {
-        updateBookmark(
-            {
-                ...selectedBlock,
-                cycleName: selectedCycleName,
-                step: selectedStep,
-            }
-        )
-
-    }, [selectedCycleName, selectedStep])
 
     const columns = [
         {
@@ -131,9 +101,24 @@ function BookmarkTable() {
             accessorKey: "times",
             header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
-                const data = row.original
                 return <div className="text-center font-medium">
-                    ㅇ
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="배치 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                {batchList[row.original.facility]?.map((batch) =>
+                                    <SelectItem
+                                        key={batch.batchName}
+                                        value={batch.batchName}
+                                    >
+                                        {batch.batchName}
+                                    </SelectItem>
+                                )}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
                 </div>
             },
         },
@@ -141,9 +126,6 @@ function BookmarkTable() {
             id: "actions",
             enableHiding: false,
             cell: ({ row }) => {
-                const payment = row.original
-
-
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -153,8 +135,7 @@ function BookmarkTable() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => deleteBookmark(payment.id)}>세팅값 삭제</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleBlockClick(payment)}>사이클/스텝 선택</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteBookmark(row.original.id)}>세팅값 삭제</DropdownMenuItem>
                         </DropdownMenuContent>
 
                     </DropdownMenu >
@@ -181,11 +162,6 @@ function BookmarkTable() {
             columnVisibility,
             rowSelection,
             pagination,
-        },
-        defaultColumn: {
-            size: 150, //starting column size
-            minSize: 50, //enforced during column resizing
-            maxSize: 500, //enforced during column resizing
         },
     })
     return (
@@ -219,7 +195,8 @@ function BookmarkTable() {
                     </Button>
                 </div>
             </div>
-            <div className="rounded-md border h-[400px]">
+            {/* 테이블 높이 수정 필요 */}
+            <div className="rounded-md border h-[414px]">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

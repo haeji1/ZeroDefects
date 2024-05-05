@@ -61,10 +61,12 @@ function Addlist() {
             parameter: selectedParameter,
         }
         addBookmark(newBookmark);
+        setSelectedFacility(null);
+        setSelectedParameter(null);
     }
 
     return (
-        <Card className="flex flex-col m-3 gap-5 px-5 py-5">
+        <Card className="flex flex-col gap-5 my-4 px-5 py-5">
             <Label htmlFor="" className="font-bold text-[20px]">목록 추가</Label>
             <div className="grid grid-cols-5 gap-3">
                 <div className="col-span-2 grid w-full items-center gap-1.5">
@@ -74,7 +76,7 @@ function Addlist() {
                         setSelectedParameter(null);
                     }}>
                         <SelectTrigger className="w-full self-center">
-                            <SelectValue placeholder="설비명" />
+                            <SelectValue placeholder="설비 선택" />
                         </SelectTrigger>
                         <SelectContent>
                             {Object.keys(facilityList).map(facility => (

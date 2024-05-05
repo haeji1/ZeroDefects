@@ -59,7 +59,7 @@ function GetGraph() {
 
 
     return (
-        <Card className="flex flex-col m-3 gap-5 px-5 py-5">
+        <Card className="flex flex-col gap-5 px-5 py-5">
             <Label htmlFor="" className="font-bold text-[20px]">조회</Label>
             <div className="grid grid-cols-10 gap-5">
                 <div className="col-span-3 flex flex-col gap-2 h-[200px]">
