@@ -33,18 +33,6 @@ function GetGraph() {
 
 
     const handleButtonClick = (id) => {
-
-        if (id === 'time') {
-            setStartStep(null);
-            setEndStep(null)
-        }
-        else if (id === 'step') {
-            setStartDate(null);
-            setStartTime(null);
-            setEndDate(null);
-            setEndTime(null);
-
-        }
         setSelectedButton(id)
         setTimeButtonSelected(id === 'time')
     };
@@ -56,32 +44,41 @@ function GetGraph() {
 
     const handleGetGraph = async () => {
 
-        const startParts = startTime.split(":");
-        const endParts = endTime.split(":");
+        let queryCondition;
 
-        const step = [];
-        for (let i = startStep; i <= endStep; i++) {
-            step.push(i);
+        if (selectedButton === 'time') {
+            const startParts = startTime.split(":");
+            const endParts = endTime.split(":");
+            queryCondition = {
+                startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
+                endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
+                step: null,
+            }
+        }
+        else if (selectedButton === 'step') {
+            const step = [];
+            for (let i = startStep; i <= endStep; i++) {
+                step.push(i);
+            }
+            queryCondition = {
+                startTime: null,
+                endTime: null,
+                step: step,
+            }
         }
 
         setIsFetching(true)
         const data = {
             queryType: selectedButton,
-            queryCondition: {
-                startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
-                endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
-                step: step,
-            },
-            queryData:
-                selectedBookmark.map((val) => {
-                    return {
-                        facility: val.facility,
-                        parameter: val.parameter,
-                        batchName: val.selectedBatchName,
-                    }
-                })
+            queryCondition: queryCondition,
+            queryData: selectedBookmark.map((val) => {
+                return {
+                    facility: val.facility,
+                    parameter: val.parameter,
+                    batchName: selectedButton === 'time' ? null : val.selectedBatchName,
+                }
+            })
         }
-
         console.log(data)
         // const res = await getGraph(data)
         // setGraphData(res);
