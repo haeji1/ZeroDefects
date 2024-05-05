@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { format } from "date-fns";
+import { useEffect, useState } from "react";
 import {
     flexRender,
     getCoreRowModel,
@@ -8,25 +7,23 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
-import { useBookmarkStore } from "@/stores/Bookmark";
-import { Checkbox } from "@/components/base/checkbox"
+import { MoreHorizontal, ChevronsUpDown, Check } from "lucide-react"
+import { useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
+import { Checkbox } from "@/components/base/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/base/select";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/base/dropdown-menu"
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-} from "@/components/base/card";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Separator } from "@/components/base/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/base/radio-group";
-import { Label } from "@/components/base/label";
 import { Input } from "@/components/base/input"
 import { Button } from "@/components/base/button";
 import {
@@ -37,17 +34,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import useDidMountEffect from "@/hooks/useDidMountEffect";
-import axios from "axios";
-import { useGraphDataStore } from "@/stores/GraphData";
-import Addlist from "@/components/domain/dashboard/AddList";
-import GetGraph from "@/components/domain/dashboard/GetGraph";
-import BookmarkTable from "./BookmarkTable";
+import { useFacilityStore } from "@/stores/Facility";
 
-function BookmarkSection() {
+function BookmarkTable() {
 
-    const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
-    const { setIsFetching, setGraphData } = useGraphDataStore();
+    const { bookmark, deleteBookmark } = useBookmarkStore();
+    const { setSelectedBookmark } = useSelectedBookmarkStore();
+    const { batchList } = useFacilityStore();
 
     // 테이블 관련 hook
     // ==============================
@@ -58,47 +51,9 @@ function BookmarkSection() {
     const [rowSelection, setRowSelection] = useState({})
     const [pagination, setPagination] = useState({
         pageIndex: 0,
-        pageSize: 7,
+        pageSize: 5,
     });
     // ==============================
-    const [cycles, setCycles] = useState([])
-    const stepList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-    const [selectedBlock, setSelectedBlock] = useState({});
-    const [selectedCycleName, setSelectedCycleName] = useState(null);
-    const [selectedStep, setSelectedStep] = useState(null);
-
-    const handleBlockClick = (data) => {
-        setSelectedBlock(data) // 선택한 블럭으로 교체
-        setCycles(data.cycles) // 블럭의 사이클 리스트로 교체
-        setSelectedCycleName(data.cycleName)
-        setSelectedStep(data.step)
-    }
-
-    useDidMountEffect(() => {
-        updateBookmark(
-            {
-                ...selectedBlock,
-                cycleName: selectedCycleName,
-                step: selectedStep,
-            }
-        )
-
-    }, [selectedCycleName, selectedStep])
-
-    // 그래프 조회 
-    const getGraphData = async (datas) => {
-
-        setIsFetching(true)
-        axios.post('http://localhost:8000/bokeh/read', datas)
-            .then(response => {
-                console.log("성공")
-                setGraphData(response.data)
-                setIsFetching(false)
-            })
-            .catch(error => {
-                console.log(error, "그래프 받아오는 것 실패");
-            })
-    }
 
     const columns = [
         {
@@ -145,11 +100,26 @@ function BookmarkSection() {
         },
         {
             accessorKey: "times",
-            header: () => <div className="text-center">시간대</div>,
+            header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
-                const data = row.original
                 return <div className="text-center font-medium">
-                    {format(data.startTime, "yy-MM-dd hh:mm") + " ~ " + format(data.endTime, "yy-MM-dd hh:mm")}
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="배치 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                {batchList[row.original.facility]?.map((batch) =>
+                                    <SelectItem
+                                        key={batch.batchName}
+                                        value={batch.batchName}
+                                    >
+                                        {batch.batchName}
+                                    </SelectItem>
+                                )}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
                 </div>
             },
         },
@@ -157,9 +127,6 @@ function BookmarkSection() {
             id: "actions",
             enableHiding: false,
             cell: ({ row }) => {
-                const payment = row.original
-
-
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -169,8 +136,7 @@ function BookmarkSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => deleteBookmark(payment.id)}>세팅값 삭제</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleBlockClick(payment)}>사이클/스텝 선택</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteBookmark(row.original.id)}>세팅값 삭제</DropdownMenuItem>
                         </DropdownMenuContent>
 
                     </DropdownMenu >
@@ -189,7 +155,10 @@ function BookmarkSection() {
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
+        onRowSelectionChange: async (row) => {
+            await setRowSelection(row)
+            setSelectedBookmark(table.getSelectedRowModel().rows.map((row) => row.original))
+        },
         onPaginationChange: setPagination,
         state: {
             sorting,
@@ -198,15 +167,9 @@ function BookmarkSection() {
             rowSelection,
             pagination,
         },
-        defaultColumn: {
-            size: 200, //starting column size
-            minSize: 50, //enforced during column resizing
-            maxSize: 500, //enforced during column resizing
-        },
     })
-
     return (
-        <div>
+        <>
             <div className="flex items-center py-4">
                 <Input
                     placeholder="설비명으로 검색"
@@ -236,7 +199,8 @@ function BookmarkSection() {
                     </Button>
                 </div>
             </div>
-            <div className="rounded-md border h-[500px]">
+            {/* 테이블 높이 수정 필요 */}
+            <div className="rounded-md border h-[414px]">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -286,71 +250,8 @@ function BookmarkSection() {
                     </TableBody>
                 </Table>
             </div>
-            {/* <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    총 {table.getFilteredRowModel().rows.length}개 중{" "}
-                    {table.getFilteredSelectedRowModel().rows.length}개 선택됨.
-                </div>
-            </div> */}
-            <div className="grid grid-cols-2 space-x-5 py-4">
-                <Card className="mb-3">
-                    <CardHeader>
-                        <CardTitle>
-                            Cycle Selection
-                        </CardTitle>
-                    </CardHeader>
-                    <ScrollArea className="h-48">
-                        <div className="p-4">
-                            <RadioGroup defalutValue={cycles[0]}>
-                                {cycles.map((cycle) => (
-                                    <>
-                                        <div key={cycle.cycleName} className="flex flex-row text-sm justify-between"
-                                            onClick={() => setSelectedCycleName(cycle.cycleName)}>
-                                            <Label htmlFor={cycle.cycleName}>{cycle.cycleName}</Label>
-                                            <RadioGroupItem value={cycle.cycleName} id={cycle.cycleName} />
-                                        </div>
-                                        <Separator className="my-2" />
-                                    </>
-                                ))}
-                            </RadioGroup>
-                        </div>
-                    </ScrollArea>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Step Selection
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-5">
-                            {stepList.map((step) =>
-                                <Button key={step} className="m-[2px]" variant="outline" onClick={() => setSelectedStep(step)}>{step}</Button>
-                            )}
-
-                        </div>
-                        <Button variant="outline" className='w-full' onClick={() => setSelectedStep(null)}>전체</Button>
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="flex flex-row-reverse space-x-2">
-                <Button
-                    className="ml-auto"
-                    onClick={() => {
-                        const selectedRows = table.getSelectedRowModel().rows
-                        const selectedRowData = selectedRows.map(row => row.original)
-                        // console.log(selectedRowData)
-                        getGraphData(selectedRowData)
-                    }}
-                >
-                    비교하기
-                </Button>
-            </div>
-            <BookmarkTable />
-            <GetGraph />
-            <Addlist />
-        </div>
+        </>
     )
 }
 
-export default BookmarkSection;
+export default BookmarkTable;
