@@ -11,6 +11,7 @@ url = os.getenv('MONGO_FURL')
 client = MongoClient(url)
 db = client["section"]
 
+
 # 파일이 업로드되면 파일의 전 구간에서 배치와 사이클 구간 찾아서 MongoDB에 저장
 def get_section_data(condition: FacilityData):
     df = get_section(condition)
@@ -61,7 +62,7 @@ def get_section_data(condition: FacilityData):
 
     # 각 배치 및 스텝의 이름 생성 및 출력
     for batch_start, batch_end in zip(batch_starts, batch_ends):
-        batch_name = f"batch-{equipment_name}-{df['Time'][batch_start][0:19]}"
+        batch_name = f"batch-{equipment_name}-{df['Time'][batch_start]}"
         batch_dict = {
             "batch_name": batch_name,
             "batch_start_time": df['Time'][batch_start],
@@ -76,8 +77,8 @@ def get_section_data(condition: FacilityData):
             if start >= batch_start and end <= batch_end:
                 step_dict = {
                     f"step{step_index}": {
-                        f"step{step_index}StartTime": df['Time'][start],
-                        f"step{step_index}EndTime": df['Time'][end]
+                        f"step{step_index}StartTime": df['Time'][start].strftime('%Y-%m-%d %H:%M:%S'),
+                        f"step{step_index}EndTime": df['Time'][end].strftime('%Y-%m-%d %H:%M:%S')
                     }
                 }
                 batch_dict["steps"].append(step_dict)
@@ -85,20 +86,15 @@ def get_section_data(condition: FacilityData):
 
                 steps_dict.append(step_dict)
 
-        output["batches"].append(batch_dict)
-
         try:
             section_list.append(BatchAndStepsSection(batchName=batch_name,
-                                                     batchStartTime=df['Time'][batch_start],
-                                                     batchEndTime=df['Time'][batch_end],
+                                                     batchStartTime=df['Time'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
+                                                     batchEndTime=df['Time'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
                                                      steps=steps_dict))
         except TypeError as e:
             print(f"Error appending to batch_list: {e}")
 
-    print("section_list", section_list)
-
     # section_list를 mongodb에 저장
     section = db[condition.facility]
     for s in section_list:
-        print("dict(s)", dict(s))
         section.insert_one(dict(s))
