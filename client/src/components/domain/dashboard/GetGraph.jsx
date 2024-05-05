@@ -1,10 +1,4 @@
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/base/select";
+
 import { Card } from "@/components/base/card";
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
@@ -12,14 +6,11 @@ import { Calendar as CalendarIcon, ListOrdered as StepIcon, Clock as TimeIcon } 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
-import { useFacilityStore } from "@/stores/Facility"
 import { useGraphDataStore } from "@/stores/GraphData";
-import { useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
-import axios from "axios";
-import { fetchFacilityInfos } from "@/apis/api/api";
+import { useSelectedBookmarkStore } from "@/stores/Bookmark";
 import { Label } from "@/components/base/label";
 import { getGraph } from "@/apis/api/api";
 
@@ -42,6 +33,18 @@ function GetGraph() {
 
 
     const handleButtonClick = (id) => {
+
+        if (id === 'time') {
+            setStartStep(null);
+            setEndStep(null)
+        }
+        else if (id === 'step') {
+            setStartDate(null);
+            setStartTime(null);
+            setEndDate(null);
+            setEndTime(null);
+
+        }
         setSelectedButton(id)
         setTimeButtonSelected(id === 'time')
     };
@@ -83,6 +86,17 @@ function GetGraph() {
         // const res = await getGraph(data)
         // setGraphData(res);
     }
+
+
+    useEffect(() => {
+        // 시간으로 
+        if (selectedButton === 'time') {
+            startDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+        }
+        else {
+            startStep && endStep ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+        }
+    }, [startDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
 
 
 
@@ -200,7 +214,6 @@ function GetGraph() {
                     </div>
                 </div>
             </div>
-
             <div className="ml-auto">
                 <Button disabled={!isButtonEnabled} onClick={handleGetGraph}>조회</Button>
             </div>
