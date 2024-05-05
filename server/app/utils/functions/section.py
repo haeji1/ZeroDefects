@@ -1,41 +1,38 @@
 import os
-
 from dotenv import load_dotenv
 from pymongo import MongoClient
-
 from app.models.influx.influx_models import FacilityData
 from app.utils.functions.influx_functions import get_section
-from app.models.section.section_models import Cycle
-from app.models.section.section_models import CycleSection
+from app.models.section.section_models import BatchAndStepsSection
 
 load_dotenv()
+
 url = os.getenv('MONGO_FURL')
-
-# MongoDB client
 client = MongoClient(url)
-
 db = client["section"]
 
-def get_section_data(condition: FacilityData) -> [CycleSection]:
 
+# 파일이 업로드되면 파일의 전 구간에서 배치와 사이클 구간 찾아서 MongoDB에 저장
+def get_section_data(condition: FacilityData):
     df = get_section(condition)
 
-    # 사이클 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
-    cycle_starts = []
-    cycle_ends = []
+    # 배치 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
+    batch_starts = []
+    batch_ends = []
     step_starts = []  # 각 스텝의 시작 인덱스
     step_ends = []  # 각 스텝의 끝 인덱스
     current_step = None  # 현재 스텝
+
     step_number = 0  # 스텝 번호
 
-    # 'RcpReq[]' 컬럼과 'CoatingLayerN[Layers]' 컬럼을 기준으로 사이클 및 스텝의 시작과 끝 찾기
+    # 'RcpReq[]' 컬럼과 'CoatingLayerN[Layers]' 컬럼을 기준으로 배치 및 스텝의 시작과 끝 찾기
     for i in range(len(df)):
 
-        # 사이클 시작 검사
+        # 배치 시작 검사
         if df['RcpReq[]'][i] == 1:
             if i == 0 or (i > 0 and df['RcpReq[]'][i - 1] == 0):
-                cycle_starts.append(i)
-                current_step = 0  # 사이클이 시작되면 스텝을 0으로 초기화
+                batch_starts.append(i)
+                current_step = 0  # 배치가 시작되면 스텝을 0으로 초기화
                 step_starts.append(i)  # 스텝 시작 인덱스 추가
                 step_number = 0  # 스텝 번호를 0으로 초기화
             # 스텝 변경 검사 (CoatingLayerN[Layers] 값의 변화를 기준으로 스텝 구분)
@@ -45,70 +42,59 @@ def get_section_data(condition: FacilityData) -> [CycleSection]:
                 step_number += 1  # 스텝 번호 증가
         else:
             if i > 0 and df['RcpReq[]'][i - 1] == 1:
-                # 사이클이 끝나는 지점 처리
-                cycle_ends.append(i - 1)
+                # 배치가 끝나는 지점 처리
+                batch_ends.append(i - 1)
                 step_ends.append(i - 1)  # 현재 스텝의 끝 인덱스 추가
                 current_step = None  # 스텝 초기화
 
-    # 마지막 사이클의 끝 처리
+    # 마지막 배치의 끝 처리
     if df['RcpReq[]'].iloc[-1] == 1:
-        cycle_ends.append(len(df) - 1)
+        batch_ends.append(len(df) - 1)
         step_ends.append(len(df) - 1)  # 마지막 스텝의 끝 처리
 
-    # 파일명에서 설비명과 날짜 추출
-    # equipment_name, log_type, date, log_start_time = file_path.split('-')
     equipment_name = condition.facility
 
     # JSON 구조 생성
-    output = {"cycles": []}
+    output = {"batches": []}
 
-    cycle_list = []
+    batch_list = []
     section_list = []
 
-    # 각 사이클 및 스텝의 이름 생성 및 출력
-    for cycle_start, cycle_end in zip(cycle_starts, cycle_ends):
-        cycle_name = f"cycle-{equipment_name}-{df['Time'][cycle_start][0:19]}"
-        cycle_dict = {
-            "cycle_name": cycle_name,
-            "cycle_start_time": df['Time'][cycle_start],
-            "cycle_end_time": df['Time'][cycle_end],
+    # 각 배치 및 스텝의 이름 생성 및 출력
+    for batch_start, batch_end in zip(batch_starts, batch_ends):
+        batch_name = f"batch-{equipment_name}-{df['Time'][batch_start]}"
+        batch_dict = {
+            "batch_name": batch_name,
+            "batch_start_time": df['Time'][batch_start],
+            "batch_end_time": df['Time'][batch_end],
             "steps": []
         }
 
-        # 해당 사이클 내의 스텝들 출력
+        # 해당 배치 내의 스텝들 출력
         step_index = 0
         steps_dict = []
         for start, end in zip(step_starts, step_ends):
-            if start >= cycle_start and end <= cycle_end:
+            if start >= batch_start and end <= batch_end:
                 step_dict = {
                     f"step{step_index}": {
-                        "start_time": df['Time'][start],
-                        "end_time": df['Time'][end]
+                        f"step{step_index}StartTime": df['Time'][start].strftime('%Y-%m-%d %H:%M:%S'),
+                        f"step{step_index}EndTime": df['Time'][end].strftime('%Y-%m-%d %H:%M:%S')
                     }
                 }
-                cycle_dict["steps"].append(step_dict)
+                batch_dict["steps"].append(step_dict)
                 step_index += 1
 
                 steps_dict.append(step_dict)
 
-        output["cycles"].append(cycle_dict)
-
         try:
-            cycle_list.append(Cycle(cycleName=cycle_name,
-                                    cycleStartTime=df['Time'][cycle_start],
-                                    cycleEndTime=df['Time'][cycle_end]))
-
-            section_list.append(CycleSection(cycleName=cycle_name,
-                                             cycleStartTime=str(df['Time'][cycle_start]), cycleEndTime=str(df['Time'][cycle_end]),
-                                             steps=steps_dict))
+            section_list.append(BatchAndStepsSection(batchName=batch_name,
+                                                     batchStartTime=df['Time'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
+                                                     batchEndTime=df['Time'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
+                                                     steps=steps_dict))
         except TypeError as e:
-            print(f"Error appending to cycle_list: {e}")
+            print(f"Error appending to batch_list: {e}")
 
-    # section_list 를 mongodb에 저장
-    print(condition.facility)
+    # section_list를 mongodb에 저장
     section = db[condition.facility]
     for s in section_list:
-        print(dict(s))
         section.insert_one(dict(s))
-
-    return cycle_list

@@ -12,6 +12,7 @@ from app.utils.functions.section import get_section_data
 from app.routers.bokeh import bokeh_router
 from app.routers.influx import influx_router
 from app.routers.mongo import mongo_router
+from app.routers.section import section_router
 from app.dbtest import timescale
 
 # postgreSQL
@@ -36,12 +37,4 @@ app.add_middleware(
 app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
 app.include_router(mongo_router.mongo_router)
-app.include_router(timescale.timescale_router)
-
-@app.post("/api/section")
-async def section(conditon: FacilityData):
-    print('conditon', conditon)
-    return { "cycles": get_section_data(conditon) }
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+app.include_router(section_router.section_router)

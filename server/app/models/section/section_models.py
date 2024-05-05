@@ -1,21 +1,24 @@
 from pydantic import BaseModel
 
-class Cycle(BaseModel):
-    cycleName: str
-    cycleStartTime: str
-    cycleEndTime: str
 
-    class Config:
-        arbitrary_types_allowed = True
-
-class CycleSection(BaseModel):
-    cycleName: str
-    cycleStartTime: str
-    cycleEndTime: str
+class BatchAndStepsSection(BaseModel):
+    batchName: str
+    batchStartTime: str
+    batchEndTime: str
     steps: []
 
     class Config:
         arbitrary_types_allowed = True
+
+
+# class StepSection(BaseModel):
+#     batchName: str
+#     batchStartTime: str
+#     batchEndTime: str
+#     steps: []
+#
+#     class Config:
+#         arbitrary_types_allowed = True
 
 class SectionModel(BaseModel):
     startTime: str
