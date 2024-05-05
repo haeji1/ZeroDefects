@@ -21,10 +21,18 @@ def draw_dataframe_to_graph(df_list, facility_list):
         colors = Category10_10
 
         for i, df in enumerate(df_list):
+            # 각 데이터프레임의 시작 시간을 추출하여 가장 빠른 시작 시간을 구합니다.
+            # start_time = pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True).min()
+            start_time = pd.to_datetime(df["Time"], utc=True).min()
 
-            start_time = pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True).min()
+            # 데이터프레임의 이름을 가져옵니다.
             df_name = facility_list[i]
-            df["Time"] = (pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True) - start_time).dt.total_seconds()
+
+            # 시간 정보를 조정하여 모든 선이 같은 출발점에서 시작되도록 합니다.
+            # df["Time"] = (pd.to_datetime(df["Time"].str.replace("Z", ""), utc=True) - start_time).dt.total_seconds()
+            df["Time"] = (pd.to_datetime(df["Time"], utc=True) - start_time).dt.total_seconds()
+
+            # 색상 선택
             color = colors[i % len(colors)]
             source = ColumnDataSource(data=df)
 
@@ -69,7 +77,10 @@ def draw_single_dataframe_to_graph(df, facility):
     plots = []
     all_data = []
 
-    df["Time"] = df["Time"].str.replace("Z", "")
+    # "Z" 제거
+    # df["Time"] = df["Time"].str.replace("Z", "")
+
+    # pd.to_datetime을 사용하여 변환
     time_values = pd.to_datetime(df["Time"], utc=True)
 
     combined_data = dict(x=time_values)

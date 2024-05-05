@@ -14,7 +14,7 @@ from typing import List
 from influxdb_client.client.write_api import ASYNCHRONOUS
 from starlette.responses import JSONResponse
 
-from app.repository.influx.influx_client import InfluxGTRClient
+# from app.repository.influx.influx_client import InfluxGTRClient
 from app.routers.bokeh.bokeh_router import FacilityData
 from app.utils.functions.influx_functions import get_datas, get_df_TRC, get_section
 
