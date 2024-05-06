@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional, List
 
 
 class BatchInfo(BaseModel):
@@ -16,3 +17,21 @@ class FacilityInfo(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class GraphQueryCondition(BaseModel):
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
+    step: Optional[List[int]] = None
+
+
+class GraphQueryData(BaseModel):
+    facility: str
+    parameter: str
+    batchName: Optional[str] = None
+
+
+class GraphQueryRequest(BaseModel):
+    queryType: str
+    queryCondition: GraphQueryCondition
+    queryData: List[GraphQueryData]
