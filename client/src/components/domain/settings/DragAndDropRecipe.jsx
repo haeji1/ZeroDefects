@@ -3,20 +3,23 @@ import axios from "axios";
 import DragAndDropAni from "./DragandDropFileGif";
 import FileDataForRecipe from "@/stores/FileDataForRecipe";
 import FileListForRecipe from "./FileListForRecipe";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useState } from "react";
+import Loading from "./Loading";
 
 function DragAndDropFileRecipe() {
-  const { files, addFiles, clearFiles, addOrUpdateFiles } = FileDataForRecipe(
+  const { files, addFiles, fileCount ,clearFiles, addOrUpdateFiles,incrementFileCount, decrementFileCount} = FileDataForRecipe(
     (state) => ({
       addFiles: state.addFiles,
       files: state.files,
+      fileCount: state.fileCount,
       clearFiles: state.clearFiles,
       addOrUpdateFiles: state.addOrUpdateFiles,
+      incrementFileCount: state.incrementFileCount,
+      decrementFileCount: state.decrementFileCount,
     })
   );
 
-  const [loading, setLoding] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDragOver = (e) => {
     e.preventDefault(); // 기본 이벤트를 방지합니다.
@@ -45,7 +48,6 @@ function DragAndDropFileRecipe() {
     }
 
     for (const file of validFiles) {
-      // 변경된 부분: 여기서 files는 상태에서 가져온 파일 리스트입니다.
       const hasFile = files.some(
         (existingFile) => existingFile.name === file.name
       );
@@ -59,6 +61,7 @@ function DragAndDropFileRecipe() {
         }
       } else {
         addOrUpdateFiles([file]);
+        incrementFileCount();
       }
     }
   };
@@ -82,13 +85,12 @@ function DragAndDropFileRecipe() {
     files.forEach((file) => {
       formData.append("files", file);
     });
-
+    setIsLoading(true); // 로딩 시작
     console.log(Array.from(formData));
     console.log("첨부파일 보내기 시작");
-
     // 수정
     axios
-      .post("http://localhost:8000/setting", formData, {
+      .post("http://localhost:8000/facility/setting", formData, {
         headers: {
           "Content-Type":
             "application/vnd.ms-excel" ||
@@ -99,10 +101,15 @@ function DragAndDropFileRecipe() {
         console.log(res.data);
         console.log("첨부파일 보내기 성공");
         clearFiles(); // 업로드 후 파일 목록 지우기
+        alert( fileCount + "개 파일 업로드 완료")
+        alert()
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error(err);
         console.log("첨부파일 보내기 실패");
+        alert("실패")
+        setIsLoading(false);
       });
   };
   return (
@@ -131,7 +138,16 @@ function DragAndDropFileRecipe() {
       <div style={{ paddingTop: "20px" }} />
       <FileListForRecipe />
       <div style={{ paddingTop: "20px" }} />
-      <Button onClick={uploadFiles}>저장</Button>
+      <div>{fileCount}개의 파일</div>
+      {isLoading ? (
+        // 로딩 중일 때 로딩 컴포넌트 렌더링
+        <div>
+          <Loading/>
+        </div>
+      ) : (
+        // 로딩 완료 후 버튼 렌더링
+        <Button onClick={uploadFiles}>저장</Button>
+      )}
     </div>
   );
 }

@@ -1,27 +1,25 @@
 import { Button } from "@/components/base/button";
 import axios from "axios";
 import DragAndDropAni from "./DragandDropFileGif";
-import {
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/base/resizable";
 import FileDataForSettings from "@/stores/FileDataForSettingStore";
 import FileList from "./FileList";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useState } from "react";
+import Loading from "./Loading";
 
 function DragAndDropFileFacility() {
-  const { files, addFiles, clearFiles, addOrUpdateFiles } = FileDataForSettings(
+  const { files, fileCount ,addFiles, clearFiles, addOrUpdateFiles,incrementFileCount,decrementFileCount } = FileDataForSettings(
     (state) => ({
       addFiles: state.addFiles,
       files: state.files,
+      fileCount: state.fileCount,
+      decrementFileCount: state.decrementFileCount,
       clearFiles: state.clearFiles,
       addOrUpdateFiles: state.addOrUpdateFiles,
+      incrementFileCount: state.incrementFileCount,
     })
   );
-
-  const [loading, setLoding] = useState(true);
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   const handleDragOver = (e) => {
     e.preventDefault(); // 기본 이벤트를 방지합니다.
   };
@@ -60,6 +58,7 @@ function DragAndDropFileFacility() {
         }
       } else {
         addOrUpdateFiles([file]);
+        incrementFileCount();
       }
     }
   };
@@ -83,7 +82,7 @@ function DragAndDropFileFacility() {
     files.forEach((file) => {
       formData.append("files", file); // 이제 file은 실제 File 객체를 포함하고 있습니다.
     });
-
+    setIsLoading(true);
     console.log(Array.from(formData));
     console.log("첨부파일 보내기 시작");
 
@@ -98,10 +97,14 @@ function DragAndDropFileFacility() {
         console.log(res.data);
         console.log("첨부파일 보내기 성공");
         clearFiles(); // 업로드 후 파일 목록 지우기
+        alert( fileCount + "개 파일 업로드 완료")
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error(err);
         console.log("첨부파일 보내기 실패");
+        alert("실패")
+        setIsLoading(false);
       });
   };
   return (
@@ -129,9 +132,18 @@ function DragAndDropFileFacility() {
         <h2>여기에 파일을 끌어다 놓거나 클릭하여 선택하세요.</h2>
       </div>
       <div style={{ paddingTop: "20px" }} />
-      <FileList />
+      <FileList/>
       <div style={{ paddingTop: "20px" }} />
-      <Button onClick={uploadFiles}>저장</Button>
+      <div>{fileCount}개의 파일</div>
+      {isLoading ? (
+        // 로딩 중일 때 로딩 컴포넌트 렌더링
+        <div>
+          <Loading/>
+        </div>
+      ) : (
+        // 로딩 완료 후 버튼 렌더링
+        <Button onClick={uploadFiles}>저장</Button>
+      )}
     </div>
   );
 }

@@ -10,6 +10,8 @@ import {
   TableRow,
 } from "@/components/base/table";
 import { ScrollArea } from "@/components/base/scroll-area";
+import {formatFileSize} from "@/lib/formatFileSize";
+
 
 const FileListForRecipe = () => {
   const { files, deleteFile } = FileDataForRecipe((state) => ({
@@ -38,7 +40,7 @@ const FileListForRecipe = () => {
             {files.map((file, index) => (
               <TableRow key={index}>
                 <TableCell>{file.name}</TableCell>
-                <TableCell>{`${file.size} bytes`}</TableCell>
+                <TableCell>{formatFileSize(file.size)}</TableCell>
                 <TableCell>
                   <button onClick={() => deleteFile(file.name)}>삭제</button>
                 </TableCell>
