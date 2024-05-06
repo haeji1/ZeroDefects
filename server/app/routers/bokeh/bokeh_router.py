@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 # bokeh
 from bokeh.embed import json_item
+import json
 
 from app.models.influx.influx_models import FacilityData
 from app.utils.functions.influx_functions import get_datas
@@ -74,6 +75,33 @@ async def read_influxdb(conditions: List[FacilityData]):
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
     return JSONResponse(content=plot_json)
+
+@router.post("/read/single/line")
+async def get_single_data_line(conditions: List[FacilityData]):
+
+    facility_list, parameter_list, df_list = influx_list_time_query(conditions)
+    bokeh_service.draw_single_line(df_list[0], facility_list[0])
+    print("============router================")
+
+    x_data, y_data, facility = bokeh_service.draw_single_line(df_list[0], facility_list[0])
+    # x_data, facility = bokeh_service.draw_single_line(df_list[0], facility_list[0])
+
+    x_data = [str(timestamp) for timestamp in x_data]
+
+    # print("============data정보==========")
+    # # print(x_data)
+    # # print(y_data)
+    # print("==========직렬화=============")
+
+
+    response_data = {
+        "x_data": x_data,
+        "y_data":  y_data,
+        "facility": facility
+    }
+    print("===========response_data=========")
+    print(JSONResponse(content=response_data))
+    return JSONResponse(content=response_data)
 
 @router.get("/bokeh-section")
 def read_section(request_body: List[FacilityData]):

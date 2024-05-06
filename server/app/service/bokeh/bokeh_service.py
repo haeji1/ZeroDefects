@@ -6,6 +6,7 @@ from bokeh.plotting import figure
 
 # data frame
 import pandas as pd
+import numpy as np
 
 
 def draw_dataframe_to_graph(df_list, facility_list):
@@ -112,6 +113,42 @@ def draw_single_dataframe_to_graph(df, facility):
 
     return plots
 
+def save_graph_data(df_list, facility_list):
+    # 선 하나만 추가할 때
+    if len(df_list) == 1:
+        return draw_single_line(df_list[0],facility_list[0])
+    # else:
+
+
+# 하나의 선 정보 저장
+def draw_single_line(df, facility):
+    print("===========method=============")
+    all_data = []
+    print(df)
+    print(df.columns)
+    print("====time_values====")
+    df["Time"] = df["Time"].str.replace("Z", "")
+    time_values = pd.to_datetime(df["Time"], utc=True)
+    print(time_values)
+
+    combined_data = dict(x=time_values)
+    y_data = {}
+    for column in df.columns:
+        if column != "Time":
+            column_data = df[column]
+            all_data.append(column_data)
+            combined_data[column] = column_data.values
+            if isinstance(column_data.values, np.ndarray):
+                y_data[column] = column_data.values.tolist()
+
+    source = ColumnDataSource(data=combined_data)
+
+    x_data = source.data['x']
+    print("=========y_data========")
+    print(y_data)
+    print("=========y_data========")
+
+    return [x_data, y_data, facility]
 
 # ColumnDataSource의 max, min, 평균 값 구하기
 def calc_df_values(source, df_name,column_name):
