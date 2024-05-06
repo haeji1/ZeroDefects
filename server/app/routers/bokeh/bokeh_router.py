@@ -79,7 +79,7 @@ async def read_influxdb(conditions: List[FacilityData]):
 @router.post("/read/single/line")
 async def get_single_data_line(conditions: List[FacilityData]):
 
-    facility_list, parameter_list, df_list = influx_list_time_query(conditions)
+    facility_list, parameter_list, df_list = get_datas(conditions)
     bokeh_service.draw_single_line(df_list[0], facility_list[0])
     print("============router================")
 
@@ -87,12 +87,6 @@ async def get_single_data_line(conditions: List[FacilityData]):
     # x_data, facility = bokeh_service.draw_single_line(df_list[0], facility_list[0])
 
     x_data = [str(timestamp) for timestamp in x_data]
-
-    # print("============data정보==========")
-    # # print(x_data)
-    # # print(y_data)
-    # print("==========직렬화=============")
-
 
     response_data = {
         "x_data": x_data,
@@ -102,6 +96,29 @@ async def get_single_data_line(conditions: List[FacilityData]):
     print("===========response_data=========")
     print(JSONResponse(content=response_data))
     return JSONResponse(content=response_data)
+
+@router.post("read/multi/line")
+async def get_multi_data_line(conditions: List[FacilityData]):
+
+    facility_list, parameter_list, df_list = get_datas(conditions)
+    bokeh_service.draw_multi_line(df_list, facility_list)
+
+    print("============router================")
+
+    x_data_list, y_data_list, facility_list = bokeh_service.draw_multi_line(df_list, facility_list)
+
+    x_data_list = [[str(timestamp) for timestamp in x_data] for x_data in x_data_list]
+
+    response_data = {
+        "x_data_list": x_data_list,
+        "y_data_list": y_data_list,
+        "facility_list": facility_list
+    }
+
+    print("===========response_data=========")
+    print(JSONResponse(content=response_data))
+    return JSONResponse(content=response_data)
+
 
 @router.get("/bokeh-section")
 def read_section(request_body: List[FacilityData]):
