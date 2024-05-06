@@ -8,8 +8,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/base/table";
 import { ScrollArea } from "@/components/base/scroll-area";
+import {formatFileSize} from "@/lib/formatFileSize"
 
 const FileList = () => {
   const { files, deleteFile } = FileDataForSettings((state) => ({
@@ -18,19 +20,19 @@ const FileList = () => {
   }));
 
   return (
-    <div style={{ width: "100%", height: "300px" }}>
+    <div style={{ width: "100%", height: "300px", textAlign: ""}}>
       <ScrollArea className="h-[100%] w-[100%] rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>
-                <div className="text-center">파일 이름</div>
+                파일 이름
               </TableHead>
               <TableHead>
-                <div className="text-center">크기</div>
+                크기
               </TableHead>
               <TableHead>
-                <div className="text-center">작업</div>
+                작업
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -38,7 +40,8 @@ const FileList = () => {
             {files.map((file, index) => (
               <TableRow key={index}>
                 <TableCell>{file.name}</TableCell>
-                <TableCell>{`${file.size} bytes`}</TableCell>
+                {/* <TableCell>{`${file.size} bytes`}</TableCell> */}
+                <TableCell>{formatFileSize(file.size)}</TableCell>
                 <TableCell>
                   <button onClick={() => deleteFile(file.name)}>삭제</button>
                 </TableCell>
@@ -49,6 +52,6 @@ const FileList = () => {
       </ScrollArea>
     </div>
   );
-};
+}; 
 
 export default FileList;

@@ -12,5 +12,4 @@ export const useParameterStore = create((set) => ({
         })),
     removeParameter: (id) =>
         set((prev) => ({ parameterList: prev.parameterList.filter((e) => e.id !== id) })),
-
 }))
