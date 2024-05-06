@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
+from fastapi import HTTPException
 from pymongo import MongoClient, ReplaceOne
-from app.models.section.section_models import BatchInfo, FacilityInfo
+from app.models.section.section_models import BatchInfo, FacilityInfo, GraphQueryRequest
 
 load_dotenv()
 
@@ -100,3 +101,43 @@ def get_batches_info(facility: FacilityInfo) -> []:
         batch.pop('_id', None)  # '_id' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
         batch.pop('steps', None)  # 'steps' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
     return batches
+
+
+def get_sections_info(request_body: GraphQueryRequest) -> []:
+    responses = []
+
+    for data in request_body.queryData:
+        print("data:", data)
+        collection = db[data.facility]
+        batch_document = collection.find_one({"batchName": data.batchName})
+        if not batch_document:
+            raise HTTPException(status_code=404, detail=f"Batch {data.batchName} not found in {data.facility}")
+
+        steps = request_body.queryCondition.step
+        if not steps:
+            raise HTTPException(status_code=400, detail="Invalid step range")
+
+        start_time = None
+        end_time = None
+
+        start_step_key = f"step{steps[0]}"
+        end_step_key = f"step{steps[-1]}"
+        for step_item in batch_document['steps']:
+            if start_step_key in step_item:
+                start_time = step_item[start_step_key][f"{start_step_key}StartTime"]
+            if end_step_key in step_item:
+                end_time = step_item[end_step_key][f"{end_step_key}EndTime"]
+
+        if start_time is None or end_time is None:
+            raise HTTPException(status_code=404, detail="No step in batch")
+
+        response = {
+            "facility": data.facility,
+            "batchName": data.batchName,
+            "parameter": data.parameter,
+            "startTime": start_time,
+            "endTime": end_time
+        }
+        responses.append(response)
+
+    return responses
