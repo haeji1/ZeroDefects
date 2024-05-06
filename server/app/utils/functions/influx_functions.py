@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 from http.client import HTTPException
 from typing import List, Dict, Any
 
+import warnings
+from influxdb_client.client.warnings import MissingPivotFunction
+
 import pandas as pd
 from influxdb_client import InfluxDBClient
 
@@ -17,8 +20,23 @@ token = settings.influx_token
 organization = settings.influx_org
 bucket = settings.influx_bucket
 
+warnings.simplefilter('ignore', MissingPivotFunction)
 
 # --------- functions --------- #
+
+def get_facilities_info():
+    client = InfluxDBClient(url=url, token=token, org=organization)
+    answer_measurements = execute_query(client, info_measurements_query(b=bucket))
+
+    facilities = defaultdict(list)
+    for measurement in answer_measurements['_value']:
+        answer_fields = client.query_api().query_data_frame(info_field_query(b=bucket, measurement=measurement))
+
+        fields = [field for field in answer_fields['_value']]
+        facilities[measurement] = fields
+
+    return {'result': dict(facilities)}
+
 # get data
 def get_datas(conditions: List[FacilityData]) -> []:
     start_time = time.time()
@@ -111,6 +129,23 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
+
+# info facility
+def info_measurements_query(b: str) -> str:
+    return f"""
+            import "influxdata/influxdb/schema"
+            schema.measurements(bucket: "{b}")
+            """
+# info parameter
+def info_field_query(b: str, measurement: str) -> str:
+    return f"""
+            import "influxdata/influxdb/schema"
+            schema.fieldKeys(
+            bucket: "{b}",
+            predicate: (r) => r._measurement == "{measurement}",
+            )
+            """
+# execute query
 def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame:
     df_result = client.query_api().query_data_frame(org=settings.influx_org, query=query)
     df_result.drop(columns=['result', 'table'], inplace=True)
