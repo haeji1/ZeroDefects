@@ -1,3 +1,5 @@
+import ReactDOM from 'react-dom/client'
+import "@/app/global.css"
 import { ImageProvider } from '@/components/domain/dashboard/ImageContext'
 import Dashboard from '@/pages/Dashboard'
 import Settings from '@/pages/Settings'
@@ -50,3 +52,6 @@ function App() {
 }
 
 export default App
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App />
+)
