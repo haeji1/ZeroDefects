@@ -72,6 +72,7 @@ function GetGraph() {
             queryType: selectedButton,
             queryCondition: queryCondition,
             queryData: selectedBookmark.map((val) => {
+                console.log(val)
                 return {
                     facility: val.facility,
                     parameter: val.parameter,

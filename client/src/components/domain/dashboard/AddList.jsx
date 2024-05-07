@@ -18,7 +18,7 @@ import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/base/label";
-import { useFacilityStore } from "@/stores/Facility"
+import { useBatchStore, useFacilityStore } from "@/stores/Facility"
 import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
 import { useBookmarkStore } from "@/stores/Bookmark";
@@ -28,7 +28,8 @@ function Addlist() {
     const [selectedFacility, setSelectedFacility] = useState()
     const [selectedParameter, setSelectedParameter] = useState()
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-    const { facilityList, batchList, addBatch, updateFacility } = useFacilityStore();
+    const { facilityList, updateFacility } = useFacilityStore();
+    const { batchList, addBatch } = useBatchStore();
     const { addBookmark } = useBookmarkStore()
     const [open, setOpen] = useState(false)
 

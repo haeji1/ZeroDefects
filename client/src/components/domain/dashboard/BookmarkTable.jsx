@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     flexRender,
     getCoreRowModel,
@@ -7,7 +7,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal, ChevronsUpDown, Check } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import { useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
 import { Checkbox } from "@/components/base/checkbox";
 import {
@@ -34,13 +34,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { useFacilityStore } from "@/stores/Facility";
+import { useBatchStore } from "@/stores/Facility";
 
 function BookmarkTable() {
 
-    const { bookmark, deleteBookmark } = useBookmarkStore();
+    const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
     const { setSelectedBookmark } = useSelectedBookmarkStore();
-    const { batchList } = useFacilityStore();
+    const { batchList } = useBatchStore();
 
     // 테이블 관련 hook
     // ==============================
@@ -102,10 +102,19 @@ function BookmarkTable() {
             accessorKey: "times",
             header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
-                return <div className="text-center font-medium">
-                    <Select>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="배치 선택" />
+                return <div className="text-center font-medium w-full">
+                    <Select
+                        onValueChange={(e) => {
+                            const data = {
+                                id: row.original.id,
+                                facility: row.original.facility,
+                                parameter: row.original.parameter,
+                                selectedBatchName: e,
+                            }
+                            updateBookmark(data)
+                        }}>
+                        <SelectTrigger>
+                            <SelectValue placeholder={bookmark.find((fac) => fac.facility === row.original.facility)?.selectedBatchName} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
@@ -157,6 +166,8 @@ function BookmarkTable() {
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: async (row) => {
             await setRowSelection(row)
+            const a = table.getSelectedRowModel().rows
+            console.log(a)
             setSelectedBookmark(table.getSelectedRowModel().rows.map((row) => row.original))
         },
         onPaginationChange: setPagination,

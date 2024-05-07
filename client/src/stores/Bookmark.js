@@ -24,11 +24,7 @@ export const useBookmarkStore = create(
                         id: data.id,
                         facility: data.facility,
                         parameter: data.parameter,
-                        startTime: data.startTime,
-                        endTime: data.endTime,
-                        cycles: data.cycles,
-                        cycleName: data.cycleName,
-                        step: data.step,
+                        selectedBatchName: data.selectedBatchName,
                     }
                 ]
             })),

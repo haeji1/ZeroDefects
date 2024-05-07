@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from 'zustand/middleware'
 
 
 // batchList = {
@@ -33,21 +34,24 @@ export const useFacilityStore = create(
     (set) => ({
         facilityList: {},
         updateFacility: (data) => set({ facilityList: data }),
-        batchList: {},
-
-        addBatch: (facility, newBatch) => {
-
-            console.log({ [facility]: newBatch })
-            set((state) => (
-
-
-                {
-                    batchList: {
-                        ...state.batchList,
-                        [facility]: newBatch,
-                    }
-                }
-            ))
-        },
     })
 );
+
+export const useBatchStore = create(
+    persist(
+        (set) => ({
+            batchList: {},
+            addBatch: (facility, newBatch) => {
+                set((state) => (
+                    {
+                        batchList: {
+                            ...state.batchList,
+                            [facility]: newBatch,
+                        }
+                    }
+                ))
+            },
+        }),
+        { name: 'batchStorage' }
+    )
+)
