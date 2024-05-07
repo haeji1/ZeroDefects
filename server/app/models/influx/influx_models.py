@@ -15,3 +15,10 @@ class TRCData(BaseModel):
     facility: str
     startTime: str
     endTime: str
+
+class SectionData(BaseModel):
+    facility: str
+    batchName: Optional[str] = None
+    parameter: str
+    startTime: str
+    endTime: str
