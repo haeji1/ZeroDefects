@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from bokeh.embed import json_item
 import json
 
-from app.models.influx.influx_models import FacilityData
+from app.models.influx.influx_models import FacilityData, SectionData
 from app.utils.functions.influx_functions import get_datas
 
 ##############################
@@ -67,10 +67,12 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
     return factor_dictionary
 
 @router.post("/read")
-async def read_influxdb(conditions: List[FacilityData]):
+async def read_influxdb(conditions: List[SectionData]):
 
     # get facility, parameter, df from influxdb
     graph_type, graph_df = get_datas(conditions)
+    print('graph_type', graph_type)
+    print('graph_df', graph_df)
     plots = bokeh_service.draw_dataframe_to_graph(graph_type, graph_df)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 

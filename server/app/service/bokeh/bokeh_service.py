@@ -9,56 +9,42 @@ import pandas as pd
 import numpy as np
 
 
-def draw_dataframe_to_graph(df_list, facility_list, graph_type):
+def draw_dataframe_to_graph(graph_type, graph_df):
     if (graph_type == "time"):
-        return draw_graph_time_standard(df_list, facility_list)
+        return draw_graph_time_standard(graph_df)
     elif (graph_type == "step"):
-        return draw_graph_step_standard(df_list, facility_list)
+        return draw_graph_step_standard(graph_df)
     # if len(df_list) == 1:
     #     return draw_single_dataframe_to_graph(df_list[0], facility_list[0])
     # else:
     #     return draw_multi_dataframe_to_graph(df_list, facility_list)
 
 
-def draw_graph_time_standard(df_list, facility_list):
+def draw_graph_time_standard(graph_df):
     plots = []
-    p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time (seconds)',
-               y_axis_label='Value',
-               height=400)
-
+    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value" )
     colors = Category10_10
 
-    for i, df in enumerate(df_list):
-        df_name = facility_list[i]
-        df["Time"] = pd.to_datetime(df["Time"], utc=True)
+    # print("=======draw_graph_time_standard========")
+    # print(graph_df.columns)
+    facility_list = []
+    column_list = []
 
-        color = colors[i % len(colors)]
-        source = ColumnDataSource(data=df)
+    graph_df["Time"] = pd.to_datetime(graph_df["Time"], utc=True)
 
-        for j, column_name in enumerate(df.columns[1:]):
-            line = p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}",
-                          color=color)
+    for column in graph_df.columns:
+        if column == "Time":
+            continue
 
-            hover = HoverTool(renderers=[line], tooltips=[
-                ('facility', f'{df_name}'),
-                ('time', '@Time{%H:%M:%S}'),
-                ('Value', '$y')
-            ], formatters={'@x': 'datetime'})
-
-            # max_value, min_value, average = calc_df_values(source, df_name, column_name)
-            # average_line = Span(location=average, dimension='width', line_color=color, line_width=1)
-            # p.add_layout(average_line)
-            # average_hover = HoverTool(renderers=[line], tooltips=[
-            #     ('facility', f'{df_name}'),
-            #     ('Value', f'{average}')
-            # ])
-            # p.add_tools(average_hover)
-
+        facility, column_name = column.split("_")
+        color = colors[len(p.renderers) % len(colors)]
+        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
+        hover = HoverTool(renderers=[line], tooltips=[
+                     ('facility', f'{column}'),
+                     ('time', '@Time{%H:%M:%S}'),
+                     ('Value', '$y')
+                 ], formatters={'@x': 'datetime'})
         p.add_tools(hover)
-
-        # # 최댓값과 최솟값 텍스트 추가
-        # p.text(x=[0], y=[0], text=[f'Min: {min_value}, Max: {max_value}'], text_font_size="10pt",
-        #        text_baseline="bottom", text_align="left", text_color="black")
 
     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
     p.legend.location = "top_left"
@@ -68,126 +54,28 @@ def draw_graph_time_standard(df_list, facility_list):
     return plots
 
 
-def draw_graph_step_standard(df_list, facility_list):
+def draw_graph_step_standard(graph_df):
     plots = []
-    p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time (seconds)',
-               y_axis_label='Value',
-               height=400)
-
+    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value")
     colors = Category10_10
 
-    if len(df_list) == 1:
-        start_time = pd.to_datetime(df_list[0]["Time"], utc=True).min()
+    start_time = graph_df["Time"].min()
+    graph_df["Time"] = (graph_df["Time"] - start_time).dt.total_seconds()
 
-    else :
-        for i, df in enumerate(df_list):
-            start_time = pd.to_datetime(df["Time"], utc=True).min()
+    for column in graph_df:
+        if column == "Time":
+            continue
 
-            df_name = facility_list[i]
-            df["Time"] = (pd.to_datetime(df["Time"], utc=True) - start_time).dt.total_seconds()
-
-            color = colors[i % len(colors)]
-            source = ColumnDataSource(data=df)
-
-            for j, column_name in enumerate(df.columns[1:]):
-                line = p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}",
-                              color=color)
-
-                hover = HoverTool(renderers=[line], tooltips=[
-                    ('facility', f'{df_name}'),
-                    ('time', '@Time seconds'),
-                    ('Value', '$y')
-                ])
-
-                p.add_tools(hover)
-
-    p.x_range.start = 0
-    p.xaxis.formatter = NumeralTickFormatter(format="0")
-    p.legend.location = "top_left"
-    p.toolbar.autohide = True
-    plots.append(p)
-
-    return plots
-
-
-def draw_single_dataframe_to_graph(df, facility):
-
-    plots = []
-    all_data = []
-
-    time_values = pd.to_datetime(df["Time"], utc=True)
-
-    combined_data = dict(x=time_values)
-    for column in df.columns:
-        if column != "Time":
-            column_data = df[column]
-            all_data.append(column_data)
-            combined_data[column] = column_data.values
-
-    source = ColumnDataSource(data=combined_data)
-
-    p = figure(title="facility", sizing_mode="scale_both", x_axis_label='Time', y_axis_label='Value',
-               height=800)
-
-    for i, column_name in enumerate(df.columns[1:]):
-        line = p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
+        facility, column_name = column.split("_")
+        color = colors[len(plots) % len(colors)]
+        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
 
         hover = HoverTool(renderers=[line], tooltips=[
-            ('facility', f'{facility}'),
-            ('time', '@x{%H:%M:%S}'),
+            ('facility', f'{column}'),
+            ('time', '@Time seconds'),
             ('Value', '$y')
-        ],  formatters={'@x': 'datetime'})
-
-    p.add_tools(hover)
-
-    p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
-    p.legend.location = "top_left"
-    p.toolbar.autohide = True
-    plots.append(p)
-
-    return plots
-
-
-def draw_multi_dataframe_to_graph(df_list, facility_list):
-    plots = []
-    p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time (seconds)',
-               y_axis_label='Value',
-               height=400)
-
-    colors = Category10_10
-
-    for i, df in enumerate(df_list):
-        start_time = pd.to_datetime(df["Time"], utc=True).min()
-        df_name = facility_list[i]
-        df["Time"] = (pd.to_datetime(df["Time"], utc=True) - start_time).dt.total_seconds()
-
-        color = colors[i % len(colors)]
-        source = ColumnDataSource(data=df)
-
-        for j, column_name in enumerate(df.columns[1:]):
-            line = p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}",
-                          color=color)
-
-            hover = HoverTool(renderers=[line], tooltips=[
-                ('facility', f'{df_name}'),
-                ('time', '@Time seconds'),
-                ('Value', '$y')
-            ])
-
-            # max_value, min_value, average = calc_df_values(source, df_name, column_name)
-            # average_line = Span(location=average, dimension='width', line_color=color, line_width=1)
-            # p.add_layout(average_line)
-            # average_hover = HoverTool(renderers=[line], tooltips=[
-            #     ('facility', f'{df_name}'),
-            #     ('Value', f'{average}')
-            # ])
-            # p.add_tools(average_hover)
-
+        ])
         p.add_tools(hover)
-
-        # # 최댓값과 최솟값 텍스트 추가
-        # p.text(x=[0], y=[0], text=[f'Min: {min_value}, Max: {max_value}'], text_font_size="10pt",
-        #        text_baseline="bottom", text_align="left", text_color="black")
 
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
@@ -197,6 +85,184 @@ def draw_multi_dataframe_to_graph(df_list, facility_list):
 
     return plots
 
+
+# def draw_graph_step_standard(df_list, facility_list):
+#     plots = []
+#     p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time (seconds)',
+#                y_axis_label='Value',
+#                height=400)
+#
+#     colors = Category10_10
+#
+#     if len(df_list) == 1:
+#         start_time = pd.to_datetime(df_list[0]["Time"], utc=True).min()
+#
+#     else :
+#         for i, df in enumerate(df_list):
+#             start_time = pd.to_datetime(df["Time"], utc=True).min()
+#
+#             df_name = facility_list[i]
+#             df["Time"] = (pd.to_datetime(df["Time"], utc=True) - start_time).dt.total_seconds()
+#
+#             color = colors[i % len(colors)]
+#             source = ColumnDataSource(data=df)
+#
+#             for j, column_name in enumerate(df.columns[1:]):
+#                 line = p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}",
+#                               color=color)
+#
+#                 hover = HoverTool(renderers=[line], tooltips=[
+#                     ('facility', f'{df_name}'),
+#                     ('time', '@Time seconds'),
+#                     ('Value', '$y')
+#                 ])
+#
+#                 p.add_tools(hover)
+#
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
+
+
+# def draw_graph_time_standard(df_list, facility_list):
+#     plots = []
+#     p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time (seconds)',
+#                y_axis_label='Value',
+#                height=400)
+#
+#     colors = Category10_10
+#
+#     for i, df in enumerate(df_list):
+#         df_name = facility_list[i]
+#         df["Time"] = pd.to_datetime(df["Time"], utc=True)
+#
+#         color = colors[i % len(colors)]
+#         source = ColumnDataSource(data=df)
+#
+#         for j, column_name in enumerate(df.columns[1:]):
+#             line = p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}",
+#                           color=color)
+#
+#             hover = HoverTool(renderers=[line], tooltips=[
+#                 ('facility', f'{df_name}'),
+#                 ('time', '@Time{%H:%M:%S}'),
+#                 ('Value', '$y')
+#             ], formatters={'@x': 'datetime'})
+#
+#             # max_value, min_value, average = calc_df_values(source, df_name, column_name)
+#             # average_line = Span(location=average, dimension='width', line_color=color, line_width=1)
+#             # p.add_layout(average_line)
+#             # average_hover = HoverTool(renderers=[line], tooltips=[
+#             #     ('facility', f'{df_name}'),
+#             #     ('Value', f'{average}')
+#             # ])
+#             # p.add_tools(average_hover)
+#
+#         p.add_tools(hover)
+#
+#         # # 최댓값과 최솟값 텍스트 추가
+#         # p.text(x=[0], y=[0], text=[f'Min: {min_value}, Max: {max_value}'], text_font_size="10pt",
+#         #        text_baseline="bottom", text_align="left", text_color="black")
+#
+#     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
+#
+#
+
+# def draw_single_dataframe_to_graph(df, facility):
+#
+#     plots = []
+#     all_data = []
+#
+#     time_values = pd.to_datetime(df["Time"], utc=True)
+#
+#     combined_data = dict(x=time_values)
+#     for column in df.columns:
+#         if column != "Time":
+#             column_data = df[column]
+#             all_data.append(column_data)
+#             combined_data[column] = column_data.values
+#
+#     source = ColumnDataSource(data=combined_data)
+#
+#     p = figure(title="facility", sizing_mode="scale_both", x_axis_label='Time', y_axis_label='Value',
+#                height=800)
+#
+#     for i, column_name in enumerate(df.columns[1:]):
+#         line = p.line(x='x', y=column_name, source=source, legend_label=column_name, color=Category10_10[i])
+#
+#         hover = HoverTool(renderers=[line], tooltips=[
+#             ('facility', f'{facility}'),
+#             ('time', '@x{%H:%M:%S}'),
+#             ('Value', '$y')
+#         ],  formatters={'@x': 'datetime'})
+#
+#     p.add_tools(hover)
+#
+#     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
+#
+#
+# def draw_multi_dataframe_to_graph(df_list, facility_list):
+#     plots = []
+#     p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time (seconds)',
+#                y_axis_label='Value',
+#                height=400)
+#
+#     colors = Category10_10
+#
+#     for i, df in enumerate(df_list):
+#         start_time = pd.to_datetime(df["Time"], utc=True).min()
+#         df_name = facility_list[i]
+#         df["Time"] = (pd.to_datetime(df["Time"], utc=True) - start_time).dt.total_seconds()
+#
+#         color = colors[i % len(colors)]
+#         source = ColumnDataSource(data=df)
+#
+#         for j, column_name in enumerate(df.columns[1:]):
+#             line = p.line(x='Time', y=column_name, source=source, legend_label=f"{df_name} - {column_name}",
+#                           color=color)
+#
+#             hover = HoverTool(renderers=[line], tooltips=[
+#                 ('facility', f'{df_name}'),
+#                 ('time', '@Time seconds'),
+#                 ('Value', '$y')
+#             ])
+#
+#             # max_value, min_value, average = calc_df_values(source, df_name, column_name)
+#             # average_line = Span(location=average, dimension='width', line_color=color, line_width=1)
+#             # p.add_layout(average_line)
+#             # average_hover = HoverTool(renderers=[line], tooltips=[
+#             #     ('facility', f'{df_name}'),
+#             #     ('Value', f'{average}')
+#             # ])
+#             # p.add_tools(average_hover)
+#
+#         p.add_tools(hover)
+#
+#         # # 최댓값과 최솟값 텍스트 추가
+#         # p.text(x=[0], y=[0], text=[f'Min: {min_value}, Max: {max_value}'], text_font_size="10pt",
+#         #        text_baseline="bottom", text_align="left", text_color="black")
+#
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
 
 
 def save_graph_data(df_list, facility_list):
