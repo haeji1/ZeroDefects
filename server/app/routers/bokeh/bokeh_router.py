@@ -59,7 +59,7 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
     for records in result:
         for record in records:
             if flag:
-                iso_time = record.get_time().isoformat() # + "Z"
+                iso_time = record.get_time().isoformat()
                 factor_dictionary['Time'].append(iso_time)
             factor_dictionary[record.get_field()].append(record.get_value())
         flag = False
@@ -70,8 +70,8 @@ def execute_query(client: InfluxDBClient, org: str, query: str) -> List[Dict[str
 async def read_influxdb(conditions: List[FacilityData]):
 
     # get facility, parameter, df from influxdb
-    graph_type, graph_df = get_datas(conditions)
-    plots = bokeh_service.draw_dataframe_to_graph(graph_type, graph_df)
+    facility_list, parameter_list, df_list, graph_type = get_datas(conditions)
+    plots = bokeh_service.draw_dataframe_to_graph(df_list, facility_list, graph_type)
     plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
     return JSONResponse(content=plot_json)
