@@ -11,7 +11,7 @@ from influxdb_client.client.warnings import MissingPivotFunction
 import pandas as pd
 from influxdb_client import InfluxDBClient
 
-from app.models.influx.influx_models import FacilityData
+from app.models.influx.influx_models import FacilityData, SectionData
 
 from config import settings
 
@@ -38,7 +38,7 @@ def get_facilities_info():
     return {'result': dict(facilities)}
 
 # get data
-def get_datas(conditions: List[FacilityData]) -> []:
+def get_datas(conditions: List[SectionData]) -> []:
     start_time = time.time()
     facility_list = []
     parameter_list = []
