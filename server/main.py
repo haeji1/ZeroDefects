@@ -4,25 +4,18 @@ from fastapi import FastAPI
 
 from app.dbtest import timescale
 # bokeh
-from bokeh.plotting import figure
-from bokeh.embed import json_item
 
 from app.models.influx.influx_models import FacilityData
-# section
-from app.utils.functions.section import get_section_data
 
 from app.routers.bokeh import bokeh_router
 from app.routers.influx import influx_router
 from app.routers.mongo import mongo_router
+from app.routers.section import section_router
+from app.dbtest import timescale
 
 # postgreSQL
-from database import engine
-from psycopg2 import IntegrityError
-from datetime import datetime, timedelta
 
 # data frame
-import pandas as pd
-import numpy as np
 
 # cors
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,4 +36,3 @@ app.include_router(bokeh_router.router)
 app.include_router(influx_router.influx_router)
 app.include_router(mongo_router.mongo_router)
 app.include_router(section_router.section_router)
-app.include_router(timescale.timescale_router)
