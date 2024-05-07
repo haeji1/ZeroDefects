@@ -94,10 +94,10 @@ async def get_single_data_line(conditions: List[FacilityData]):
         "facility": facility
     }
     print("===========response_data=========")
-    print(JSONResponse(content=response_data))
+    # print(JSONResponse(content=response_data))
     return JSONResponse(content=response_data)
 
-@router.post("read/multi/line")
+@router.post("/read/multi/line")
 async def get_multi_data_line(conditions: List[FacilityData]):
 
     facility_list, parameter_list, df_list = get_datas(conditions)
