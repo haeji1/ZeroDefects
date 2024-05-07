@@ -34,13 +34,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { useFacilityStore } from "@/stores/Facility";
+import { useBatchStore } from "@/stores/Facility";
 
 function BookmarkTable() {
 
     const { bookmark, deleteBookmark } = useBookmarkStore();
     const { setSelectedBookmark } = useSelectedBookmarkStore();
-    const { batchList } = useFacilityStore();
+    const { batchList } = useBatchStore();
 
     // 테이블 관련 hook
     // ==============================
