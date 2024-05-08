@@ -130,6 +130,7 @@ function DragAndDropFileRecipe() {
           id="fileInput"
           type="file"
           style={{ display: "none" }}
+          multiple={true}
           onChange={handleFileSelect}
           accept=".xls, .xlsx"
         />
