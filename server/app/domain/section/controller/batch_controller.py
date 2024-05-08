@@ -29,9 +29,9 @@ async def get_batches(facility: FacilityInfo):
     return {"batches": get_batches_info(facility)}
 
 
-@section_router.get("/bokeh-section")
-def read_section(request_body: List[FacilityData]):
-    return batch_service.read_from_section(request_body)
+# @section_router.get("/bokeh-section")
+# def read_section(request_body: List[FacilityData]):
+#     return batch_service.read_from_section(request_body)
 
 
 @section_router.post("/draw-graph")

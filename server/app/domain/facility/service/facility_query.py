@@ -37,8 +37,8 @@ def fields_time_query(b: str, facility: str, fields, start_date: str, end_date: 
 # query for field time
 def field_time_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
     # date string -> date obj
-    start_dt = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%fZ")
-    end_dt = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
 
     # calculate window size
     window_size_seconds = (end_dt - start_dt).total_seconds()

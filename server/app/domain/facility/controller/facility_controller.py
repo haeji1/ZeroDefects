@@ -1,10 +1,10 @@
 import os
 from fastapi import APIRouter, File, UploadFile, HTTPException
 
-from influxdb_client import InfluxDBClient
-
 from collections import defaultdict
 from typing import List
+
+from app.domain.facility.repository.influx_client import InfluxGTRClient
 from config import settings
 from starlette.responses import JSONResponse
 
@@ -20,7 +20,7 @@ facility_router = APIRouter(prefix="/facility", tags=['request'])
 
 @facility_router.post("/write")
 async def write_influxdb(files: List[UploadFile] = File(...)):
-    client = InfluxDBClient(url=url, token=token, org=organization, bucket_name=bucket)
+    client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
     content = client.write_csv(files)
     return JSONResponse(status_code=200, content=content)
 

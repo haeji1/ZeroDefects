@@ -8,5 +8,5 @@ class FacilityData(BaseModel):
     parameter: str
     startTime: str
     endTime: str
-    cycleName: Optional[str] = None
+    batchName: Optional[str] = None
     step: Optional[int] = None
