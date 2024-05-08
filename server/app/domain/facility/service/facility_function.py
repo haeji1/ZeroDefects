@@ -40,7 +40,7 @@ def get_facilities_info():
     return {'result': dict(facilities)}
 
 # get data
-def get_datas(conditions: List[SectionData]) -> []:
+def get_datas(conditions: List[SectionData]):
     start_time = time.time()
     result_df = pd.DataFrame()
     client = InfluxDBClient(url=url, token=token, org=organization)
@@ -75,7 +75,7 @@ def get_datas(conditions: List[SectionData]) -> []:
                 raise HTTPException(500, str(e))
 
     print('time: ', time.time() - start_time)
-    return ["step", result_df]
+    return result_df
 # get df TRC
 def get_df_TRC(condition: FacilityData):
     client = InfluxDBClient(url=url, token=token, org=organization)

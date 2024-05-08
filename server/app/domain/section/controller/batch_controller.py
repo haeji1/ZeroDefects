@@ -52,8 +52,8 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=request_body.queryCondition.startTime,
                 endTime=request_body.queryCondition.endTime
             ))
-            graph_type, graph_df = get_datas(sections)
-            plots = draw_dataframe_to_graph(graph_type, graph_df)
+            graph_df = get_datas(sections)
+            plots = draw_dataframe_to_graph("time", graph_df)
             plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
@@ -71,8 +71,8 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=s['startTime'],
                 endTime=s['endTime']
             ))
-        graph_type, graph_df = get_datas(sections_list)
-        plots = draw_dataframe_to_graph(graph_type, graph_df)
+        graph_df = get_datas(sections_list)
+        plots = draw_dataframe_to_graph("step", graph_df)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
         if not sections:
