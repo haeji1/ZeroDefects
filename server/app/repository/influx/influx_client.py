@@ -55,7 +55,7 @@ class InfluxGTRClient:
     # constructor
     def __init__(self, url: str, token: str, org: str, bucket_name: str) -> None:
         self.bucket_name = bucket_name
-        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=60000)
+        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=1200000)
 
     # write
     def write_csv(self, files: List[UploadFile] = File(...), batch_size=900) -> []:
@@ -88,7 +88,7 @@ class InfluxGTRClient:
     def read_data(self, conditions: List[SectionData]) -> []:
         start_time = time.time()
         result_df = pd.DataFrame()
-
+        print('conditions: ', conditions)
         # conditions length == 1
         if len(conditions) == 1:
             query = field_time_query(
@@ -122,7 +122,7 @@ class InfluxGTRClient:
                     raise HTTPException(500, str(e))
 
         print('time: ', time.time() - start_time)
-        return ["step", result_df]
+        return ["time", result_df]
     def read_info(self):
         answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
 

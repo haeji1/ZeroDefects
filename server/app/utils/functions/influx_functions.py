@@ -39,9 +39,10 @@ def get_facilities_info():
 
 # get data
 def get_datas(conditions: List[SectionData]) -> []:
+    print('conditions', conditions)
     start_time = time.time()
     result_df = pd.DataFrame()
-    client = InfluxDBClient(url=url, token=token, org=organization)
+    client = InfluxDBClient(url=url, token=token, org=organization, timeout=1200000)
 
     # conditions length == 1
     if len(conditions) == 1:
@@ -73,7 +74,7 @@ def get_datas(conditions: List[SectionData]) -> []:
                 raise HTTPException(500, str(e))
 
     print('time: ', time.time() - start_time)
-    return ["step", result_df]
+    return ["time", result_df]
 # get df TRC
 def get_df_TRC(condition: FacilityData):
     client = InfluxDBClient(url=url, token=token, org=organization)
@@ -129,6 +130,7 @@ def field_time_query(b: str, facility: str, field: str, start_date: str, end_dat
             from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
+                |> aggregateWindow(every: 2m, fn: mean, createEmpty: false)
                 |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
             //  |> rename(columns: {{"{field}": "Value"}})
                 |> keep(columns: ["_time", "{field}", "P.MF211Ar[sccm]"])

@@ -18,7 +18,7 @@ def draw_dataframe_to_graph(graph_type, graph_df):
 
 def draw_graph_time_standard(graph_df):
     plots = []
-    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value" )
+    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", max_height=1000)
     colors = Category10_10
 
     graph_df["Time"] = pd.to_datetime(graph_df["Time"], utc=True)
@@ -30,13 +30,12 @@ def draw_graph_time_standard(graph_df):
         facility, column_name = column.split("-")
 
         color = colors[len(p.renderers) % len(colors)]
-        # line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
         line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
         hover = HoverTool(renderers=[line], tooltips=[
                      ('facility', f'{column}'),
-                     ('time', '@Time{%H:%M:%S}'),
+                     ('time', '@Time{%F %T}'),
                      ('Value', '$y')
-                 ], formatters={'@x': 'datetime'})
+                 ], formatters={'@Time': 'datetime'})
         p.add_tools(hover)
 
     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
@@ -49,7 +48,7 @@ def draw_graph_time_standard(graph_df):
 
 def draw_graph_step_standard(graph_df):
     plots = []
-    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value")
+    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
     colors = Category10_10
 
     start_time = graph_df["Time"].min()
