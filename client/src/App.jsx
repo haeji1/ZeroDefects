@@ -1,6 +1,4 @@
-import ReactDOM from 'react-dom/client'
-import "@/app/global.css"
-import { ImageProvider } from '@/components/domain/dashboard/ImageContext'
+import { createContext, useState, useContext } from "react";
 import Dashboard from '@/pages/Dashboard'
 import Settings from '@/pages/Settings'
 import Analysis from '@/pages/Analysis'
@@ -11,6 +9,22 @@ import {
   RouterProvider,
 } from 'react-router-dom'
 import Navbar from './components/common/Navbar'
+import ReactDOM from 'react-dom/client'
+import "@/app/global.css"
+
+const ImageContext = createContext();
+
+const ImageProvider = ({ children }) => {
+  const [image, setImage] = useState(null);
+
+  return (
+    <ImageContext.Provider value={{ image, setImage }}>
+      {children}
+    </ImageContext.Provider>
+  );
+};
+
+const useImage = () => useContext(ImageContext);
 
 function App() {
 
@@ -51,7 +65,6 @@ function App() {
   )
 }
 
-export default App
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
 )

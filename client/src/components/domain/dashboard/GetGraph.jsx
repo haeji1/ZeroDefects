@@ -24,7 +24,7 @@ function GetGraph() {
     const [endStep, setEndStep] = useState();
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
     const { selectedBookmark } = useSelectedBookmarkStore();
-    const { setIsFetching } = useGraphDataStore()
+    const { setIsFetching, setGraphData } = useGraphDataStore()
 
     const [selectedButton, setSelectedButton] = useState('time');
 
@@ -80,9 +80,9 @@ function GetGraph() {
                 }
             })
         }
-        console.log(data)
-        // const res = await getGraph(data)
-        // setGraphData(res);
+        const res = await getGraph(data)
+        setGraphData(res.data);
+        setIsFetching(false)
     }
 
 
