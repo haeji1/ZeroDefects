@@ -2,21 +2,13 @@ import { create } from "zustand";
 
 const FileDataForSettings = create((set) => ({
   files: [],
-  fileCount: 0,
-  incrementFileCount: () => {
-    set((state) => ({ fileCount: state.fileCount + 1 }));
-  },
-  decrementFileCount: () => {
-    set((state) => ({ fileCount: state.fileCount - 1 }));
-  },
   addFiles: (newFiles) =>
     set((state) => ({ files: [...state.files, ...newFiles] })),
   deleteFile: (fileName) =>
     set((state) => ({
       files: state.files.filter((file) => file.name !== fileName),
-      fileCount: state.fileCount -1,
     })),
-  clearFiles: () => set({ files: [], fileCount: 0 }),
+  clearFiles: () => set({ files: []}),
   addOrUpdateFiles: (newFiles) =>
     set((state) => {
       const updatedFiles = [...state.files];

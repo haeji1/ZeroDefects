@@ -7,15 +7,12 @@ import { useState } from "react";
 import Loading from "./Loading";
 
 function DragAndDropFileFacility() {
-  const { files, fileCount ,addFiles, clearFiles, addOrUpdateFiles,incrementFileCount,decrementFileCount } = FileDataForSettings(
+  const { files ,addFiles, clearFiles, addOrUpdateFiles } = FileDataForSettings(
     (state) => ({
       addFiles: state.addFiles,
       files: state.files,
-      fileCount: state.fileCount,
-      decrementFileCount: state.decrementFileCount,
       clearFiles: state.clearFiles,
       addOrUpdateFiles: state.addOrUpdateFiles,
-      incrementFileCount: state.incrementFileCount,
     })
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +39,6 @@ function DragAndDropFileFacility() {
         "유효하지 않은 파일 형식이 포함되어 있습니다. CSV 파일만 업로드해주세요."
       );
     }
-
     for (const file of validFiles) {
       // 변경된 부분: 여기서 files는 상태에서 가져온 파일 리스트입니다.
       const hasFile = files.some(
@@ -57,8 +53,7 @@ function DragAndDropFileFacility() {
           addOrUpdateFiles([file]);
         }
       } else {
-        addOrUpdateFiles([file]);
-        incrementFileCount();
+        addFiles([file]);
       }
     }
   };
@@ -68,6 +63,8 @@ function DragAndDropFileFacility() {
     if (files.length) {
       handleFiles(files);
     }
+    // 파일이 업로드 하고 삭제하고 또 업로드 할 때 반영 안되는 거 오류 해결 코드
+    e.target.value = '';
   };
   const uploadFiles = (e) => {
     e.preventDefault();
@@ -97,7 +94,7 @@ function DragAndDropFileFacility() {
         console.log(res.data);
         console.log("첨부파일 보내기 성공");
         clearFiles(); // 업로드 후 파일 목록 지우기
-        alert( fileCount + "개 파일 업로드 완료")
+        alert( files.length + "개 파일 업로드 완료")
         setIsLoading(false);
       })
       .catch((err) => {
@@ -134,7 +131,7 @@ function DragAndDropFileFacility() {
       <div style={{ paddingTop: "20px" }} />
       <FileList/>
       <div style={{ paddingTop: "20px" }} />
-      <div>{fileCount}개의 파일</div>
+      <div>{files.length}개의 파일</div>
       {isLoading ? (
         // 로딩 중일 때 로딩 컴포넌트 렌더링
         <div>
