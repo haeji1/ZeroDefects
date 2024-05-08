@@ -4,9 +4,10 @@ import uvicorn
 from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
 
+from app.domain.section.model.faciltiy_info import FacilityInfo
+from app.domain.section.model.graph_query_request import GraphQueryRequest
 from config import settings
 from app.domain.facility.model.facility_data import FacilityData
-from app.domain.section.model.batch_info import FacilityInfo
 from app.domain.section.service import batch_service
 from app.domain.section.service.batch_service import get_batches_info
 
@@ -31,3 +32,8 @@ async def get_batches(facility: FacilityInfo):
 @section_router.get("/bokeh-section")
 def read_section(request_body: List[FacilityData]):
     return batch_service.read_from_section(request_body)
+
+
+@section_router.post("/draw-graph")
+async def draw_graph(request_body: GraphQueryRequest):
+    return batch_service.draw_graph(request_body)

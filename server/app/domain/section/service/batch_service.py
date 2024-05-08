@@ -1,12 +1,19 @@
 import os
 from typing import List
 
+from bokeh.embed import json_item
 from dotenv import load_dotenv
+from fastapi import HTTPException
 from pymongo import MongoClient, ReplaceOne
 from starlette.responses import JSONResponse
 
 from app.domain.facility.model.facility_data import FacilityData
-from app.domain.section.model.batch_info import FacilityInfo, BatchInfo
+from app.domain.facility.service.facility_function import get_datas
+from app.domain.graph.service.draw_service import draw_dataframe_to_graph
+from app.domain.section.model.batch_info import BatchInfo
+from app.domain.section.model.faciltiy_info import FacilityInfo
+from app.domain.section.model.graph_query_request import GraphQueryRequest
+from app.domain.section.model.section_data import SectionData
 
 load_dotenv()
 
@@ -138,3 +145,69 @@ def read_from_section(request_body: List[FacilityData]):
                         break
 
     return JSONResponse(status_code=200, content=results)
+
+
+def draw_graph(request_body: GraphQueryRequest):
+    if request_body.queryType == "time":
+        sections: List[SectionData] = []
+        for data in request_body.queryData:
+            sections.append(SectionData(
+                facility=data.facility,
+                batchName=data.batchName,
+                parameter=data.parameter,
+                startTime=request_body.queryCondition.startTime,
+                endTime=request_body.queryCondition.endTime
+            ))
+            print('sections ', sections)
+            facility_list, parameter_list, df_list = get_datas(sections)
+            plots = draw_dataframe_to_graph(df_list, facility_list)
+            plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
+
+        return JSONResponse(status_code=200, content=plot_json)
+    elif request_body.queryType == "step":
+        sections = get_sections_info(request_body)
+        if not sections:
+            raise HTTPException(status_code=404, detail="Sections not found")
+        return {"sections": sections}
+    else:
+        raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")
+
+
+def get_sections_info(request_body: GraphQueryRequest) -> []:
+    responses = []
+
+    for data in request_body.queryData:
+        print("data:", data)
+        collection = db[data.facility]
+        batch_document = collection.find_one({"batchName": data.batchName})
+        if not batch_document:
+            raise HTTPException(status_code=404, detail=f"Batch {data.batchName} not found in {data.facility}")
+
+        steps = request_body.queryCondition.step
+        if not steps:
+            raise HTTPException(status_code=400, detail="Invalid step range")
+
+        start_time = None
+        end_time = None
+
+        start_step_key = f"step{steps[0]}"
+        end_step_key = f"step{steps[-1]}"
+        for step_item in batch_document['steps']:
+            if start_step_key in step_item:
+                start_time = step_item[start_step_key][f"{start_step_key}StartTime"]
+            if end_step_key in step_item:
+                end_time = step_item[end_step_key][f"{end_step_key}EndTime"]
+
+        if start_time is None or end_time is None:
+            raise HTTPException(status_code=404, detail="No step in batch")
+
+        response = {
+            "facility": data.facility,
+            "batchName": data.batchName,
+            "parameter": data.parameter,
+            "startTime": start_time,
+            "endTime": end_time
+        }
+        responses.append(response)
+
+    return responses

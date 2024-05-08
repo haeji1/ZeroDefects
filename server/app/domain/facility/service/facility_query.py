@@ -50,9 +50,10 @@ def field_time_query(b: str, facility: str, field: str, start_date: str, end_dat
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
                 |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-                |> rename(columns: {{"{field}": "Value"}})
-                |> keep(columns: ["_time", "Value"])
+            //  |> rename(columns: {{"{field}": "Value"}})
+                |> keep(columns: ["_time", "{field}", "P.MF211Ar[sccm]"])
             '''
+
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''

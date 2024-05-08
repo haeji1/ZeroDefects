@@ -9,10 +9,3 @@ class BatchInfo(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-
-
-class FacilityInfo(BaseModel):
-    facility: str
-
-    class Config:
-        arbitrary_types_allowed = True

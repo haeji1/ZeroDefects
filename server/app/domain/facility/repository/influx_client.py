@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta
 import time
 from io import StringIO
-
+from collections import defaultdict
 import pandas as pd
 from fastapi import UploadFile, File, HTTPException
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -11,17 +11,17 @@ from influxdb_client.client.write.dataframe_serializer import data_frame_to_list
 
 from typing import List, Any
 from loguru import logger
-from starlette.responses import JSONResponse
 
-from app.domain.facility.service.facility_query import field_time_query, execute_query
+from app.domain.facility.service.facility_query import field_time_query, execute_query, info_measurements_query, \
+    info_field_query
 from app.domain.section.model.section_data import SectionData
+from app.domain.section.service.batch_service import save_section_data
 from config import settings
 
 # from influxapi.schemas import InfluxWaveRecord
 
 import logging
 
-from app.domain.section.service.batch_service import save_section_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class BadQueryException(Exception):
     DESCRIPTION = "Bad query"
 
 
-class FacilityRepository:
+class InfluxDBClient:
 
     # constructor
     def __init__(self, url: str, token: str, org: str, bucket_name: str) -> None:
@@ -121,6 +121,18 @@ class FacilityRepository:
 
         print('time: ', time.time() - start_time)
         return ["step", result_df]
+
+    def read_info(self):
+        answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
+
+        facilities = defaultdict(list)
+        for measurement in answer_measurements['_value']:
+            answer_fields = self.client.query_api().query_data_frame(info_field_query(b=self.bucket_name, measurement=measurement))
+
+            fields = [field for field in answer_fields['_value']]
+            facilities[measurement] = fields
+
+        return {'result': dict(facilities)}
 
     # @classmethod
     # def write_df(cls, write_api, file: File(), batch_size=1000):

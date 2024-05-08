@@ -8,7 +8,6 @@ from app.domain.recipe.controller import recipe_controller
 from app.domain.section.controller import batch_controller
 # bokeh
 
-from app.models.influx.influx_models import FacilityData
 
 # from app.routers.bokeh import bokeh_router
 # from app.routers.influx import influx_router

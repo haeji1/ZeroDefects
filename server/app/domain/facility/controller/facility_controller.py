@@ -1,14 +1,13 @@
 import os
 from fastapi import APIRouter, File, UploadFile, HTTPException
 
+from influxdb_client import InfluxDBClient
 
+from collections import defaultdict
 from typing import List
-
+from config import settings
 from starlette.responses import JSONResponse
 
-from config import settings
-from app.domain.facility.model.facility_data import FacilityData
-from app.domain.facility.repository.facility_repository import FacilityRepository
 from app.domain.facility.service.facility_function import get_facilities_info
 
 url = settings.influx_url
@@ -21,8 +20,9 @@ facility_router = APIRouter(prefix="/facility", tags=['request'])
 
 @facility_router.post("/write")
 async def write_influxdb(files: List[UploadFile] = File(...)):
-    client = FacilityRepository(url=url, token=token, org=organization, bucket_name=bucket)
-    return await client.write_csv(files, 1000)
+    client = InfluxDBClient(url=url, token=token, org=organization, bucket_name=bucket)
+    content = client.write_csv(files)
+    return JSONResponse(status_code=200, content=content)
 
 
 @facility_router.get("/info")
@@ -31,5 +31,5 @@ async def get_info_test():
 
 
 @facility_router.post("/read")
-async def read_influxdb(conditions: List[FacilityData]):
-    return JSONResponse(status_code=200, content={'message': 'success'})
+async def read_influxdb():
+    return
