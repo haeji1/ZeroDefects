@@ -2,8 +2,8 @@ from typing import List
 
 from fastapi import APIRouter
 
-from domain.facility.model.facility_data import FacilityData
-from domain.graph.service import graph_service
+from app.domain.facility.model.facility_data import FacilityData
+from app.domain.graph.service import graph_service
 
 graph_router = APIRouter(
     prefix="/bokeh",

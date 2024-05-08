@@ -19,7 +19,7 @@ from config import settings
 
 import logging
 
-from domain.section.service.batch_service import save_section_data
+from app.domain.section.service.batch_service import save_section_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

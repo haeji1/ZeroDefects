@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile
-from domain.recipe.service import recipe_service
+from app.domain.recipe.service import recipe_service
 
 
 recipe_router = APIRouter(prefix="/facility", tags=['setting'])

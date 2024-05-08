@@ -13,8 +13,8 @@ from influxdb_client import InfluxDBClient
 
 
 from config import settings
-from domain.facility.model.facility_data import FacilityData
-from domain.facility.service import facility_query
+from app.domain.facility.model.facility_data import FacilityData
+from app.domain.facility.service import facility_query
 
 url = settings.influx_url
 token = settings.influx_token

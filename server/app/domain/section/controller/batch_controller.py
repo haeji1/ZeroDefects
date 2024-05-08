@@ -5,10 +5,10 @@ from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
 
 from config import settings
-from domain.facility.model.facility_data import FacilityData
-from domain.section.model.batch_info import FacilityInfo
-from domain.section.service import batch_service
-from domain.section.service.batch_service import get_batches_info
+from app.domain.facility.model.facility_data import FacilityData
+from app.domain.section.model.batch_info import FacilityInfo
+from app.domain.section.service import batch_service
+from app.domain.section.service.batch_service import get_batches_info
 
 url = settings.mongo_furl
 

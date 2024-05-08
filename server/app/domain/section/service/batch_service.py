@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 from pymongo import MongoClient, ReplaceOne
 from starlette.responses import JSONResponse
 
-from domain.facility.model.facility_data import FacilityData
-from domain.section.model.batch_info import FacilityInfo, BatchInfo
+from app.domain.facility.model.facility_data import FacilityData
+from app.domain.section.model.batch_info import FacilityInfo, BatchInfo
 
 load_dotenv()
 

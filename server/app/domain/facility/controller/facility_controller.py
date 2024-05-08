@@ -7,9 +7,9 @@ from typing import List
 from starlette.responses import JSONResponse
 
 from config import settings
-from domain.facility.model.facility_data import FacilityData
-from domain.facility.repository.facility_repository import FacilityRepository
-from domain.facility.service.facility_function import get_facilities_info
+from app.domain.facility.model.facility_data import FacilityData
+from app.domain.facility.repository.facility_repository import FacilityRepository
+from app.domain.facility.service.facility_function import get_facilities_info
 
 url = settings.influx_url
 token = settings.influx_token
