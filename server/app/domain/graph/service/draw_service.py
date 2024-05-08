@@ -10,7 +10,7 @@ import numpy as np
 
 
 def draw_dataframe_to_graph(graph_type, graph_df):
-    save_graph_data(graph_df)
+    # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
     if (graph_type == "time"):
         return draw_graph_time_standard(graph_df)
@@ -53,6 +53,7 @@ def draw_graph_step_standard(graph_df):
     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
     colors = Category10_10
 
+    print("graph_df", graph_df)
     start_time = graph_df["Time"].min()
     graph_df["Time"] = (graph_df["Time"] - start_time).dt.total_seconds()
 

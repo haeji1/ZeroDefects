@@ -37,13 +37,13 @@ def fields_time_query(b: str, facility: str, fields, start_date: str, end_date: 
 # query for field time
 def field_time_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
     # date string -> date obj
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+    # start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+    # end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
 
     # calculate window size
-    window_size_seconds = (end_dt - start_dt).total_seconds()
-    window_size_seconds = 1
-    window_size = f"{int(window_size_seconds)}s"  # Flux에서 사용할 수 있는 형태의 문자열로 변환
+    # window_size_seconds = (end_dt - start_dt).total_seconds()
+    # window_size_seconds = 1
+    # window_size = f"{int(window_size_seconds)}s"  # Flux에서 사용할 수 있는 형태의 문자열로 변환
 
     return f'''
             from(bucket: "{b}")
@@ -51,7 +51,7 @@ def field_time_query(b: str, facility: str, field: str, start_date: str, end_dat
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
                 |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
             //  |> rename(columns: {{"{field}": "Value"}})
-                |> keep(columns: ["_time", "{field}", "P.MF211Ar[sccm]"])
+                |> keep(columns: ["_time", "{field}"])
             '''
 
 # query for get section

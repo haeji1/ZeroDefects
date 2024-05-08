@@ -52,7 +52,7 @@ def get_datas(conditions: List[SectionData]) -> []:
             start_date=conditions[0].startTime, end_date=conditions[0].endTime)
         try:
             result_df = execute_query(client, query)
-            result_df.rename(columns={f'{conditions[0].parameter}': f'{conditions[0].facility}_{conditions[0].parameter}'}, inplace=True)
+            result_df.rename(columns={f'{conditions[0].parameter}': f'{conditions[0].facility}-{conditions[0].parameter}'}, inplace=True)
         except Exception as e:
             raise HTTPException(500, str(e))
 
@@ -69,7 +69,7 @@ def get_datas(conditions: List[SectionData]) -> []:
                 print(e)
 
             try:
-                result_df[f'{condition.facility}_{condition.parameter}'] = execute_query(client, query)[[condition.parameter]]
+                result_df[f'{condition.facility}-{condition.parameter}'] = execute_query(client, query)[[condition.parameter]]
                 # df_list.append(df)
             except Exception as e:
                 raise HTTPException(500, str(e))
