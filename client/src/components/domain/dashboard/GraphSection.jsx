@@ -19,9 +19,9 @@ function GraphSection() {
 
     const { graphData, isFetching } = useGraphDataStore()
 
-    useEffect(() => {
-        console.log(isFetching)
-    }, [isFetching])
+    // useEffect(() => {
+    //     console.log(isFetching)
+    // }, [isFetching])
 
     return (
         <div className="flex flex-col ">
@@ -37,7 +37,6 @@ function GraphSection() {
                     </div> : graphData.length != 0 ?
                         graphData.map((data, index) => (
                             <div key={index}>
-                                <h2>Plot {index + 1}</h2>
                                 <BokehPlot data={data} />
                             </div>
                         )) : <div className="flex flex-col items-center my-[100px]">
