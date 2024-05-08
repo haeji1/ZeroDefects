@@ -8,7 +8,7 @@ from app.domain.facility.repository.influx_client import InfluxGTRClient
 from config import settings
 from starlette.responses import JSONResponse
 
-from app.domain.facility.service.facility_function import get_facilities_info, read_from_influxdb
+from app.domain.facility.service.facility_function import get_facilities_info
 
 url = settings.influx_url
 token = settings.influx_token
@@ -32,4 +32,4 @@ async def get_info_test():
 
 @facility_router.post("/read")
 async def read_influxdb():
-    return read_from_influxdb()
+    return
