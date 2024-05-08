@@ -10,7 +10,11 @@ import numpy as np
 
 
 def draw_dataframe_to_graph(graph_type, graph_df):
+    print("=============graph_type=======")
+    print(graph_type)
     if (graph_type == "time"):
+        print("=========draw_dataframe_to_graph=======")
+        print(graph_type)
         return draw_graph_time_standard(graph_df)
     elif (graph_type == "step"):
         return draw_graph_step_standard(graph_df)
@@ -36,9 +40,10 @@ def draw_graph_time_standard(graph_df):
         if column == "Time":
             continue
 
-        facility, column_name = column.split("_")
+        # facility, column_name = column.split("_")
         color = colors[len(p.renderers) % len(colors)]
-        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
+        # line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
+        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{column} - {column}", color=color)
         hover = HoverTool(renderers=[line], tooltips=[
                      ('facility', f'{column}'),
                      ('time', '@Time{%H:%M:%S}'),
@@ -66,9 +71,10 @@ def draw_graph_step_standard(graph_df):
         if column == "Time":
             continue
 
-        facility, column_name = column.split("_")
+        # facility, column_name = column.split("_")
         color = colors[len(plots) % len(colors)]
-        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
+        # line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
+        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{column} - {column}", color=color)
 
         hover = HoverTool(renderers=[line], tooltips=[
             ('facility', f'{column}'),
