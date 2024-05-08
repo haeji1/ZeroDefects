@@ -1,4 +1,7 @@
 {
+    "include": [
+        "src/**/*"
+    ],
     "compilerOptions": {
         "target": "ES5",
         "module": "CommonJS",
@@ -11,6 +14,9 @@
             "@/*": [
                 "./src/*"
             ]
-        }
+        },
+        "types": [
+            "vite/client"
+        ],
     }
 }
