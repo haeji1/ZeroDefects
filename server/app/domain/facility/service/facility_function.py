@@ -10,8 +10,10 @@ from influxdb_client.client.warnings import MissingPivotFunction
 
 import pandas as pd
 from influxdb_client import InfluxDBClient
+from starlette.responses import JSONResponse
 
 from app.domain.facility.model.facility_data import FacilityData
+from app.domain.facility.repository.influx_client import InfluxGTRClient
 from app.domain.facility.service.facility_query import section_query, execute_query, field_time_query, info_field_query, \
     info_measurements_query
 from app.domain.section.model.section_data import SectionData
@@ -23,6 +25,7 @@ organization = settings.influx_org
 bucket = settings.influx_bucket
 
 warnings.simplefilter('ignore', MissingPivotFunction)
+
 
 # --------- functions --------- #
 
@@ -39,6 +42,7 @@ def get_facilities_info():
 
     return {'result': dict(facilities)}
 
+
 # get data
 def get_datas(conditions: List[SectionData]) -> []:
     start_time = time.time()
@@ -52,7 +56,9 @@ def get_datas(conditions: List[SectionData]) -> []:
             start_date=conditions[0].startTime, end_date=conditions[0].endTime)
         try:
             result_df = execute_query(client, query)
-            result_df.rename(columns={f'{conditions[0].parameter}': f'{conditions[0].facility}-{conditions[0].parameter}'}, inplace=True)
+            result_df.rename(
+                columns={f'{conditions[0].parameter}': f'{conditions[0].facility}-{conditions[0].parameter}'},
+                inplace=True)
         except Exception as e:
             raise HTTPException(500, str(e))
 
@@ -69,13 +75,16 @@ def get_datas(conditions: List[SectionData]) -> []:
                 print(e)
 
             try:
-                result_df[f'{condition.facility}-{condition.parameter}'] = execute_query(client, query)[[condition.parameter]]
+                result_df[f'{condition.facility}-{condition.parameter}'] = execute_query(client, query)[
+                    [condition.parameter]]
                 # df_list.append(df)
             except Exception as e:
                 raise HTTPException(500, str(e))
 
     print('time: ', time.time() - start_time)
     return ["step", result_df]
+
+
 # get df TRC
 def get_df_TRC(condition: FacilityData):
     client = InfluxDBClient(url=url, token=token, org=organization)
@@ -85,6 +94,8 @@ def get_df_TRC(condition: FacilityData):
         return execute_query(client, query)
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
 # get section information by FacilityData
 def get_section(condition: FacilityData):
     client = InfluxDBClient(url=url, token=token, org=organization)
@@ -94,3 +105,23 @@ def get_section(condition: FacilityData):
         return execute_query(client, query)
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+def read_from_influxdb():
+    sections: List[SectionData] = [SectionData(
+        facility="F1494",
+        batchName=None,
+        parameter="P.PiG201Press[Pa]",
+        startTime="2024-02-11T00:29:04.0Z",
+        endTime="2024-04-21T01:29:04.0Z"
+    ), SectionData(
+        facility="F1494",
+        batchName=None,
+        parameter="P.MF211Ar[sccm]",
+        startTime="2024-02-11T00:29:04.0Z",
+        endTime="2024-04-21T01:29:04.0Z"
+    )]
+
+    client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
+    graph_type, graph_df = client.read_data(sections)
+    return JSONResponse(status_code=200, content={'result': 'success'})
