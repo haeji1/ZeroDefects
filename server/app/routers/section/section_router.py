@@ -34,12 +34,6 @@ async def get_batches(facility: FacilityInfo):
 
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
-    print("=======================")
-    print(request_body)
-    print("=====queryType======")
-    print(request_body.queryType)
-    print("=====queryData=======")
-    print(request_body.queryData)
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         for s in request_body.queryData:
@@ -50,18 +44,12 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=request_body.queryCondition.startTime,
                 endTime=request_body.queryCondition.endTime
             ))
-            print("========sections=======")
-            print('sections ', sections)
             graph_type, graph_df = get_datas(sections)
             plots = draw_dataframe_to_graph(graph_type, graph_df)
             plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-            print("=========plot_json_success=======")
-            # print(plot_json)
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
         sections = get_sections_info(request_body)
-        print("==============sections============")
-        print(sections)
         sections_list: List[SectionData] = []
         for s in sections:
             s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S')
@@ -75,16 +63,12 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=s['startTime'],
                 endTime=s['endTime']
             ))
-        print("======sections_list======")
-        print(sections_list)
         graph_type, graph_df = get_datas(sections_list)
         plots = draw_dataframe_to_graph(graph_type, graph_df)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-        print(plot_json)
-        # return JSONResponse(status_code=200, content=plot_json)
+
         if not sections:
             raise HTTPException(status_code=404, detail="Sections not found")
-        # return {"sections": sections}
         return JSONResponse(status_code=200, content=plot_json)
     else:
         raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")

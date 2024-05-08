@@ -115,7 +115,7 @@ class InfluxGTRClient:
                     print(e)
 
                 try:
-                    result_df[f'{condition.facility}_{condition.parameter}'] = execute_query(self.client, query)[
+                    result_df[f'{condition.facility}-{condition.parameter}'] = execute_query(self.client, query)[
                         [condition.parameter]]
                     # df_list.append(df)
                 except Exception as e:
