@@ -11,7 +11,7 @@ from influxdb_client.client.warnings import MissingPivotFunction
 import pandas as pd
 from influxdb_client import InfluxDBClient
 
-from app.models.influx.influx_models import FacilityData
+from app.models.influx.influx_models import FacilityData, SectionData
 
 from config import settings
 
@@ -38,27 +38,42 @@ def get_facilities_info():
     return {'result': dict(facilities)}
 
 # get data
-def get_datas(conditions: List[FacilityData]) -> []:
+def get_datas(conditions: List[SectionData]) -> []:
     start_time = time.time()
-    facility_list = []
-    parameter_list = []
-    df_list = []
-
+    result_df = pd.DataFrame()
     client = InfluxDBClient(url=url, token=token, org=organization)
-    for condition in conditions:
-        query = field_time_query(
-            b=bucket, facility=condition.facility, field=condition.parameter,
-            start_date=condition.startTime, end_date=condition.endTime)
 
+    # conditions length == 1
+    if len(conditions) == 1:
+        query = field_time_query(
+            b=bucket, facility=conditions[0].facility, field=conditions[0].parameter,
+            start_date=conditions[0].startTime, end_date=conditions[0].endTime)
         try:
-            facility_list.append(condition.facility)
-            parameter_list.append(condition.parameter)
-            df_list.append(execute_query(client, query))
+            result_df = execute_query(client, query)
+            result_df.rename(columns={f'{conditions[0].parameter}': f'{conditions[0].facility}_{conditions[0].parameter}'}, inplace=True)
         except Exception as e:
             raise HTTPException(500, str(e))
 
+    # conditions length > 1
+    if len(conditions) > 1:
+        for condition in conditions:
+            query = field_time_query(
+                b=bucket, facility=condition.facility, field=condition.parameter,
+                start_date=condition.startTime, end_date=condition.endTime)
+
+            try:
+                result_df['Time'] = execute_query(client, query)[['Time']]
+            except Exception as e:
+                print(e)
+
+            try:
+                result_df[f'{condition.facility}_{condition.parameter}'] = execute_query(client, query)[[condition.parameter]]
+                # df_list.append(df)
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
     print('time: ', time.time() - start_time)
-    return [facility_list, parameter_list, df_list]
+    return ["step", result_df]
 # get df TRC
 def get_df_TRC(condition: FacilityData):
     client = InfluxDBClient(url=url, token=token, org=organization)
@@ -115,8 +130,8 @@ def field_time_query(b: str, facility: str, field: str, start_date: str, end_dat
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
                 |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-                |> rename(columns: {{"{field}": "Value"}})
-                |> keep(columns: ["_time", "Value"])
+            //  |> rename(columns: {{"{field}": "Value"}})
+                |> keep(columns: ["_time", "{field}", "P.MF211Ar[sccm]"])
             '''
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
@@ -124,7 +139,7 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             from(bucket: "{b}")
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{facility}")
-            |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]") 
+            |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]")
             
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
