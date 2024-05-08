@@ -80,9 +80,9 @@ function GetGraph() {
                 }
             })
         }
-        console.log(data)
         const res = await getGraph(data)
-        setGraphData(res);
+        setGraphData(res.data);
+        setIsFetching(false)
     }
 
 
