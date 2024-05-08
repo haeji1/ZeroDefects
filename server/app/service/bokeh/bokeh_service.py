@@ -10,6 +10,8 @@ import numpy as np
 
 
 def draw_dataframe_to_graph(graph_type, graph_df):
+    save_graph_data(graph_df)
+    # extract_axis_info(graph_df)
     if (graph_type == "time"):
         return draw_graph_time_standard(graph_df)
     elif (graph_type == "step"):
@@ -166,79 +168,124 @@ def draw_graph_step_standard(graph_df):
 #     return plots
 
 
-def save_graph_data(df_list, facility_list):
-    # 선 하나만 추가할 때
-    if len(df_list) == 1:
-        return draw_single_line(df_list[0],facility_list[0])
-    else:
-        return draw_multi_line(df_list, facility_list)
-
-# 하나의 선 정보 저장
-def draw_single_line(df, facility):
-    print("===========method=============")
-    all_data = []
-    print(df)
-    print(df.columns)
-    print("====time_values====")
-    time_values = pd.to_datetime(df["Time"], utc=True)
-    print(time_values)
-
-    combined_data = dict(x=time_values)
+def save_graph_data(graph_df):
+    # print("=============save_graph_data==============")
+    time_values = pd.to_datetime(graph_df["Time"], utc=True)
     y_data = {}
-    for column in df.columns:
+    for column in graph_df.columns:
         if column != "Time":
-            column_data = df[column]
-            all_data.append(column_data)
-            combined_data[column] = column_data.values
-            if isinstance(column_data.values, np.ndarray):
-                y_data[column] = column_data.values.tolist()
-
-    source = ColumnDataSource(data=combined_data)
-
-    x_data = source.data['x']
-    print("=========y_data========")
+            y_data[column] = graph_df[column].values.tolist()
+    print("========time_value==========")
+    print(time_values)
+    print("========y_data==========")
     print(y_data)
-    print("=========y_data========")
+    # return time_values, y_data
 
-    return [x_data, y_data, facility]
+    #
+    #     for idx, df in enumerate(df_list):
+    #         print(f"======DataFrame {idx + 1}======")
+    #         print(df)
+    #         print(df.columns)
+    #         print("====time_values====")
+    #         time_values = pd.to_datetime(df["Time"], utc=True)
+    #         print(time_values)
+    #
+    #         combined_data = dict(x=time_values)
+    #         y_data = {}
+    #         for column in df.columns:
+    #             if column != "Time":
+    #                 column_data = df[column]
+    #                 all_data.append(column_data)
+    #                 combined_data[column] = column_data.values
+    #                 if isinstance(column_data.values, np.ndarray):
+    #                     y_data[column] = column_data.values.tolist()
+    #
+    #         source = ColumnDataSource(data=combined_data)
+    #
+    #         x_data = source.data['x']
+    #         x_data_list.append(x_data)
+    #         y_data_list.append(y_data)
+    #
+    #     print("=========x_data_list========")
+    #     print(x_data_list)
+    #     print("=========y_data_list========")
+    #     print(y_data_list)
+    #
+    #     return [x_data_list, y_data_list, facility_list]
 
-def draw_multi_line(df_list, facility_list):
-    print("===========method=============")
-    all_data = []
-    x_data_list = []
-    y_data_list = []
-
-    for idx, df in enumerate(df_list):
-        print(f"======DataFrame {idx + 1}======")
-        print(df)
-        print(df.columns)
-        print("====time_values====")
-        time_values = pd.to_datetime(df["Time"], utc=True)
-        print(time_values)
-
-        combined_data = dict(x=time_values)
-        y_data = {}
-        for column in df.columns:
-            if column != "Time":
-                column_data = df[column]
-                all_data.append(column_data)
-                combined_data[column] = column_data.values
-                if isinstance(column_data.values, np.ndarray):
-                    y_data[column] = column_data.values.tolist()
-
-        source = ColumnDataSource(data=combined_data)
-
-        x_data = source.data['x']
-        x_data_list.append(x_data)
-        y_data_list.append(y_data)
-
-    print("=========x_data_list========")
-    print(x_data_list)
-    print("=========y_data_list========")
-    print(y_data_list)
-
-    return [x_data_list, y_data_list, facility_list]
-
+# def save_graph_data(df_list, facility_list):
+#     # 선 하나만 추가할 때
+#     if len(df_list) == 1:
+#         return draw_single_line(df_list[0],facility_list[0])
+#     else:
+#         return draw_multi_line(df_list, facility_list)
+#
+# # 하나의 선 정보 저장
+# def draw_single_line(df, facility):
+#     print("===========method=============")
+#     all_data = []
+#     print(df)
+#     print(df.columns)
+#     print("====time_values====")
+#     time_values = pd.to_datetime(df["Time"], utc=True)
+#     print(time_values)
+#
+#     combined_data = dict(x=time_values)
+#     y_data = {}
+#     for column in df.columns:
+#         if column != "Time":
+#             column_data = df[column]
+#             all_data.append(column_data)
+#             combined_data[column] = column_data.values
+#             if isinstance(column_data.values, np.ndarray):
+#                 y_data[column] = column_data.values.tolist()
+#
+#     source = ColumnDataSource(data=combined_data)
+#
+#     x_data = source.data['x']
+#     print("=========y_data========")
+#     print(y_data)
+#     print("=========y_data========")
+#
+#     return [x_data, y_data, facility]
+#
+# def draw_multi_line(df_list, facility_list):
+#     print("===========method=============")
+#     all_data = []
+#     x_data_list = []
+#     y_data_list = []
+#
+#     for idx, df in enumerate(df_list):
+#         print(f"======DataFrame {idx + 1}======")
+#         print(df)
+#         print(df.columns)
+#         print("====time_values====")
+#         time_values = pd.to_datetime(df["Time"], utc=True)
+#         print(time_values)
+#
+#         combined_data = dict(x=time_values)
+#         y_data = {}
+#         for column in df.columns:
+#             if column != "Time":
+#                 column_data = df[column]
+#                 all_data.append(column_data)
+#                 combined_data[column] = column_data.values
+#                 if isinstance(column_data.values, np.ndarray):
+#                     y_data[column] = column_data.values.tolist()
+#
+#         source = ColumnDataSource(data=combined_data)
+#
+#         x_data = source.data['x']
+#         x_data_list.append(x_data)
+#         y_data_list.append(y_data)
+#
+#     print("=========x_data_list========")
+#     print(x_data_list)
+#     print("=========y_data_list========")
+#     print(y_data_list)
+#
+#     return [x_data_list, y_data_list, facility_list]
+#
 
 # ColumnDataSource의 max, min, 평균 값 구하기
 def calc_df_values(source, df_name,column_name):

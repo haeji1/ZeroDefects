@@ -99,6 +99,9 @@ async def get_single_data_line(conditions: List[FacilityData]):
     # print(JSONResponse(content=response_data))
     return JSONResponse(content=response_data)
 
+
+# @router.post("/update-graph)
+# async def update_graph():
 @router.post("/read/multi/line")
 async def get_multi_data_line(conditions: List[FacilityData]):
 
