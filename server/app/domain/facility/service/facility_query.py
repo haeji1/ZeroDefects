@@ -79,6 +79,7 @@ def info_field_query(b: str, measurement: str) -> str:
             schema.fieldKeys(
             bucket: "{b}",
             predicate: (r) => r._measurement == "{measurement}",
+            start: -1y,
             )
             """
 # execute query
