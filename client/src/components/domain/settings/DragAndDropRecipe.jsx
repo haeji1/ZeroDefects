@@ -102,7 +102,6 @@ function DragAndDropFileRecipe() {
         console.log("첨부파일 보내기 성공");
         clearFiles(); // 업로드 후 파일 목록 지우기
         alert( fileCount + "개 파일 업로드 완료")
-        alert()
         setIsLoading(false);
       })
       .catch((err) => {
