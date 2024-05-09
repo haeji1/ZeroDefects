@@ -145,7 +145,7 @@ function BookmarkTable() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => deleteBookmark(row.original.id)}>세팅값 삭제</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteBookmark(row.original.id)}>삭제</DropdownMenuItem>
                         </DropdownMenuContent>
 
                     </DropdownMenu >
