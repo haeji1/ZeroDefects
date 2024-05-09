@@ -43,8 +43,6 @@ async def get_batches(facility: FacilityInfo):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     end_time_list = []
-    print("===========queryData=======")
-    print(request_body.queryType)
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         for s in request_body.queryData:
@@ -55,19 +53,12 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=request_body.queryCondition.startTime,
                 endTime=request_body.queryCondition.endTime
             ))
-        print("================================")
         graph_df = get_datas(sections)
-        print("============graph_df=================")
-        print(graph_df)
-        print(end_time_list)
         plots = draw_dataframe_to_graph("time", graph_df,end_time_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
-        print("=============")
         sections = get_sections_info(request_body)
-        print("==========sections==========")
-        print(sections)
         sections_list: List[SectionData] = []
         # print("sections", sections)
         for s in sections:
@@ -85,7 +76,6 @@ async def draw_graph(request_body: GraphQueryRequest):
             end_time_list.append(s['endTime'])
         #     print("============endtimelist============")
         # print(end_time_list)
-        print("========section_list==========끝")
         graph_df = get_datas(sections_list)
         plots = draw_dataframe_to_graph("step", graph_df, end_time_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
