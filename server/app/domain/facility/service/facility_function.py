@@ -56,7 +56,7 @@ def get_datas(conditions: List[SectionData]):
             df.rename(
                 columns={f'{condition.parameter}': f'{condition.facility}-{condition.parameter}'},
                 inplace=True)
-            print('df: ', df)
+            # print('df: ', df)
             result_df.append(df)
         except Exception as e:
             raise HTTPException(500, str(e))
@@ -89,8 +89,8 @@ def get_datas(conditions: List[SectionData]):
     #             # df_list.append(df)
     #         except Exception as e:
     #             raise HTTPException(500, str(e))
-    print('result_df', result_df)
-    print('time: ', time.time() - start_time)
+    # print('result_df', result_df)
+    # print('time: ', time.time() - start_time)
     return result_df
 # get df TRC
 def get_df_TRC(condition: FacilityData):
