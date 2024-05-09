@@ -53,9 +53,9 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=request_body.queryCondition.startTime,
                 endTime=request_body.queryCondition.endTime
             ))
-            graph_df = get_datas(sections)
-            plots = draw_dataframe_to_graph("time", graph_df)
-            plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
+        graph_df = get_datas(sections)
+        plots = draw_dataframe_to_graph("time", graph_df)
+        plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
         sections = get_sections_info(request_body)
