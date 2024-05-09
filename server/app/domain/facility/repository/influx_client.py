@@ -16,6 +16,7 @@ from loguru import logger
 from starlette.responses import JSONResponse
 from urllib3.exceptions import NewConnectionError
 
+from app.domain.facility.service.facility_function import get_measurement_code
 from app.domain.facility.service.facility_query import field_time_query, execute_query, info_measurements_query, \
     info_field_query
 from app.domain.section.model.section_data import SectionData
@@ -147,7 +148,7 @@ class InfluxGTRClient:
             return {"filename": file.filename, "message": "Invalid file name"}
 
         measurement_before = file.filename.split('-')[0]
-        measurement = cls.get_measurement_code(measurement_before)
+        measurement = get_measurement_code(measurement_before)
         date_string = file.filename.rsplit('-')[2]
         ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
 
@@ -269,25 +270,3 @@ class InfluxGTRClient:
         buckets = bucket_api.find_buckets().buckets
         if not any(b.name == settings.influx_bucket for b in buckets):
             bucket_api.create_bucket(bucket_name=settings.influx_bucket, org=settings.influx_org)
-
-    @classmethod
-    def get_measurement_code(cls, input):
-        mapping = {
-            'F1492': 'MASS01',
-            'F1494': 'MASS02',
-            'F1495': 'MASS04',
-            'F1493': 'MASS05',
-            'F1500': 'MASS06',
-            'F1496': 'MASS07',
-            'F1497': 'MASS08',
-            'F1498': 'MASS09',
-            'F1502': 'MASS10',
-            'F1503': 'MASS11',
-            'F1501': 'MASS12',
-            'F1504': 'MASS13',
-            'F1505': 'MASS14',
-            'F1507': 'MASS18',
-            'F1508': 'MASS22',
-        }
-
-        return mapping.get(input, "unknown")

@@ -42,6 +42,7 @@ async def get_batches(facility: FacilityInfo):
 
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
+    print("request_body", request_body)
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         for s in request_body.queryData:
@@ -59,6 +60,7 @@ async def draw_graph(request_body: GraphQueryRequest):
     elif request_body.queryType == "step":
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
+        # print("sections", sections)
         for s in sections:
             s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S')
             s['startTime'] = s['startTime'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')

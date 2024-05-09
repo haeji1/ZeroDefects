@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 
+from app.domain.facility.service.facility_function import get_measurement_code
 from config import settings
 
 url = settings.mongo_furl
@@ -27,7 +28,9 @@ def recipe_service(files):
             raise HTTPException(status_code=500, detail=str(e))
 
         df.loc[25:44, 3:78] = df.loc[25:44, 3:78].fillna(0)
-        facility = file.filename.split('_')[1].split('.')[0]
+        facility_before = file.filename.split('_')[1].split('.')[0]
+        print("facility_before", facility_before)
+        facility = get_measurement_code(facility_before)
         # db collection name is facility(from file_name)
         collection = setting[facility]
         data_to_insert = {}
