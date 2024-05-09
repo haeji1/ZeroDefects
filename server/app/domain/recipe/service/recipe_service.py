@@ -29,7 +29,6 @@ def recipe_service(files):
 
         df.loc[25:44, 3:78] = df.loc[25:44, 3:78].fillna(0)
         facility_before = file.filename.split('_')[1].split('.')[0]
-        print("facility_before", facility_before)
         facility = get_measurement_code(facility_before)
         # db collection name is facility(from file_name)
         collection = setting[facility]
@@ -39,7 +38,7 @@ def recipe_service(files):
         for i in range(0, 21):
             step_key = f"Step{i}"
             data_to_insert[step_key] = {
-                "Time": df.iloc[25+i][3],
+                "Time": df.iloc[25 + i][3],
                 "TG1": {
                     "Power": df.iloc[25 + i][4],
                     "Ar1": df.iloc[25 + i][6],

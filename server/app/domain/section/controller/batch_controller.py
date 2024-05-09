@@ -15,7 +15,8 @@ from app.domain.section.model.graph_query_request import GraphQueryRequest
 from app.domain.section.model.section_data import SectionData
 from config import settings
 
-from app.domain.section.service.batch_service import get_batches_info, get_sections_info
+from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
+    get_step_info_using_facility_name_on_mongoDB
 
 url = settings.mongo_furl
 
@@ -43,6 +44,7 @@ async def get_batches(facility: FacilityInfo):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
+    get_step_info_using_facility_name_on_mongoDB(request_body)
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         for s in request_body.queryData:
@@ -82,6 +84,12 @@ async def draw_graph(request_body: GraphQueryRequest):
         return JSONResponse(status_code=200, content=plot_json)
     else:
         raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")
+
+
+
+
+
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
