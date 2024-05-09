@@ -19,31 +19,25 @@ def draw_dataframe_to_graph(graph_type, graph_df, end_time_list):
 
 
 def draw_graph_time_standard(graph_df):
-    print("==========start========")
     colors = Category10_10
-
 
     plots = []
     p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time',
                y_axis_label='Value', max_height=1000)
 
-
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
-        df["Time"] = time_values
+        df["Time"] = pd.to_datetime(df["Time"])
         facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
         source = ColumnDataSource(data={'Time': time_values, 'Value': df[df.columns[-1]]})
-        print("***********format************")
-        print(df["Time"])
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
         hover = HoverTool(renderers=[line], tooltips=[
                      ('facility', f'{facility}'),
-                     ('time', '@Time{%Y-%m-%d %H:%M:%S}'),
+                     ('time', '@Time{%F %T}'),
                      ('Value', '$y')
-                 ])
-        p.add_tools(hover)
+                 ], formatters={'@Time': 'datetime'})
 
         p.add_tools(hover)
 
