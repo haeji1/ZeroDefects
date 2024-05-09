@@ -110,7 +110,6 @@ function DragAndDropFileRecipe() {
   };
   return (
     <div style={{ marginLeft: "100px", marginRight: "100px" }}>
-      레시피
       <div
         style={{
           border: "2px dashed #ccc",
@@ -134,8 +133,8 @@ function DragAndDropFileRecipe() {
       </div>
       <div style={{ paddingTop: "20px" }} />
       <FileListForRecipe />
-      <div style={{ paddingTop: "20px" }} />
       <div>{files.length}개의 파일</div>
+      <div style={{ paddingTop: "20px" }} />
       {isLoading ? (
         // 로딩 중일 때 로딩 컴포넌트 렌더링
         <div>
