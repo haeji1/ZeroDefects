@@ -181,7 +181,6 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
         print("data:", data)
         collection = db[data.facility]
         batch_document = collection.find_one({"batchName": data.batchName})
-        print(batch_document)
         if not batch_document:
             raise HTTPException(status_code=404, detail=f"Batch {data.batchName} not found in {data.facility}")
 

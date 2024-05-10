@@ -56,14 +56,21 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=request_body.queryCondition.startTime,
                 endTime=request_body.queryCondition.endTime
             ))
+        print("=========sections=========")
+        print(sections)
+        print("======graph_df시작============")
         graph_df = get_datas(sections)
+        print(graph_df)
+        print("=============graph_df끝==========")
+
+        print("============draw_dataframe시작===================")
         plots = draw_dataframe_to_graph("time", graph_df,end_time_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
-        # print("sections", sections)
+        print("sections", sections)
         for s in sections:
             s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S')
             s['startTime'] = s['startTime'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')

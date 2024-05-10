@@ -19,6 +19,10 @@ def draw_dataframe_to_graph(graph_type, graph_df, end_time_list):
 
 
 def draw_graph_time_standard(graph_df):
+
+    if (len(graph_df) == 0):
+        return []
+
     colors = Category10_10
 
     plots = []
@@ -28,6 +32,11 @@ def draw_graph_time_standard(graph_df):
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
         df["Time"] = pd.to_datetime(df["Time"])
+        print("===============time_values=============")
+        print(time_values)
+        print("===============time_values끝===========")
+        print("================value==================")
+        print(df[df.columns[-1]])
         facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
@@ -40,7 +49,8 @@ def draw_graph_time_standard(graph_df):
                  ], formatters={'@Time': 'datetime'})
 
         p.add_tools(hover)
-
+    # print("============df=============")
+    # print(df)
     all_time_values = pd.concat([df['Time'] for df in graph_df])
     min_time = all_time_values.min()
     max_time = all_time_values.max()
@@ -49,6 +59,40 @@ def draw_graph_time_standard(graph_df):
 
     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
     p.yaxis.formatter = NumeralTickFormatter(format="0,0")
+    p.legend.location = "top_left"
+    p.toolbar.autohide = True
+    plots.append(p)
+
+    return plots
+
+
+def draw_graph_step_standard(graph_df, end_time_list):
+    colors = Category10_10
+
+    plots = []
+    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+
+    combined_df = pd.concat(graph_df)
+    start_time = pd.to_datetime(combined_df["Time"], utc=True).min()
+
+    for df in graph_df:
+        time_values = (pd.to_datetime(df["Time"], utc=True) - start_time).dt.total_seconds()
+        df["Time"] = time_values
+        facility, column_name = df.columns[-1].split('-')
+
+        color = colors[len(p.renderers) % len(colors)]
+        source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+        line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+        hover = HoverTool(renderers=[line], tooltips=[
+            ('facility', f'{facility}'),
+            ('time', '@Time seconds'),
+            ('Value', '$y')
+        ])
+
+        p.add_tools(hover)
+
+    p.x_range.start = 0
+    p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
     p.toolbar.autohide = True
     plots.append(p)
@@ -140,56 +184,54 @@ def draw_graph_time_standard(graph_df):
 #     return plots
 
 
-def draw_graph_step_standard(graph_df, end_time_list):
-    print("=====================")
-    print(end_time_list)
-
-    plots = []
-    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
-    colors = Category10_10
-
-    print("graph_df", graph_df)
-    print("==============start_time=========")
-    start_time = graph_df["Time"].min()
-    graph_df["Time"] = (graph_df["Time"] - start_time).dt.total_seconds()
-    # start_time = graph_df["Time"].min()
-    # graph_df["Time"] = (graph_df["Time"] - start_time).dt.total_seconds()
-
-    for column in graph_df:
-        if column == "Time":
-            continue
-
-        facility, column_name = column.split("-")
-        color = colors[len(p.renderers) % len(colors)]
-        line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
-
-        hover = HoverTool(renderers=[line], tooltips=[
-            ('facility', f'{column}'),
-            ('time', '@Time seconds'),
-            ('Value', '$y')
-        ])
-        p.add_tools(hover)
-
-    print(start_time)
-    idx = 1
-    for end_time in end_time_list:
-        end_time = pd.to_datetime(end_time)
-
-        end_time_seconds = (end_time- start_time).total_seconds()
-
-        print("end_time_seconds", end_time_seconds)
-
-        span = Span(location=end_time_seconds, dimension='height', line_color='black', line_dash='dashed', line_width=2)
-        p.add_layout(span)
-        print(idx, end_time)
-        idx += 1
-    p.x_range.start = 0
-    p.xaxis.formatter = NumeralTickFormatter(format="0")
-    p.legend.location = "top_left"
-    p.toolbar.autohide = True
-    plots.append(p)
-
-    return plots
+# def draw_graph_step_standard(graph_df, end_time_list):
+#     print("=====================")
+#     print(end_time_list)
+#
+#     plots = []
+#     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+#     colors = Category10_10
+#
+#     print("graph_df", graph_df)
+#     print("==============start_time=========")
+#     start_time = graph_df["Time"].min()
+#     graph_df["Time"] = (graph_df["Time"] - start_time).dt.total_seconds()
+#
+#     for column in graph_df:
+#         if column == "Time":
+#             continue
+#
+#         facility, column_name = column.split("-")
+#         color = colors[len(p.renderers) % len(colors)]
+#         line = p.line(x="Time", y=column, source=graph_df, legend_label=f"{facility} - {column_name}", color=color)
+#
+#         hover = HoverTool(renderers=[line], tooltips=[
+#             ('facility', f'{column}'),
+#             ('time', '@Time seconds'),
+#             ('Value', '$y')
+#         ])
+#         p.add_tools(hover)
+#
+#     print(start_time)
+#     idx = 1
+#     for end_time in end_time_list:
+#         end_time = pd.to_datetime(end_time)
+#
+#         end_time_seconds = (end_time- start_time).total_seconds()
+#
+#         print("end_time_seconds", end_time_seconds)
+#
+#         span = Span(location=end_time_seconds, dimension='height', line_color='black', line_dash='dashed', line_width=2)
+#         p.add_layout(span)
+#         print(idx, end_time)
+#         idx += 1
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
 
 # def draw_single_dataframe_to_graph(df, facility):
 #
