@@ -19,6 +19,10 @@ def draw_dataframe_to_graph(graph_type, graph_df, end_time_list):
 
 
 def draw_graph_time_standard(graph_df):
+
+    if (len(graph_df) == 0):
+        return []
+
     colors = Category10_10
 
     plots = []
