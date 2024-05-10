@@ -7,15 +7,12 @@ import { useState } from "react";
 import Loading from "./Loading";
 
 function DragAndDropFileRecipe() {
-  const { files, addFiles, fileCount ,clearFiles, addOrUpdateFiles,incrementFileCount, decrementFileCount} = FileDataForRecipe(
+  const { files, addFiles, clearFiles, addOrUpdateFiles} = FileDataForRecipe(
     (state) => ({
       addFiles: state.addFiles,
       files: state.files,
-      fileCount: state.fileCount,
       clearFiles: state.clearFiles,
       addOrUpdateFiles: state.addOrUpdateFiles,
-      incrementFileCount: state.incrementFileCount,
-      decrementFileCount: state.decrementFileCount,
     })
   );
 
@@ -61,7 +58,6 @@ function DragAndDropFileRecipe() {
         }
       } else {
         addOrUpdateFiles([file]);
-        incrementFileCount();
       }
     }
   };
@@ -71,6 +67,7 @@ function DragAndDropFileRecipe() {
     if (files.length) {
       handleFiles(files);
     }
+    e.target.value = '';
   };
   const uploadFiles = (e) => {
     e.preventDefault();
@@ -101,8 +98,7 @@ function DragAndDropFileRecipe() {
         console.log(res.data);
         console.log("첨부파일 보내기 성공");
         clearFiles(); // 업로드 후 파일 목록 지우기
-        alert( fileCount + "개 파일 업로드 완료")
-        alert()
+        alert( files.length + "개 파일 업로드 완료")
         setIsLoading(false);
       })
       .catch((err) => {
@@ -114,7 +110,6 @@ function DragAndDropFileRecipe() {
   };
   return (
     <div style={{ marginLeft: "100px", marginRight: "100px" }}>
-      레시피
       <div
         style={{
           border: "2px dashed #ccc",
@@ -130,6 +125,7 @@ function DragAndDropFileRecipe() {
           id="fileInput"
           type="file"
           style={{ display: "none" }}
+          multiple={true}
           onChange={handleFileSelect}
           accept=".xls, .xlsx"
         />
@@ -137,8 +133,8 @@ function DragAndDropFileRecipe() {
       </div>
       <div style={{ paddingTop: "20px" }} />
       <FileListForRecipe />
+      <div>{files.length}개의 파일</div>
       <div style={{ paddingTop: "20px" }} />
-      <div>{fileCount}개의 파일</div>
       {isLoading ? (
         // 로딩 중일 때 로딩 컴포넌트 렌더링
         <div>
