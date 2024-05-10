@@ -14,7 +14,7 @@ export const fetchFacilityInfos = async () => {
 
 // 조회하고자 하는 설비명, 파라미터명, 조회 구간, 사이클명(Option), 스탭번호(Option)을 통해 해당하는 Bokeh 그래프 데이터를 받아오는 요청
 // 단일 조회와 다중 비교 조회 둘 다 가능 
-export const getGraph = async (data) => {
+export const getGraph = async (data: object) => {
     try {
         console.log("그래프 데이터를 요청합니다.");
         const res = await axios.post("http://localhost:8000/api/draw-graph", data)
@@ -27,7 +27,7 @@ export const getGraph = async (data) => {
 }
 
 // 설비명, 파라미터명, 조회 구간을 통해 해당 구간 내에 배치 정보들을 받아오는 요청
-export const getBatches = async (facilityInfo) => {
+export const getBatches = async (facilityInfo: any) => {
     try {
         console.log("배치 데이터를 요청합니다.");
         const res = await axios.post("http://localhost:8000/api/batches", { facility: facilityInfo })

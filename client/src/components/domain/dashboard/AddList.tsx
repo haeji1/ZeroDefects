@@ -5,6 +5,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/base/select";
+import { ScrollArea } from "@/components/base/scroll-area";
 import {
     Command,
     CommandEmpty,
@@ -23,23 +24,25 @@ import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
 import { useBookmarkStore } from "@/stores/Bookmark";
 import { useToast } from "@/hooks/use-toast";
+import { AxiosResponse } from "axios";
 
 function Addlist() {
 
-    const [selectedFacility, setSelectedFacility] = useState()
-    const [selectedParameter, setSelectedParameter] = useState()
-    const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+    const [selectedFacility, setSelectedFacility] = useState<string>("")
+    const [selectedParameter, setSelectedParameter] = useState<string | null>("")
+    const [isButtonEnabled, setIsButtonEnabled] = useState<boolean>(false);
     const { facilityList, updateFacility } = useFacilityStore();
     const { batchList, addBatch } = useBatchStore();
     const { addBookmark } = useBookmarkStore()
     const [open, setOpen] = useState(false)
     const { toast } = useToast()
 
+
     // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
     useEffect(() => {
         const fetchData = async () => {
-            const res = await fetchFacilityInfos();
-            updateFacility(res.data.result)
+            const res: AxiosResponse | undefined = await fetchFacilityInfos();
+            updateFacility(res?.data.result)
         };
         fetchData();
     }, []);
@@ -59,13 +62,16 @@ function Addlist() {
         }
 
         if (batchList[selectedFacility] === undefined) {
-            const res = await getBatches(selectedFacility)
-            addBatch(selectedFacility, res.data.batches);
+            const res: AxiosResponse<any, any> | undefined = await getBatches(selectedFacility)
+            addBatch(selectedFacility, res?.data.batches);
             addBookmark(newBookmark);
         }
         else { addBookmark(newBookmark) }
-        setSelectedFacility(null);
         setSelectedParameter(null);
+        toast({
+            title: `목록 추가 완료`,
+            description: `${selectedFacility} 설비의 ${selectedParameter} 인자를 리스트에 추가하였습니다.`,
+        })
     }
 
     return (
@@ -82,9 +88,11 @@ function Addlist() {
                             <SelectValue placeholder="설비 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                            {Object.keys(facilityList).map(facility => (
-                                <SelectItem key={facility} value={facility} >{facility}</SelectItem>
-                            ))}
+                            <ScrollArea className="max-h-[400px] w-full">
+                                {Object.keys(facilityList).map(facility => (
+                                    <SelectItem key={facility} value={facility} >{facility}</SelectItem>
+                                ))}
+                            </ScrollArea>
                         </SelectContent>
                     </Select>
                 </div>
@@ -102,32 +110,33 @@ function Addlist() {
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[full] p-0">
-                            <Command>
-                                <CommandInput placeholder="파라미터를 검색해주세요." />
-                                <CommandEmpty>검색된 파라미터 없음</CommandEmpty>
-                                <CommandGroup>
-
-                                    {selectedFacility ? facilityList[selectedFacility].map((param) => (
-                                        <CommandItem
-                                            key={param}
-                                            value={param}
-                                            onSelect={() => {
-                                                setSelectedParameter(param)
-                                                setOpen(false)
-                                            }}
-                                        >
-                                            <Check
-                                                className={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    selectedParameter === param ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            {param}
-                                        </CommandItem>
-                                    )) : null}
-                                </CommandGroup>
-                            </Command>
+                        <PopoverContent className="w-full p-0">
+                            <ScrollArea className="h-[400px] w-full">
+                                <Command>
+                                    <CommandInput placeholder="파라미터를 검색해주세요." />
+                                    <CommandEmpty>검색된 파라미터 없음</CommandEmpty>
+                                    <CommandGroup>
+                                        {selectedFacility ? facilityList[selectedFacility].map((param: string) => (
+                                            <CommandItem
+                                                key={param}
+                                                value={param}
+                                                onSelect={() => {
+                                                    setSelectedParameter(param)
+                                                    setOpen(false)
+                                                }}
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        selectedParameter === param ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {param}
+                                            </CommandItem>
+                                        )) : null}
+                                    </CommandGroup>
+                                </Command>
+                            </ScrollArea>
                         </PopoverContent>
                     </Popover>
 
@@ -136,16 +145,6 @@ function Addlist() {
             <div className="ml-auto">
                 <Button disabled={!isButtonEnabled} onClick={handleAddButton}>추가</Button>
             </div>
-            <Button
-                onClick={() => {
-                    toast({
-                        title: "Scheduled: Catch up",
-                        description: "Friday, February 10, 2023 at 5:57 PM",
-                    })
-                }}
-            >
-                Show Toast
-            </Button>
         </Card >
     )
 }
