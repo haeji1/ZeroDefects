@@ -1,25 +1,39 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type Bookmark = {
-    id: number
-    facility: string
-    parameter: string
-    selectedBatchName: string | null
+
+interface Bookmark {
+    id?: number;
+    facility: string;
+    parameter: string;
+    selectedBatchName?: string | null;
+}
+
+interface BookmarkStore {
+    bookmark: Bookmark[];
+    addBookmark: (facilInfo: Bookmark) => void;
+    deleteBookmark: (id: number) => void;
+    updateBookmark: (data: Bookmark) => void;
+}
+
+interface SelectedBookmarkStore {
+    selectedBookmark: Bookmark[],
+    setSelectedBookmark: (data: Bookmark[]) => void,
 }
 
 
-export const useBookmarkStore = create(
+
+export const useBookmarkStore = create<BookmarkStore>()(
     persist(
         (set) => ({
             bookmark: [],
-            addBookmark: (newData) => set((state) => ({
+            addBookmark: (facilInfo) => set((state) => ({
                 bookmark: [
                     ...state.bookmark,
                     {
                         id: state.bookmark.length > 0 ? state.bookmark.at(-1).id + 1 : 1,
-                        facility: newData.facility,
-                        parameter: newData.parameter,
+                        facility: facilInfo.facility,
+                        parameter: facilInfo.parameter,
                         selectedBatchName: null,
                     }
                 ]
@@ -41,7 +55,7 @@ export const useBookmarkStore = create(
     )
 );
 
-export const useSelectedBookmarkStore = create((set) => ({
+export const useSelectedBookmarkStore = create<SelectedBookmarkStore>()((set) => ({
     selectedBookmark: [],
     setSelectedBookmark: (data) => set({ selectedBookmark: data }),
 }))

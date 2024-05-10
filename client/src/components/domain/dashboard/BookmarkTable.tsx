@@ -37,13 +37,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { useBatchStore } from "@/stores/Facility";
+import { useFacilityStore } from "@/stores/Facility";
 
 function BookmarkTable() {
 
     const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
     const { setSelectedBookmark } = useSelectedBookmarkStore();
-    const { batchList } = useBatchStore();
+    const { facilityList } = useFacilityStore();
 
     // 테이블 관련 hook
     // ==============================
@@ -106,7 +106,7 @@ function BookmarkTable() {
             header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
 
-                const batches = batchList[row.original.facility];
+                const batches = facilityList[row.original.facility].batches;
 
 
                 return <div className="text-center font-medium min-w-[250px]">

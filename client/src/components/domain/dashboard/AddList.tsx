@@ -19,7 +19,7 @@ import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/base/label";
-import { useBatchStore, useFacilityStore } from "@/stores/Facility"
+import { useFacilityStore, Facility } from "@/stores/Facility"
 import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
 import { useBookmarkStore } from "@/stores/Bookmark";
@@ -31,8 +31,7 @@ function Addlist() {
     const [selectedFacility, setSelectedFacility] = useState<string>("")
     const [selectedParameter, setSelectedParameter] = useState<string | null>("")
     const [isButtonEnabled, setIsButtonEnabled] = useState<boolean>(false);
-    const { facilityList, updateFacility } = useFacilityStore();
-    const { batchList, addBatch } = useBatchStore();
+    const { facilityList, updateFacilityList, updateBatch } = useFacilityStore();
     const { addBookmark } = useBookmarkStore()
     const [open, setOpen] = useState(false)
     const { toast } = useToast()
@@ -42,7 +41,16 @@ function Addlist() {
     useEffect(() => {
         const fetchData = async () => {
             const res: AxiosResponse | undefined = await fetchFacilityInfos();
-            updateFacility(res?.data.result)
+            const data: Facility = {}
+            const result: Facility = res?.data.result;
+            for (const [facilityName, value] of Object.entries(result)) {
+                data[facilityName] = {
+                    parameters: value,
+                    batches: undefined
+                }
+            }
+            updateFacilityList(data)
+            console.log(data);
         };
         fetchData();
     }, []);
@@ -58,12 +66,13 @@ function Addlist() {
 
         const newBookmark = {
             facility: selectedFacility,
-            parameter: selectedParameter,
+            parameter: selectedParameter!,
+            selectedBatchName: null
         }
 
-        if (batchList[selectedFacility] === undefined) {
+        if (facilityList[selectedFacility].batches === undefined) {
             const res: AxiosResponse<any, any> | undefined = await getBatches(selectedFacility)
-            addBatch(selectedFacility, res?.data.batches);
+            updateBatch(selectedFacility, res?.data.batches);
             addBookmark(newBookmark);
         }
         else { addBookmark(newBookmark) }
@@ -116,7 +125,7 @@ function Addlist() {
                                     <CommandInput placeholder="파라미터를 검색해주세요." />
                                     <CommandEmpty>검색된 파라미터 없음</CommandEmpty>
                                     <CommandGroup>
-                                        {selectedFacility ? facilityList[selectedFacility].map((param: string) => (
+                                        {selectedFacility ? facilityList[selectedFacility].parameters.map((param: string) => (
                                             <CommandItem
                                                 key={param}
                                                 value={param}
