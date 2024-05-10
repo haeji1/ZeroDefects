@@ -22,6 +22,7 @@ import { useBatchStore, useFacilityStore } from "@/stores/Facility"
 import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
 import { useBookmarkStore } from "@/stores/Bookmark";
+import { useToast } from "@/hooks/use-toast";
 
 function Addlist() {
 
@@ -32,6 +33,7 @@ function Addlist() {
     const { batchList, addBatch } = useBatchStore();
     const { addBookmark } = useBookmarkStore()
     const [open, setOpen] = useState(false)
+    const { toast } = useToast()
 
     // DB에 존재하는 설비 리스트들이랑, 해당 설비의 파라미터들 마운트 시에 가져오기
     useEffect(() => {
@@ -134,6 +136,16 @@ function Addlist() {
             <div className="ml-auto">
                 <Button disabled={!isButtonEnabled} onClick={handleAddButton}>추가</Button>
             </div>
+            <Button
+                onClick={() => {
+                    toast({
+                        title: "Scheduled: Catch up",
+                        description: "Friday, February 10, 2023 at 5:57 PM",
+                    })
+                }}
+            >
+                Show Toast
+            </Button>
         </Card >
     )
 }

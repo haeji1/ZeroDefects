@@ -11,6 +11,7 @@ import {
 import Navbar from './components/common/Navbar'
 import ReactDOM from 'react-dom/client'
 import "@/app/global.css"
+import { Toaster } from "./components/base/toaster";
 
 const ImageContext = createContext();
 
@@ -61,6 +62,7 @@ function App() {
   return (
     <ImageProvider>
       <RouterProvider router={router} />
+      <Toaster />
     </ImageProvider>
   )
 }
