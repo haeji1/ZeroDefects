@@ -1,5 +1,8 @@
 import { useState } from "react";
 import {
+    ColumnDef,
+    ColumnFiltersState,
+    SortingState,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -8,7 +11,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
-import { useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
+import { Bookmark, useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
 import { Checkbox } from "@/components/base/checkbox";
 import {
     Select,
@@ -44,9 +47,9 @@ function BookmarkTable() {
 
     // 테이블 관련 hook
     // ==============================
-    const data = bookmark
-    const [sorting, setSorting] = useState([])
-    const [columnFilters, setColumnFilters] = useState([])
+    const data: Bookmark[] = bookmark
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = useState({})
     const [rowSelection, setRowSelection] = useState({})
     const [pagination, setPagination] = useState({
@@ -55,7 +58,7 @@ function BookmarkTable() {
     });
     // ==============================
 
-    const columns = [
+    const columns: ColumnDef<Bookmark>[] = [
         {
             id: "select",
             header: ({ table }) => (
@@ -83,7 +86,7 @@ function BookmarkTable() {
             header: () => <div className="text-center">설비명</div>,
             cell: ({ row }) => {
 
-                const facility = row.getValue("facility")
+                const facility: string = row.getValue("facility")
 
                 return <div className="text-center">{facility}</div>
             }
@@ -93,7 +96,7 @@ function BookmarkTable() {
             header: () => <div className="text-center">파라미터</div>,
             cell: ({ row }) => {
 
-                const parameter = row.getValue("parameter")
+                const parameter: string = row.getValue("parameter")
 
                 return <div className="text-center">{parameter}</div>
             }
@@ -102,23 +105,28 @@ function BookmarkTable() {
             accessorKey: "times",
             header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
-                return <div className="text-center font-medium w-full">
+
+                const batches = batchList[row.original.facility];
+
+
+                return <div className="text-center font-medium min-w-[250px]">
                     <Select
-                        onValueChange={(e) => {
-                            const data = {
-                                id: row.original.id,
-                                facility: row.original.facility,
-                                parameter: row.original.parameter,
-                                selectedBatchName: e,
-                            }
-                            updateBookmark(data)
-                        }}>
+                    // onValueChange={(e) => {
+                    //     const data = {
+                    //         id: row.original.id,
+                    //         facility: row.original.facility,
+                    //         parameter: row.original.parameter,
+                    //         selectedBatchName: e,
+                    //     }
+                    //     updateBookmark(data)
+                    // }}
+                    >
                         <SelectTrigger>
-                            <SelectValue placeholder={bookmark.find((fac) => fac.facility === row.original.facility)?.selectedBatchName} />
+                            <SelectValue placeholder="조회할 배치 구간을 선택해주세요." />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                {batchList[row.original.facility]?.map((batch) =>
+                                {batches?.map((batch) =>
                                     <SelectItem
                                         key={batch.batchName}
                                         value={batch.batchName}
@@ -126,6 +134,7 @@ function BookmarkTable() {
                                         {batch.batchName}
                                     </SelectItem>
                                 )}
+                                <SelectItem value="asdfas">asdfas</SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>
@@ -166,9 +175,9 @@ function BookmarkTable() {
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: async (row) => {
             await setRowSelection(row)
-            const a = table.getSelectedRowModel().rows
-            console.log(a)
-            setSelectedBookmark(table.getSelectedRowModel().rows.map((row) => row.original))
+            // const a = table.getSelectedRowModel().rows
+            // console.log(a)
+            // setSelectedBookmark(table.getSelectedRowModel().rows.map((row) => row.original))
         },
         onPaginationChange: setPagination,
         state: {

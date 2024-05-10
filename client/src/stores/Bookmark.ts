@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export type Bookmark = {
+    id: number
+    facility: string
+    parameter: string
+    selectedBatchName: string | null
+}
+
+
 export const useBookmarkStore = create(
     persist(
         (set) => ({
