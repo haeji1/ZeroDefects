@@ -155,7 +155,7 @@ class InfluxGTRClient:
         try:
             df = pd.read_csv(file.file)
 
-            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'])
+            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'], format='%Y-%m-%d %H:%M:%S')
             df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
             df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
 
