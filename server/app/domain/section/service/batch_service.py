@@ -236,7 +236,7 @@ def get_step_info_using_facility_name_on_mongoDB(request_body):
 
     # 스텝 찾아서 넣기
     for val in result:
-        facility_name = val["name"]
+        facility_name = val["facilityName"]
         # 가장 최근 레시피 가져오겠다.
         collections = list(db[facility_name].find().sort('_id', -1).limit(1))
         # 스텝 리스트 넣을 리스트
