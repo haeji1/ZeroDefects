@@ -53,6 +53,8 @@ def get_datas(conditions: List[SectionData]):
                         start_date=condition.startTime, end_date=condition.endTime)
         try:
             df = execute_query(client, query)
+            if df is None:
+                continue
             df.rename(
                 columns={f'{condition.parameter}': f'{condition.facility}-{condition.parameter}'},
                 inplace=True)

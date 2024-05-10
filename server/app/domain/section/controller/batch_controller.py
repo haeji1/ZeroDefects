@@ -44,7 +44,7 @@ async def get_batches(facility: FacilityInfo):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
-    get_step_info_using_facility_name_on_mongoDB(request_body)
+    # get_step_info_using_facility_name_on_mongoDB(request_body)
     end_time_list = []
     if request_body.queryType == "time":
         sections: List[SectionData] = []
