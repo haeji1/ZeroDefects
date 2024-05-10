@@ -12,8 +12,8 @@ function Dashboard() {
                 <GraphSection />
             </div>
             <Card className="p-4">
-                <BookmarkTable />
                 <Addlist />
+                <BookmarkTable />
                 <GetGraph />
             </Card>
         </div>
