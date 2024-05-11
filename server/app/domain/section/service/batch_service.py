@@ -178,7 +178,6 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
     responses = []
 
     for data in request_body.queryData:
-        print("data:", data)
         collection = db[data.facility]
         batch_document = collection.find_one({"batchName": data.batchName})
         if not batch_document:

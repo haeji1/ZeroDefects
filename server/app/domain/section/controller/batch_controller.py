@@ -33,7 +33,7 @@ async def get_batches(facility: FacilityInfo):
     batches = get_batches_info(facility)
     if not batches:
         raise HTTPException(status_code=404, detail="Batches not found")
-    return {"batches": get_batches_info(facility)}
+    return {"batches": batches}
 
 
 # @section_router.get("/bokeh-section")
@@ -44,8 +44,7 @@ async def get_batches(facility: FacilityInfo):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
-    # get_step_info_using_facility_name_on_mongoDB(request_body)
-    end_time_list = []
+    step_time_info = []
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         for s in request_body.queryData:
@@ -56,26 +55,24 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=request_body.queryCondition.startTime,
                 endTime=request_body.queryCondition.endTime
             ))
-        print("=========sections=========")
-        print(sections)
-        print("======graph_df시작============")
+        # print("=========sections=========")
+        # print(sections)
+        # print("======graph_df시작============")
         graph_df = get_datas(sections)
-        print(graph_df)
-        print("=============graph_df끝==========")
-
-        print("============draw_dataframe시작===================")
-        plots = draw_dataframe_to_graph("time", graph_df,end_time_list)
+        # print(graph_df)
+        # print("=============graph_df끝==========")
+        #
+        # print("============draw_dataframe시작===================")
+        plots = draw_dataframe_to_graph("time", graph_df, step_time_info)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
+        setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
-        print("sections", sections)
         for s in sections:
-            s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S')
-            s['startTime'] = s['startTime'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            s['endTime'] = datetime.strptime(s['endTime'], '%Y-%m-%d %H:%M:%S')
-            s['endTime'] = s['endTime'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            s['endTime'] = datetime.strptime(s['endTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             sections_list.append(SectionData(
                 facility=s['facility'],
                 batchName=s['batchName'],
@@ -83,11 +80,9 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=s['startTime'],
                 endTime=s['endTime']
             ))
-            end_time_list.append(s['endTime'])
-        #     print("============endtimelist============")
-        # print(end_time_list)
+
         graph_df = get_datas(sections_list)
-        plots = draw_dataframe_to_graph("step", graph_df, end_time_list)
+        plots = draw_dataframe_to_graph("step", graph_df, step_time_info)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
         if not sections:
@@ -95,11 +90,6 @@ async def draw_graph(request_body: GraphQueryRequest):
         return JSONResponse(status_code=200, content=plot_json)
     else:
         raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")
-
-
-
-
-
 
 
 if __name__ == "__main__":

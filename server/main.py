@@ -6,24 +6,13 @@ from app.domain.facility.controller import facility_controller
 from app.domain.graph.controller import graph_controller
 from app.domain.recipe.controller import recipe_controller
 from app.domain.section.controller import batch_controller
-# bokeh
-
-
-# from app.routers.bokeh import bokeh_router
-# from app.routers.influx import influx_router
-# from app.routers.mongo import mongo_router
-# from app.routers.section import section_router
-
-# postgreSQL
-
-# data frame
 
 # cors
 from fastapi.middleware.cors import CORSMiddleware
-
 origins = [
     "*",
 ]
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,

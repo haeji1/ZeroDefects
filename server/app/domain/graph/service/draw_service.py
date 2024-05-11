@@ -19,7 +19,7 @@ def draw_dataframe_to_graph(graph_type, graph_df, end_time_list):
 
 
 def draw_graph_time_standard(graph_df):
-
+    # print("graph_df =", graph_df)
     if (len(graph_df) == 0):
         return []
 
@@ -32,11 +32,11 @@ def draw_graph_time_standard(graph_df):
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
         df["Time"] = pd.to_datetime(df["Time"])
-        print("===============time_values=============")
-        print(time_values)
-        print("===============time_values끝===========")
-        print("================value==================")
-        print(df[df.columns[-1]])
+        # print("===============time_values=============")
+        # print(time_values)
+        # print("===============time_values끝===========")
+        # print("================value==================")
+        # print(df[df.columns[-1]])
         facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
@@ -67,6 +67,7 @@ def draw_graph_time_standard(graph_df):
 
 
 def draw_graph_step_standard(graph_df, end_time_list):
+    # print("graph_df", graph_df)
     colors = Category10_10
 
     plots = []

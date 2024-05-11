@@ -44,9 +44,9 @@ def get_datas(conditions: List[SectionData]):
     start_time = time.time()
     # result_df = pd.DataFrame()
     client = InfluxDBClient(url=url, token=token, org=organization, timeout=1200000)
-    print('get data init ...')
+    # print('get data init ...')
     result_df: [pd.DataFrame] = []
-    print('conditions: ', conditions)
+    # print('conditions: ', conditions)
     for condition in conditions:
         query = field_time_query(
                         b=bucket, facility=condition.facility, field=condition.parameter,
