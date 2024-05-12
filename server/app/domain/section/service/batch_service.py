@@ -60,6 +60,7 @@ def save_section_data(facility: str, df):
     equipment_name = facility
 
     section_list = []
+    batch_steps_cnt = {}
 
     # 각 배치 및 스텝의 이름 생성 및 출력
     for batch_start, batch_end in zip(batch_starts, batch_ends):
@@ -87,6 +88,8 @@ def save_section_data(facility: str, df):
 
                 steps_dict.append(step_dict)
 
+        batch_steps_cnt[batch_name] = step_index
+
         try:
             section_list.append(BatchInfo(batchName=batch_name,
                                           batchStartTime=df['DateTime'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
@@ -99,6 +102,8 @@ def save_section_data(facility: str, df):
     operations = [ReplaceOne({'batchName': s.batchName}, dict(s), upsert=True) for s in section_list]
     if operations:
         db[facility].bulk_write(operations)
+
+    return batch_steps_cnt
 
 
 def get_batches_info(facility: FacilityInfo) -> []:

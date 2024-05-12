@@ -159,7 +159,7 @@ class InfluxGTRClient:
             df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
             df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
 
-            save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+            batch_steps_cnt = save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
             # print("write_df:", df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
 
             df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
@@ -172,7 +172,7 @@ class InfluxGTRClient:
                                                 point_settings=PointSettings())
 
             write_api.write(bucket=settings.influx_bucket, record=data)
-            return {"filename": file.filename, "message": "file successfully written"}
+            return {"filename": file.filename, "message": "file successfully written.", "batch_steps_cnt": batch_steps_cnt}
         except Exception as e:
             logger.error(f"Error fetching item : {e}", exc_info=True)
             return {"filename": file.filename, "message": str(e)}
