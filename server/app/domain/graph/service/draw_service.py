@@ -9,13 +9,13 @@ from bokeh.plotting import figure
 import pandas as pd
 
 
-def draw_dataframe_to_graph(graph_type, graph_df, step_time_info):
+def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info):
     # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
     if (graph_type == "time"):
         return draw_graph_time_standard(graph_df)
     elif (graph_type == "step"):
-        return draw_graph_step_standard(graph_df,step_time_info)
+        return draw_graph_step_standard(graph_df, steps_times_info)
 
 
 def draw_graph_time_standard(graph_df):

@@ -192,21 +192,33 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
 
         start_step_key = f"step{steps[0]}"
         end_step_key = f"step{steps[-1]}"
-        for step_item in batch_document['steps']:
-            if start_step_key in step_item:
-                start_time = step_item[start_step_key][f"{start_step_key}StartTime"]
-            if end_step_key in step_item:
-                end_time = step_item[end_step_key][f"{end_step_key}EndTime"]
 
-        if start_time is None or end_time is None:
-            raise HTTPException(status_code=404, detail="No step in batch")
+        steps_times = {}
+
+        for step in steps:
+            step_key = f"step{step}"
+            for step_item in batch_document['steps']:
+                if start_step_key in step_item:
+                    start_time = step_item[start_step_key][f"{start_step_key}StartTime"]
+                if end_step_key in step_item:
+                    end_time = step_item[end_step_key][f"{end_step_key}EndTime"]
+                if step_key in step_item:
+                    current_start_time = step_item[step_key][f"{step_key}StartTime"]
+                    current_end_time = step_item[step_key][f"{step_key}EndTime"]
+
+                    if current_start_time is None or current_end_time is None:
+                        raise HTTPException(status_code=404, detail="No step in batch")
+
+                    # 각 스텝별로 시간 정보를 딕셔너리에 저장합니다.
+                    steps_times[step_key] = {f"{step_key}startTime": current_start_time, f"{step_key}endTime": current_end_time}
 
         response = {
             "facility": data.facility,
             "batchName": data.batchName,
             "parameter": data.parameter,
             "startTime": start_time,
-            "endTime": end_time
+            "endTime": end_time,
+            "stepsTimes": steps_times
         }
         responses.append(response)
 

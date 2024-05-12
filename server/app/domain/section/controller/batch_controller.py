@@ -13,6 +13,7 @@ from app.domain.graph.service.draw_service import draw_dataframe_to_graph
 from app.domain.section.model.faciltiy_info import FacilityInfo
 from app.domain.section.model.graph_query_request import GraphQueryRequest
 from app.domain.section.model.section_data import SectionData
+from app.domain.section.model.step_data import StepData
 from config import settings
 
 from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
@@ -44,10 +45,8 @@ async def get_batches(facility: FacilityInfo):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
-    step_time_info = []
+    steps_times_info = []
     # get_step_info_using_facility_name_on_mongoDB(request_body)
-    start_time_list = []
-    end_time_list = []
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         for s in request_body.queryData:
@@ -61,7 +60,7 @@ async def draw_graph(request_body: GraphQueryRequest):
 
         graph_df = get_datas(sections)
 
-        plots = draw_dataframe_to_graph("time", graph_df,end_time_list)
+        plots = draw_dataframe_to_graph("time", graph_df)
         # print(graph_df)
         # print("=============graph_df끝==========")
         #
@@ -73,7 +72,6 @@ async def draw_graph(request_body: GraphQueryRequest):
         setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
-        print("sections", sections)
         for s in sections:
             s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             s['endTime'] = datetime.strptime(s['endTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -84,13 +82,17 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=s['startTime'],
                 endTime=s['endTime']
             ))
-            start_time_list.append(s['startTime'])
-            end_time_list.append(s['endTime'])
-        #     print("============endtimelist============")
-        # print(end_time_list)
+
+            steps_times_info.append(StepData(
+                facility=s['facility'],
+                batchName=s['batchName'],
+                stepsTime = s['stepsTimes']
+            ))
+
+        print("steps_times_info", steps_times_info)
 
         graph_df = get_datas(sections_list)
-        plots = draw_dataframe_to_graph("step", graph_df, step_time_info)
+        plots = draw_dataframe_to_graph("step", graph_df, steps_times_info)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
 
         if not sections:
