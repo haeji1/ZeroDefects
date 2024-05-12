@@ -6,6 +6,7 @@ class BatchInfo(BaseModel):
     batchStartTime: str
     batchEndTime: str
     steps: []
+    stepsCnt: int
 
     class Config:
         arbitrary_types_allowed = True

@@ -94,7 +94,8 @@ def save_section_data(facility: str, df):
             section_list.append(BatchInfo(batchName=batch_name,
                                           batchStartTime=df['DateTime'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
                                           batchEndTime=df['DateTime'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
-                                          steps=steps_dict))
+                                          steps=steps_dict,
+                                          stepsCnt=step_index))
         except TypeError as e:
             print(f"Error appending to batch_list: {e}")
 
