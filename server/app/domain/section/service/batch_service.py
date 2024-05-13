@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional
 
 import pymongo
 from bokeh.embed import json_item
@@ -15,6 +15,7 @@ from app.domain.section.model.batch_info import BatchInfo
 from app.domain.section.model.faciltiy_info import FacilityInfo
 from app.domain.section.model.graph_query_request import GraphQueryRequest
 from app.domain.section.model.section_data import SectionData
+from app.domain.section.model.step_request import StepsRequest
 
 load_dotenv()
 
@@ -104,7 +105,7 @@ def save_section_data(facility: str, df):
     if operations:
         db[facility].bulk_write(operations)
 
-    return batch_steps_cnt
+    return batch_steps_cnt, section_list
 
 
 def get_batches_info(facility: FacilityInfo) -> []:
@@ -114,11 +115,38 @@ def get_batches_info(facility: FacilityInfo) -> []:
     # 컬렉션에서 모든 문서(배치 정보) 조회
     batches = list(collection.find({}))
 
-    # MongoDB의 ObjectId를 문자열로 변환 (선택적)
     for batch in batches:
         batch.pop('_id', None)  # '_id' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
         batch.pop('steps', None)  # 'steps' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
     return batches
+
+
+def get_steps_info(steps_request: StepsRequest) -> []:
+    # facility를 기반으로 해당 컬렉션 선택
+    collection = db[steps_request.facility]
+
+    # 컬렉션에서 모든 문서(배치 정보) 조회
+    steps = list(collection.find({}))
+
+    for step in steps:
+        step.pop('_id', None)  # '_id' 키가 있으면 제거하고, 없으면 아무 일도 하지 않음
+
+    # 사용자가 특정 스텝을 지정했을 경우, 해당 스텝에 대한 정보만 필터링
+    if steps_request.steps is not None and len(steps_request.steps) > 0:
+        filtered_steps = []
+        for step in steps:
+            filtered_step = {"batchName": step["batchName"], "steps": []}
+            for requested_step in steps_request.steps:
+                step_key = f"step{requested_step}"
+                for step_info in step["steps"]:
+                    if step_key in step_info:
+                        filtered_step["steps"].append(step_info)
+                        break  # 해당 스텝을 찾았으면 루프 탈출
+            if filtered_step["steps"]:
+                filtered_steps.append(filtered_step)
+        return filtered_steps
+
+    return steps
 
 
 def read_from_section(request_body: List[FacilityData]):
