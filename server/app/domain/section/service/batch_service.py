@@ -26,19 +26,25 @@ db = client["section"]
 
 # 파일이 업로드되면 파일의 전 구간에서 배치와 사이클 구간 찾아서 MongoDB에 저장
 def save_section_data(facility: str, df):
+    # 파일의 첫 행 혹은 마지막 행인데 배치가 진행중이라면 오류 리턴
+    if df['RcpReq[]'][0] == 1 or df['RcpReq[]'].iloc[-1] == 1:
+        return None, None
+
     # 배치 및 스텝 시작과 끝 인덱스 저장을 위한 리스트
     batch_starts = []
     batch_ends = []
     step_starts = []  # 각 스텝의 시작 인덱스
     step_ends = []  # 각 스텝의 끝 인덱스
-
     step_number = 0  # 스텝 번호
+    equipment_name = facility
+    section_list = []
+    batch_steps_cnt = {}
 
     # 'RcpReq[]' 컬럼과 'CoatingLayerN[Layers]' 컬럼을 기준으로 배치 및 스텝의 시작과 끝 찾기
     for i in range(len(df)):
         # 배치 시작 검사
         if df['RcpReq[]'][i] == 1:
-            if i == 0 or (i > 0 and df['RcpReq[]'][i - 1] == 0):
+            if i > 0 and df['RcpReq[]'][i - 1] == 0:
                 batch_starts.append(i)
                 step_starts.append(i)  # 스텝 시작 인덱스 추가
                 step_number = 0  # 스텝 번호를 0으로 초기화
@@ -52,16 +58,6 @@ def save_section_data(facility: str, df):
                 # 배치가 끝나는 지점 처리
                 batch_ends.append(i - 1)
                 step_ends.append(i - 1)  # 현재 스텝의 끝 인덱스 추가
-
-    # 마지막 배치의 끝 처리
-    if df['RcpReq[]'].iloc[-1] == 1:
-        batch_ends.append(len(df) - 1)
-        step_ends.append(len(df) - 1)  # 마지막 스텝의 끝 처리
-
-    equipment_name = facility
-
-    section_list = []
-    batch_steps_cnt = {}
 
     # 각 배치 및 스텝의 이름 생성 및 출력
     for batch_start, batch_end in zip(batch_starts, batch_ends):
@@ -97,7 +93,7 @@ def save_section_data(facility: str, df):
                                           batchEndTime=df['DateTime'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
                                           steps=steps_dict,
                                           stepsCnt=step_index))
-        except TypeError as e:
+        except Exception as e:
             print(f"Error appending to batch_list: {e}")
 
     # MongoDB에 배치 정보 저장
