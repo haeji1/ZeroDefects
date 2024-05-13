@@ -1,11 +1,14 @@
-from typing import Optional, List, Any
-from bson import ObjectId
-from pydantic import BaseModel, Field
+from typing import List
+
+from pydantic import BaseModel
+
 
 class Comment(BaseModel):
+    id: int = 0
     author: str
     content: str
     password: str
+
 
 class Post(BaseModel):
     id: int = 0

@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from pymongo import MongoClient
 from starlette import status
 
@@ -80,3 +81,4 @@ def create_post_from_db(post: Post):
         return {"message": "Post created successfully."}  # JSONResponse 대신 직접 반환
     else:
         return JSONResponse(content={"message": "Failed to create post."}, status_code=status.HTTP_400_BAD_REQUEST)
+
