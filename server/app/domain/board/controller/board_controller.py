@@ -1,12 +1,14 @@
 from typing import List
 
 from fastapi import HTTPException, APIRouter
+from fastapi.encoders import jsonable_encoder
 from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 from starlette import status
 
-from app.domain.board.model.board import Post
+from app.domain.board.model.board import Post, Comment
+from app.domain.board.service.board_service import incremental_id
 from app.domain.facility.service.facility_function import get_measurement_code
 from config import settings
 
@@ -22,11 +24,15 @@ db = client["post"]
 
 @post_router.post("/posts")
 async def create_post(post: Post):
+    id_list = db.posts.find({}, sort=[("id", -1)]).limit(1)
+    list_id = 0
+    id_list = list(id_list)  # 커서를 리스트로 변환
+    if list(id_list):
+        list_id = incremental_id(id_list[0]["id"])
+    post.id = list_id
+    print(post)
     new_post = db.posts.insert_one(post.dict())
-    id_list = db.posts.find().sort("id", -1).limit(1)
-    id = 0
-    if not list(id_list):
-        id = 0
+
     if new_post.inserted_id:
         return {"message": "Post created successfully."}  # JSONResponse 대신 직접 반환
     else:
@@ -43,8 +49,20 @@ async def get_posts():
 
 # 특정 게시글 조회 API
 @post_router.get("/posts/{post_id}")
-async def read_post(post_id: str):
-    post = db.posts.find_one({"_id": post_id})
+async def read_post(post_id: int):
+    post = db.posts.find_one({"id": post_id})
+
     if post is None:
-        raise HTTPException(status_code=404, detail="Post not found")
-    return post
+        return JSONResponse(status_code=404, content={"detail": "Post not found"})
+
+    post_data = {
+        "id": post["id"],
+        "title": post["title"],
+        "content": post["content"],
+        "nickname": post["nickname"],
+        "password": post["password"],
+        "comments": [Comment(**comment) for comment in post.get("comments", [])]
+    }
+    post2 = Post(**post_data)
+
+    return JSONResponse(status_code=200, content=post2.dict())
