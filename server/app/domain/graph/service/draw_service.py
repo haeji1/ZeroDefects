@@ -1,7 +1,8 @@
 # bokeh
 from datetime import datetime
 from bokeh.layouts import column
-from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle)
+from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle,
+                          BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
 from bokeh.models import Span
 from bokeh.palettes import Category10_10
@@ -68,7 +69,72 @@ def draw_graph_time_standard(graph_df):
     return plots
 
 
-def draw_graph_step_standard(graph_df, step_time_info):
+# def draw_graph_step_standard(graph_df, step_times):
+#     # print("graph_df", graph_df)
+#     colors = Category10_10
+#
+#     plots = []
+#     toggles = []
+#     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+#     start_time = min(df["Time"].min() for df in graph_df)
+#
+#
+#     for df in graph_df:
+#         time_values = (df["Time"] - start_time).dt.total_seconds()
+#         facility, column_name = df.columns[-1].split('-')
+#
+#         # 각 facility에 대한 step_times 가져오기
+#         facility_step_times = step_times.get(facility, {})
+#
+#         color = colors[len(p.renderers) % len(colors)]
+#
+#         # Step별 BoxAnnotation 추가
+#         for step, step_time in facility_step_times.items():
+#
+#             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')  # Timestamp를 문자열로 변환
+#             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#             end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#             start_x -= time_values.min()
+#             end_x -= time_values.min()
+#
+#             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+#             p.add_layout(box_annotation)
+#
+#             toggle = Toggle(label="box", button_type="success", active=True)
+#             toggle.js_link('active', box_annotation, 'visible')
+#             toggles.append(toggle)
+#
+#             # toggle = Toggle(label="box", button_type="success", active=True)
+#             # toggle.js_link('active', box, 'visible')
+#             # p.add_layout(toggle)
+#
+#             # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
+#             # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
+#             #     annotation.visible = !annotation.visible;
+#             # """))
+#             # toggles.append(toggle)
+#
+#         time_values -= time_values.min()
+#
+#         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+#         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+#         hover = HoverTool(renderers=[line], tooltips=[
+#             ('facility', f'{facility}'),
+#             ('time', '@Time seconds'),
+#             ('Value', '$y')
+#         ])
+#
+#         p.add_tools(hover)
+#
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
+
+def draw_graph_step_standard(graph_df, step_times):
     # print("graph_df", graph_df)
     colors = Category10_10
 
@@ -82,6 +148,32 @@ def draw_graph_step_standard(graph_df, step_time_info):
         line_cnt += 1
         time_values = (df["Time"] - start_time).dt.total_seconds()
         facility, column_name = df.columns[-1].split('-')
+
+        facility_step_times = step_times.get(facility, {})
+
+        color = colors[len(p.renderers) % len(colors)]
+
+        for step, step_time in facility_step_times.items():
+
+            start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            start_x -= time_values.min()
+            end_x -= time_values.min()
+
+            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+            p.add_layout(box_annotation)
+
+
+            # toggle = Toggle(label="box", button_type="success", active=True)
+            # toggle.js_link('active', box_annotation, 'visible')
+            # toggles.append(toggle)
+
+            # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
+            # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
+            #     annotation.visible = !annotation.visible;
+            # """))
+            # toggles.append(toggle)
 
         time_values -= time_values.min()
 
@@ -122,6 +214,74 @@ def draw_graph_step_standard(graph_df, step_time_info):
 
     return plots
 
+# 홀수번째에만 색칠
+# def draw_graph_step_standard(graph_df, step_times):
+#     # print("graph_df", graph_df)
+#     colors = Category10_10
+#
+#     plots = []
+#     toggles = []
+#     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+#     start_time = min(df["Time"].min() for df in graph_df)
+#
+#     for df_index, df in enumerate(graph_df):
+#         time_values = (df["Time"] - start_time).dt.total_seconds()
+#         facility, column_name = df.columns[-1].split('-')
+#
+#         # 각 facility에 대한 step_times 가져오기
+#         facility_step_times = step_times.get(facility, {})
+#
+#         color = colors[df_index % len(colors)]  # df_index가 홀수인 경우에만 색상 변경
+#
+#         # Step별 BoxAnnotation 추가
+#         for step_index, (step, step_time) in enumerate(facility_step_times.items()):
+#             if step_index % 2 == 0:  # step_index가 홀수인 경우에만 BoxAnnotation 추가
+#                 start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')  # Timestamp를 문자열로 변환
+#                 start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#                 end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#                 start_x -= time_values.min()
+#                 end_x -= time_values.min()
+#
+#                 box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+#                 p.add_layout(box_annotation)
+#
+#                 text = Label(x=(start_x + end_x) / 2, y=0, text=f"Step {step}", text_font_size="10pt",
+#                              text_align="center", text_baseline="middle")
+#                 p.add_layout(text)
+#
+#                 # toggle = Toggle(label="box", button_type="success", active=True)
+#                 # toggle.js_link('active', box_annotation, 'visible')
+#                 # toggles.append(toggle)
+#
+#                 # toggle = Toggle(label="box", button_type="success", active=True)
+#                 # toggle.js_link('active', box, 'visible')
+#                 # p.add_layout(toggle)
+#
+#                 # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
+#                 # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
+#                 #     annotation.visible = !annotation.visible;
+#                 # """))
+#                 # toggles.append(toggle)
+#
+#         time_values -= time_values.min()
+#
+#         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+#         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+#         hover = HoverTool(renderers=[line], tooltips=[
+#             ('facility', f'{facility}'),
+#             ('time', '@Time seconds'),
+#             ('Value', '$y')
+#         ])
+#
+#         p.add_tools(hover)
+#
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
 
 # def draw_graph_step_standard(graph_df, end_time_list):
 #     print("===============graph_df==================")
@@ -513,3 +673,4 @@ def calc_df_values(source, df_name, column_name):
     print(f'{df_name} 의 평균값 {average}')
     print("===================================")
     return max_value, min_value, average
+
