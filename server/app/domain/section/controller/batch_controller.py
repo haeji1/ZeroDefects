@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 import uvicorn
 from datetime import datetime
 
 from bokeh.embed import json_item
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from pymongo import MongoClient
 from starlette.responses import JSONResponse
 
@@ -14,10 +14,11 @@ from app.domain.section.model.faciltiy_info import FacilityInfo
 from app.domain.section.model.graph_query_request import GraphQueryRequest
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.model.step_data import StepData
+from app.domain.section.model.step_request import StepsRequest
 from config import settings
 
 from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
-    get_step_info_using_facility_name_on_mongoDB
+    get_step_info_using_facility_name_on_mongoDB, get_steps_info
 
 url = settings.mongo_furl
 
@@ -31,10 +32,18 @@ section_router = APIRouter(prefix="/api", tags=['section'])
 
 @section_router.post("/batches")
 async def get_batches(facility: FacilityInfo):
-    batches = get_batches_info(facility)
-    if not batches:
+    batches_info = get_batches_info(facility)
+    if not batches_info:
         raise HTTPException(status_code=404, detail="Batches not found")
-    return {"batches": batches}
+    return {"batches": batches_info}
+
+
+@section_router.post("/steps")
+async def get_steps(request: StepsRequest):
+    steps_info = get_steps_info(StepsRequest(facility=request.facility, steps=request.steps))
+    if not steps_info:
+        raise HTTPException(status_code=404, detail="Steps not found")
+    return {"steps": steps_info}
 
 
 # @section_router.get("/bokeh-section")
