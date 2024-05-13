@@ -1,10 +1,12 @@
 import csv
+import gzip
 from collections import defaultdict
 from datetime import datetime, timedelta
 import time
 from http.client import HTTPException
-from io import StringIO
+from io import StringIO, BytesIO
 
+import numpy as np
 import pandas as pd
 from fastapi import UploadFile, File
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -86,6 +88,7 @@ class InfluxGTRClient:
         write_api.close()
         print('total time: ', time.time() - total_time)
         return response
+
     def read_data(self, conditions: List[SectionData]) -> []:
         start_time = time.time()
         result_df = pd.DataFrame()
@@ -124,12 +127,14 @@ class InfluxGTRClient:
 
         print('time: ', time.time() - start_time)
         return ["step", result_df]
+
     def read_info(self):
         answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
 
         facilities = defaultdict(list)
         for measurement in answer_measurements['_value']:
-            answer_fields = self.client.query_api().query_data_frame(info_field_query(b=self.bucket_name, measurement=measurement))
+            answer_fields = self.client.query_api().query_data_frame(
+                info_field_query(b=self.bucket_name, measurement=measurement))
 
             fields = [field for field in answer_fields['_value']]
             facilities[measurement] = fields
@@ -159,63 +164,42 @@ class InfluxGTRClient:
             df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
             df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
 
-            batch_steps_cnt = save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
-            # print("write_df:", df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+            batch_steps_cnt, section_list = save_section_data(measurement,
+                                                              df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+
+            for section in section_list:
+                batch_start_time = pd.to_datetime(section.batchStartTime)
+                batch_end_time = pd.to_datetime(section.batchEndTime)
+
+                df['batch'] = np.where((df['DateTime'] >= batch_start_time) & (df['DateTime'] <= batch_end_time),
+                                       section.batchName, '-')
+                df['section'] = '-'
+
+                for step in range(len(section.steps)):
+                    section_start_time = section.steps[step][f'step{step}'][f'step{step}StartTime']
+                    section_end_time = section.steps[step][f'step{step}'][f'step{step}EndTime']
+
+                    df.loc[(df['DateTime'] >= section_start_time) & (
+                        df['DateTime'] <= section_end_time), 'section'] = f'{step}'
 
             df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
-            float_cols = df_modified.columns.drop('DateTime')
+            float_cols = df_modified.columns.drop(['DateTime', 'batch', 'section'])
             df_modified[float_cols] = df_modified[float_cols].astype(float)
+
+            tags = ['batch', 'section']
 
             data = data_frame_to_list_of_points(data_frame=df_modified,
                                                 data_frame_measurement_name=measurement,
                                                 data_frame_timestamp_column='DateTime',
+                                                data_frame_tag_columns=tags,
                                                 point_settings=PointSettings())
 
             write_api.write(bucket=settings.influx_bucket, record=data)
-            return {"filename": file.filename, "message": "file successfully written.", "batch_steps_cnt": batch_steps_cnt}
+            return {"filename": file.filename, "message": "file successfully written.",
+                    "batch_steps_cnt": batch_steps_cnt}
         except Exception as e:
             logger.error(f"Error fetching item : {e}", exc_info=True)
             return {"filename": file.filename, "message": str(e)}
-
-    # @classmethod  # 현재 사용 안함
-    # def write_df(cls, write_api, file: File(), batch_size=1000):
-    #     print('write csv', file.filename)
-    #
-    #     # check file format
-    #     if not file.content_type == 'text/csv':
-    #         return {"filename": file.filename, "message": "Invalid CSV file"}
-    #     # check file name
-    #     if len(file.filename.split('-')) < 3:
-    #         return {"filename": file.filename, "message": "Invalid file name"}
-    #
-    #     measurement = file.filename.rsplit('-')[0]
-    #     date_string = file.filename.rsplit('-')[2]
-    #     ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
-    #
-    #     try:
-    #         df = pd.read_csv(file.file)
-    #
-    #         df['TempTime'] = pd.to_datetime(ymd_string + df['Time'])
-    #         df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
-    #         df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
-    #
-    #         save_section_data(measurement, df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
-    #         # print(df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
-    #
-    #         df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
-    #         float_cols = df_modified.columns.drop('DateTime')
-    #         df_modified[float_cols] = df_modified[float_cols].astype(float)
-    #
-    #         data = data_frame_to_list_of_points(data_frame=df_modified,
-    #                                             data_frame_measurement_name=measurement,
-    #                                             data_frame_timestamp_column='DateTime',
-    #                                             point_settings=PointSettings())
-    #
-    #         write_api.write(bucket=settings.influx_bucket, record=data)
-    #         return {"filename": file.filename, "message": "file successfully written"}
-    #     except Exception as e:
-    #         logger.error(f"Error fetching item : {e}", exc_info=True)
-    #         return {"filename": file.filename, "message": str(e)}
 
     @classmethod  # 현재 사용 안함
     async def write_not_df(cls, write_api, file: File(), batch_size=1000):
