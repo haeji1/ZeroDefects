@@ -1,6 +1,5 @@
 # bokeh
 from datetime import datetime
-
 from bokeh.layouts import column
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -39,11 +38,7 @@ def draw_graph_time_standard(graph_df):
         print("=============y==========================")
         print(df[df.columns[-1]])
         df["Time"] = pd.to_datetime(df["Time"])
-        # print("===============time_values=============")
-        # print(time_values)
-        # print("===============time_values끝===========")
-        # print("================value==================")
-        # print(df[df.columns[-1]])
+
         facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
@@ -56,8 +51,7 @@ def draw_graph_time_standard(graph_df):
                  ], formatters={'@Time': 'datetime'})
 
         p.add_tools(hover)
-    # print("============df=============")
-    # print(df)
+
     all_time_values = pd.concat([df['Time'] for df in graph_df])
     min_time = all_time_values.min()
     max_time = all_time_values.max()

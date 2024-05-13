@@ -35,6 +35,7 @@ def save_section_data(facility: str, df):
     batch_ends = []
     step_starts = []  # 각 스텝의 시작 인덱스
     step_ends = []  # 각 스텝의 끝 인덱스
+
     step_number = 0  # 스텝 번호
     equipment_name = facility
     section_list = []
@@ -270,3 +271,20 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
 #     #             print(result[name][1])
 #
 #     return result
+
+def extract_step_times(steps_times_info):
+    step_times_by_facility = {}
+    for step_data in steps_times_info:
+        facility = step_data.facility
+        steps_time = step_data.stepsTime
+        step_times = {}
+        for step, times in steps_time.items():
+            start_time = times[f"{step}startTime"]
+            end_time = times[f"{step}endTime"]
+            step_times[step] = {'startTime': start_time, 'endTime': end_time}
+
+        step_times_by_facility[facility] = step_times
+    print("*************************")
+    print(step_times_by_facility)
+    print("*************************")
+    return step_times_by_facility

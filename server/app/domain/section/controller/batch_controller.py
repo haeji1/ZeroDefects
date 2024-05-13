@@ -69,7 +69,7 @@ async def draw_graph(request_body: GraphQueryRequest):
 
         graph_df = get_datas(sections)
 
-        # plots = draw_dataframe_to_graph("time", graph_df)
+        plots = draw_dataframe_to_graph("time", graph_df)
         # print(graph_df)
         # print("=============graph_df끝==========")
         #
