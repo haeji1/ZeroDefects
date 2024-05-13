@@ -177,33 +177,6 @@ def read_from_section(request_body: List[FacilityData]):
 
     return JSONResponse(status_code=200, content=results)
 
-
-def draw_graph(request_body: GraphQueryRequest):
-    if request_body.queryType == "time":
-        sections: List[SectionData] = []
-        for data in request_body.queryData:
-            sections.append(SectionData(
-                facility=data.facility,
-                batchName=data.batchName,
-                parameter=data.parameter,
-                startTime=request_body.queryCondition.startTime,
-                endTime=request_body.queryCondition.endTime
-            ))
-            print('sections ', sections)
-            facility_list, parameter_list, df_list = get_datas(sections)
-            plots = draw_dataframe_to_graph(df_list, facility_list)
-            plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-
-        return JSONResponse(status_code=200, content=plot_json)
-    elif request_body.queryType == "step":
-        sections = get_sections_info(request_body)
-        if not sections:
-            raise HTTPException(status_code=404, detail="Sections not found")
-        return {"sections": sections}
-    else:
-        raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")
-
-
 def get_sections_info(request_body: GraphQueryRequest) -> []:
     responses = []
 
