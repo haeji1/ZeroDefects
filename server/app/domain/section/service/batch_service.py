@@ -60,6 +60,7 @@ def save_section_data(facility: str, df):
     equipment_name = facility
 
     section_list = []
+    batch_steps_cnt = {}
 
     # 각 배치 및 스텝의 이름 생성 및 출력
     for batch_start, batch_end in zip(batch_starts, batch_ends):
@@ -87,11 +88,14 @@ def save_section_data(facility: str, df):
 
                 steps_dict.append(step_dict)
 
+        batch_steps_cnt[batch_name] = step_index
+
         try:
             section_list.append(BatchInfo(batchName=batch_name,
                                           batchStartTime=df['DateTime'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
                                           batchEndTime=df['DateTime'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
-                                          steps=steps_dict))
+                                          steps=steps_dict,
+                                          stepsCnt=step_index))
         except TypeError as e:
             print(f"Error appending to batch_list: {e}")
 
@@ -99,6 +103,8 @@ def save_section_data(facility: str, df):
     operations = [ReplaceOne({'batchName': s.batchName}, dict(s), upsert=True) for s in section_list]
     if operations:
         db[facility].bulk_write(operations)
+
+    return batch_steps_cnt
 
 
 def get_batches_info(facility: FacilityInfo) -> []:
@@ -178,10 +184,8 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
     responses = []
 
     for data in request_body.queryData:
-        print("data:", data)
         collection = db[data.facility]
         batch_document = collection.find_one({"batchName": data.batchName})
-        print(batch_document)
         if not batch_document:
             raise HTTPException(status_code=404, detail=f"Batch {data.batchName} not found in {data.facility}")
 
@@ -194,21 +198,33 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
 
         start_step_key = f"step{steps[0]}"
         end_step_key = f"step{steps[-1]}"
-        for step_item in batch_document['steps']:
-            if start_step_key in step_item:
-                start_time = step_item[start_step_key][f"{start_step_key}StartTime"]
-            if end_step_key in step_item:
-                end_time = step_item[end_step_key][f"{end_step_key}EndTime"]
 
-        if start_time is None or end_time is None:
-            raise HTTPException(status_code=404, detail="No step in batch")
+        steps_times = {}
+
+        for step in steps:
+            step_key = f"step{step}"
+            for step_item in batch_document['steps']:
+                if start_step_key in step_item:
+                    start_time = step_item[start_step_key][f"{start_step_key}StartTime"]
+                if end_step_key in step_item:
+                    end_time = step_item[end_step_key][f"{end_step_key}EndTime"]
+                if step_key in step_item:
+                    current_start_time = step_item[step_key][f"{step_key}StartTime"]
+                    current_end_time = step_item[step_key][f"{step_key}EndTime"]
+
+                    if current_start_time is None or current_end_time is None:
+                        raise HTTPException(status_code=404, detail="No step in batch")
+
+                    # 각 스텝별로 시간 정보를 딕셔너리에 저장합니다.
+                    steps_times[step_key] = {f"{step_key}startTime": current_start_time, f"{step_key}endTime": current_end_time}
 
         response = {
             "facility": data.facility,
             "batchName": data.batchName,
             "parameter": data.parameter,
             "startTime": start_time,
-            "endTime": end_time
+            "endTime": end_time,
+            "stepsTimes": steps_times
         }
         responses.append(response)
 

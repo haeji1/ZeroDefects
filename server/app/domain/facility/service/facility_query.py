@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
 
 import warnings
+from typing import Any, List
+
 from influxdb_client.client.warnings import MissingPivotFunction
 
 import pandas as pd
 from influxdb_client import InfluxDBClient
+from pandas import DataFrame
 
 from config import settings
 
@@ -15,6 +18,7 @@ bucket = settings.influx_bucket
 
 warnings.simplefilter('ignore', MissingPivotFunction)
 
+
 # query for factor list
 def measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -22,6 +26,8 @@ def measurement_query(b: str, measurement: str, start_date: str, end_date: str) 
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
             '''
+
+
 # query for fields time
 def fields_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
     print("fields", fields)
@@ -34,6 +40,8 @@ def fields_time_query(b: str, facility: str, fields, start_date: str, end_date: 
             |> filter(fn: (r) => r["_measurement"] == "{facility}") 
             |> filter(fn: (r) => {fields_filter})
             """
+
+
 # query for field time
 def field_time_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
     # date string -> date obj
@@ -54,6 +62,7 @@ def field_time_query(b: str, facility: str, field: str, start_date: str, end_dat
                 |> keep(columns: ["_time", "{field}"])
             '''
 
+
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -66,12 +75,15 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
 
+
 # info facility
 def info_measurements_query(b: str) -> str:
     return f"""
             import "influxdata/influxdb/schema"
             schema.measurements(bucket: "{b}")
             """
+
+
 # info parameter
 def info_field_query(b: str, measurement: str) -> str:
     return f"""
@@ -82,10 +94,15 @@ def info_field_query(b: str, measurement: str) -> str:
             start: -1y,
             )
             """
+
+
 # execute query
-def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame:
-    df_result = client.query_api().query_data_frame(org=settings.influx_org, query=query)
-    df_result.drop(columns=['result', 'table'], inplace=True)
-    df_result.rename(columns={"_time": "Time"}, inplace=True)
+def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
+    try:
+        df_result = client.query_api().query_data_frame(org=settings.influx_org, query=query)
+        df_result.drop(columns=['result', 'table'], inplace=True)
+        df_result.rename(columns={"_time": "Time"}, inplace=True)
+    except Exception as e:
+        return None
 
     return df_result

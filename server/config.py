@@ -6,6 +6,7 @@ from pydantic.v1 import BaseSettings
 
 load_dotenv()
 
+
 class DevSettings(BaseSettings):
     influx_url: str = os.getenv("INFLUXDB_URL")
     influx_token: str = os.getenv("INFLUXDB_TOKEN")

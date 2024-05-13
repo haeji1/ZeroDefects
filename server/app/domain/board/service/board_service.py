@@ -1,4 +1,6 @@
 from pymongo import MongoClient
+from starlette import status
+
 from app.domain.board.model.board import Post, Comment
 from config import settings
 from fastapi.responses import JSONResponse
