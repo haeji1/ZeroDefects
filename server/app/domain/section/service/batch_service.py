@@ -105,7 +105,7 @@ def save_section_data(facility: str, df):
     if operations:
         db[facility].bulk_write(operations)
 
-    return batch_steps_cnt
+    return batch_steps_cnt, section_list
 
 
 def get_batches_info(facility: FacilityInfo) -> []:
