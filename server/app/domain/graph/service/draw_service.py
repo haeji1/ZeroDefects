@@ -3,6 +3,13 @@ from datetime import datetime
 from bokeh.layouts import column
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle,
                           BoxAnnotation)
+from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
+import statistics
+
+from bokeh.embed import json_item
+from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation, Glyph,
+                          GlyphRenderer, Toggle, Column, CustomJS,Label)
+
 from bokeh.models.formatters import NumeralTickFormatter
 from bokeh.models import Span
 from bokeh.palettes import Category10_10
@@ -141,6 +148,8 @@ def draw_graph_step_standard(graph_df, step_times):
     plots = []
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
 
+    toggles = []
+    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
     start_time = min(df["Time"].min() for df in graph_df)
 
     line_cnt = 0
@@ -164,6 +173,17 @@ def draw_graph_step_standard(graph_df, step_times):
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
             p.add_layout(box_annotation)
 
+            step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
+            min_value = step_df.iloc[:, -1].min()
+            max_value = step_df.iloc[:, -1].max()
+            std_deviation = step_df.iloc[:, -1].std()
+            variance = step_df.iloc[:, -1].var()
+            mean_value = step_df.iloc[:, -1].mean()
+            median_value = step_df.iloc[:, -1].median()
+            mode_value = statistics.mode(step_df.iloc[:, -1])
+
+            print(
+                f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
 
             # toggle = Toggle(label="box", button_type="success", active=True)
             # toggle.js_link('active', box_annotation, 'visible')
