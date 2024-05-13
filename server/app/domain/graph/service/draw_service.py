@@ -19,6 +19,8 @@ def draw_dataframe_to_graph(graph_type, graph_df, end_time_list):
 
 
 def draw_graph_time_standard(graph_df):
+    print("======graph_df=========")
+    print(graph_df)
     colors = Category10_10
 
     plots = []
@@ -27,6 +29,10 @@ def draw_graph_time_standard(graph_df):
 
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
+        print("==============time_value=================")
+        print(time_values)
+        print("=============y==========================")
+        print(df[df.columns[-1]])
         df["Time"] = pd.to_datetime(df["Time"])
         facility, column_name = df.columns[-1].split('-')
 

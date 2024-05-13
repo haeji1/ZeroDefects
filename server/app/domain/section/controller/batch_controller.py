@@ -15,8 +15,7 @@ from app.domain.section.model.graph_query_request import GraphQueryRequest
 from app.domain.section.model.section_data import SectionData
 from config import settings
 
-from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
-    get_step_info_using_facility_name_on_mongoDB
+from app.domain.section.service.batch_service import get_batches_info, get_sections_info
 
 url = settings.mongo_furl
 
@@ -44,7 +43,7 @@ async def get_batches(facility: FacilityInfo):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
-    get_step_info_using_facility_name_on_mongoDB(request_body)
+    # get_step_info_using_facility_name_on_mongoDB(request_body)
     end_time_list = []
     if request_body.queryType == "time":
         sections: List[SectionData] = []
