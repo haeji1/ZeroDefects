@@ -21,8 +21,10 @@ facility_router = APIRouter(prefix="/facility", tags=['request'])
 @facility_router.post("/write")
 async def write_influxdb(files: List[UploadFile] = File(...)):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    content = client.write_csv(files)
-    return JSONResponse(status_code=200, content=content)
+    contents = client.write_csv(files)
+    for content in contents:
+        print("content:", content)
+    return JSONResponse(status_code=200, content=contents)
 
 
 @facility_router.get("/info")

@@ -167,6 +167,11 @@ class InfluxGTRClient:
             batch_steps_cnt, section_list = save_section_data(measurement,
                                                               df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
 
+            if batch_steps_cnt is None and section_list is None:
+                return {"filename": file.filename,
+                        "success": -1,
+                        "message": "File write failed. Batch is still in progress on the first or last row of the file."}
+
             for section in section_list:
                 batch_start_time = pd.to_datetime(section.batchStartTime)
                 batch_end_time = pd.to_datetime(section.batchEndTime)
@@ -195,7 +200,8 @@ class InfluxGTRClient:
                                                 point_settings=PointSettings())
 
             write_api.write(bucket=settings.influx_bucket, record=data)
-            return {"filename": file.filename, "message": "file successfully written.",
+            return {"filename": file.filename, "message": "File successfully written.",
+                    "success": 1,
                     "batch_steps_cnt": batch_steps_cnt}
         except Exception as e:
             logger.error(f"Error fetching item : {e}", exc_info=True)
