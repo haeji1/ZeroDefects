@@ -6,6 +6,7 @@ from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Ra
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
 import statistics
 
+import numpy as np
 from bokeh.embed import json_item
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation, Glyph,
                           GlyphRenderer, Toggle, Column, CustomJS,Label)
@@ -41,10 +42,6 @@ def draw_graph_time_standard(graph_df):
 
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
-        print("==============time_value=================")
-        print(time_values)
-        print("=============y==========================")
-        print(df[df.columns[-1]])
         df["Time"] = pd.to_datetime(df["Time"])
 
         facility, column_name = df.columns[-1].split('-')
@@ -147,9 +144,8 @@ def draw_graph_step_standard(graph_df, step_times):
 
     plots = []
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
-
     toggles = []
-    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+
     start_time = min(df["Time"].min() for df in graph_df)
 
     line_cnt = 0
@@ -182,17 +178,10 @@ def draw_graph_step_standard(graph_df, step_times):
             median_value = step_df.iloc[:, -1].median()
             mode_value = statistics.mode(step_df.iloc[:, -1])
 
-            print(
-                f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
+            print(f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
 
             # toggle = Toggle(label="box", button_type="success", active=True)
             # toggle.js_link('active', box_annotation, 'visible')
-            # toggles.append(toggle)
-
-            # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
-            # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
-            #     annotation.visible = !annotation.visible;
-            # """))
             # toggles.append(toggle)
 
         time_values -= time_values.min()
@@ -682,7 +671,7 @@ def save_graph_data(graph_df):
 #
 
 # ColumnDataSource의 max, min, 평균 값 구하기
-def calc_df_values(source, df_name, column_name):
+def calc_df_values(source, df_name,column_name):
     print("========== source 테스트 ===========")
     print(f'source : {source} facility : {df_name} column : {column_name}')
     max_value = max(source.data[column_name])

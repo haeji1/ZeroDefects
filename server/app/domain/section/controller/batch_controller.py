@@ -81,6 +81,9 @@ async def draw_graph(request_body: GraphQueryRequest):
         # setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
+        print("====================sections====================")
+        print(sections)
+        print("====================sections=====================")
         for s in sections:
             s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             s['endTime'] = datetime.strptime(s['endTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
