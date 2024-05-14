@@ -3,6 +3,7 @@ import Dashboard from '@/pages/Dashboard'
 import Settings from '@/pages/Settings'
 import Analysis from '@/pages/Analysis'
 import Notification from '@/pages/Notification'
+import Board from "@/pages/Board";
 import {
   createBrowserRouter,
   Navigate,
@@ -52,6 +53,10 @@ function App() {
         {
           path: "/settings",
           element: <Settings />,
+        },
+        {
+          path: "/board",
+          element: <Board/>,
         },
       ],
     },
