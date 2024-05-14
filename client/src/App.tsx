@@ -13,6 +13,7 @@ import Navbar from './components/common/Navbar'
 import ReactDOM from 'react-dom/client'
 import "@/app/global.css"
 import { Toaster } from "./components/base/toaster";
+import BoardDetail from "./components/domain/board/DetailedPost";
 
 const ImageContext = createContext();
 
@@ -29,7 +30,6 @@ const ImageProvider = ({ children }) => {
 const useImage = () => useContext(ImageContext);
 
 function App() {
-
   const router = createBrowserRouter([
     {
       path: "/",
@@ -59,6 +59,10 @@ function App() {
           path: "/board",
           element: <Board/>,
         },
+        {
+          path:"/board/:ids",
+          element: <BoardDetail/>
+        }
       ],
     },
 
