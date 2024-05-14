@@ -1,5 +1,4 @@
 import Posts from "@/components/domain/board/Posts";
-
 function Board() {
     return (
         <>
