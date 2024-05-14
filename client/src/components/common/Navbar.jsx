@@ -27,6 +27,9 @@ function Navbar() {
                     <Link to="/analysis" onClick={() => handleClick('analysis')}>
                         <p className={`link ${selectedLinkClass('analysis')}`}>분석</p>
                     </Link>
+                    <Link to="/board" onClick={() => handleClick('board')}>
+                        <p className={`link ${selectedLinkClass('board')}`}>게시판</p>
+                    </Link>
                     <Link to="/notification" onClick={() => handleClick('notification')}>
                         <p className={`link ${selectedLinkClass('notification')}`}>알림</p>
                     </Link>
