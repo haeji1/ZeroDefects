@@ -12,6 +12,7 @@ import Lottie from "lottie-react";
 import ChartLoadingGIF from "@/assets/chartloading.json"
 import SamsungLogo from "@/assets/images/Logo_BLUE.png"
 import { useEffect } from "react";
+import CreatePostModal from "../board/CreatePost";
 
 Chart.register(zoomPlugin);
 
@@ -36,6 +37,7 @@ function GraphSection() {
                         graphData.map((data: any, index: number) => (
                             <div key={index}>
                                 <BokehPlot data={data} />
+                                <CreatePostModal/>
                             </div>
                         )) : <div className="flex flex-col items-center my-[100px]">
                             <img src={SamsungLogo} width={800} alt="" />
