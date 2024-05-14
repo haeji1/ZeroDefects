@@ -10,7 +10,7 @@ client = MongoClient(url)
 db = client["post"]
 
 
-def authenticate_user(nickname: str, password: str):
-    if nickname in fake_user_db and fake_user_db[nickname]["password"] == password:
-        return True
-    return False
+# def authenticate_user(nickname: str, password: str):
+#     if nickname in fake_user_db and fake_user_db[nickname]["password"] == password:
+#         return True
+#     return False
