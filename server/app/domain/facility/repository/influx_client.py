@@ -20,7 +20,7 @@ from urllib3.exceptions import NewConnectionError
 
 from app.domain.facility.service.facility_function import get_measurement_code
 from app.domain.facility.service.facility_query import field_time_query, execute_query, info_measurements_query, \
-    info_field_query
+    info_field_query, TGLife_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 from config import settings
@@ -127,7 +127,6 @@ class InfluxGTRClient:
 
         print('time: ', time.time() - start_time)
         return ["step", result_df]
-
     def read_info(self):
         answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
 
@@ -140,6 +139,27 @@ class InfluxGTRClient:
             facilities[measurement] = fields
 
         return {'result': dict(facilities)}
+
+    def read_TG_data(self, facility: object, tg_life_num: str, start_date: object, end_date: object) -> object:
+        start_time = time.time()
+        result_df = pd.DataFrame()
+
+        # conditions length == 1
+        # def TGLife_query(b: str, facility: str, tg_life: str, start_date: str, end_date: str):
+
+        query = TGLife_query(b=self.bucket_name, facility=facility, tg_life_num=tg_life_num, start_date=start_date, end_date=end_date)
+        try:
+            result_df = execute_query(self.client, query)
+
+            print('result df : ', result_df)
+            # result_df.rename(
+            #     columns={f'{conditions[0].parameter}': f'{conditions[0].facility}_{conditions[0].parameter}'},
+            #     inplace=True)
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
+        print('time: ', time.time() - start_time)
+        return ["step", result_df]
 
     @classmethod
     def write_df(cls, write_api, file: File(), batch_size=1000):
@@ -191,7 +211,7 @@ class InfluxGTRClient:
             float_cols = df_modified.columns.drop(['DateTime', 'batch', 'section'])
             df_modified[float_cols] = df_modified[float_cols].astype(float)
 
-            tags = ['batch', 'section']
+            tags = ['batch', 'section', 'TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']
 
             data = data_frame_to_list_of_points(data_frame=df_modified,
                                                 data_frame_measurement_name=measurement,
