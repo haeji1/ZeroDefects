@@ -91,7 +91,7 @@ function GetGraph() {
         if (selectedButton === 'time') {
             startDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
         }
-        else {
+        else if (selectedButton === 'step'){
             startStep && endStep ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
         }
     }, [startDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
@@ -110,7 +110,7 @@ function GetGraph() {
 
     const handleStep = (e) => {
         if (e.target.id === "startStep") {
-            setStartStep(Number(e.target.value))
+            setStartStep(e.target.value)
         }
         else if (e.target.id === "endStep") {
             setEndStep(e.target.value)
@@ -200,13 +200,13 @@ function GetGraph() {
                     </div>
                     <div className="h-full flex flex-col gap-2 justify-center">
                         <div className="flex flex-row gap-3">
-                            <div>
+                            <div className="w-full">
                                 <Label>시작 스텝</Label>
-                                <Input id="startStep" type="number" onChange={handleStep} disabled={isTimeButtonSelected} />
+                                <Input id="startStep" type="number" min={0} max={19} onChange={handleStep} disabled={isTimeButtonSelected} />
                             </div>
-                            <div>
+                            <div className="w-full">
                                 <Label>종료 스텝</Label>
-                                <Input id="endStep" type="number" onChange={handleStep} disabled={isTimeButtonSelected} />
+                                <Input id="endStep" type="number" min={0} max={19} onChange={handleStep} disabled={isTimeButtonSelected} />
                             </div>
                         </div>
                     </div>
