@@ -146,7 +146,7 @@ function GetGraph() {
                     <div className="h-full w-full flex flex-col gap-2 justify-center">
                         <div className="flex flex-row gap-3 items-center">
                             <p>
-                                시작 구간 :
+                                시작 :
                             </p>
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -176,7 +176,7 @@ function GetGraph() {
                         </div>
                         <div className="flex flex-row gap-3 items-center">
                             <p>
-                                종료 구간 :
+                                종료 :
                             </p>
                             <Popover>
                                 <PopoverTrigger asChild>
