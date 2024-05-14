@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import HTTPException
 from pymongo import MongoClient
 from starlette import status
@@ -25,9 +23,9 @@ def post_to_post2(post: Post):
         "id": post["id"],
         "title": post["title"],
         "content": post["content"],
-        "nickname": post["nickname"],
+        "author": post["author"],
         "password": post["password"],
-        "graph": post["graph"],
+        "graphData": post["graphData"],
         "comments": [Comment(**comment) for comment in post.get("comments", [])]
     }
     post2 = Post(**post_data)

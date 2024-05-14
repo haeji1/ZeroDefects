@@ -9,15 +9,15 @@ class Comment(BaseModel):
     author: str
     content: str
     password: str
-    date: Optional[datetime] = datetime.now()
+    date: Optional[str] = str(datetime.now())
 
 
 class Post(BaseModel):
     id: int = 0
     title: str
     content: str
-    nickname: str
+    author: str
     password: str
     graphData: Optional[list] = None
     comments: List[Comment] = []
-    date: Optional[datetime] = datetime.now()
+    date: Optional[str] = str(datetime.now())
