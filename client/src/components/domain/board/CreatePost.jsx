@@ -14,7 +14,7 @@ function CreatePostModal() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [author, setAuthor] = useState('');
   const [password, setPassword] = useState('');
 
   const { graphData, isFetching } = useGraphDataStore();
@@ -35,7 +35,7 @@ function CreatePostModal() {
     const postData = {
       title,
       content,
-      nickname,
+      author,
       password,
       graphData,
     };
@@ -105,7 +105,7 @@ function CreatePostModal() {
           </div>
           <div>
             <label>닉네임</label>
-            <textarea value={nickname} onChange={(e) => setNickname(e.target.value)} />
+            <textarea value={author} onChange={(e) => setAuthor(e.target.value)} />
           </div>
           <div>
             <label>패스워드</label>
