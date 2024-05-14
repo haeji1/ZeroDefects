@@ -3,8 +3,8 @@ import { persist } from 'zustand/middleware'
 
 interface Batch {
     batchName: string;
-    batchStartTime: Date;
-    batchEndTime: Date;
+    batchStartTime: string;
+    batchEndTime: string;
 }
 
 interface BatchStore {

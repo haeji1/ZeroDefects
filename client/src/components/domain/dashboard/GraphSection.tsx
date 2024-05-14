@@ -4,6 +4,8 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/base/card"
+import { Switch } from "@/components/base/switch";
+import { Label } from "@/components/base/label";
 import { Chart } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import { useGraphDataStore } from "@/stores/GraphData";
@@ -18,7 +20,7 @@ Chart.register(zoomPlugin);
 
 function GraphSection() {
 
-    const { graphData, isFetching } = useGraphDataStore()
+    const { graphData, isFetching, isCollapse, setIsCollapse } = useGraphDataStore()
 
     useEffect(() => {
     }, [isFetching])
@@ -26,8 +28,12 @@ function GraphSection() {
     return (
         <div className="flex flex-col ">
             <Card className='mr-5 min-h-[800px]'>
-                <CardHeader>
+                <CardHeader className="flex flex-row">
                     <CardTitle>Graph Overview</CardTitle>
+                    <div className="ml-auto flex items-center space-x-2">
+                        <Label htmlFor="airplane-mode">그래프 전체 보기</Label>
+                        <Switch id="airplane-mode" onClick={() => setIsCollapse(!isCollapse)} />
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {isFetching ? <div className="flex flex-col items-center">
@@ -37,7 +43,7 @@ function GraphSection() {
                         graphData.map((data: any, index: number) => (
                             <div key={index}>
                                 <BokehPlot data={data} />
-                                <CreatePostModal/>
+                                <CreatePostModal />
                             </div>
                         )) : <div className="flex flex-col items-center my-[100px]">
                             <img src={SamsungLogo} width={800} alt="" />
