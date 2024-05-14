@@ -27,6 +27,7 @@ def post_to_post2(post: Post):
         "content": post["content"],
         "nickname": post["nickname"],
         "password": post["password"],
+        "graph": post["graph"],
         "comments": [Comment(**comment) for comment in post.get("comments", [])]
     }
     post2 = Post(**post_data)
@@ -77,6 +78,7 @@ def create_post_from_db(post: Post):
     if id_list:
         list_id = incremental_id(id_list[0]["id"])
     post.id = list_id
+    print(post)
     new_post = db.posts.insert_one(post.dict())
 
     if new_post.inserted_id:

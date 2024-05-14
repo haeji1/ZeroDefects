@@ -18,5 +18,6 @@ class Post(BaseModel):
     content: str
     nickname: str
     password: str
+    graphData: Optional[list] = None
     comments: List[Comment] = []
     date: Optional[datetime] = datetime.now()

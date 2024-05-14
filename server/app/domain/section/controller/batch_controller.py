@@ -69,7 +69,7 @@ async def draw_graph(request_body: GraphQueryRequest):
 
         graph_df = get_datas(sections)
 
-        plots = draw_dataframe_to_graph("time", graph_df)
+        # plots = draw_dataframe_to_graph("time", graph_df)
         # print(graph_df)
         # print("=============graph_df끝==========")
         #
@@ -78,7 +78,7 @@ async def draw_graph(request_body: GraphQueryRequest):
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
     elif request_body.queryType == "step":
-        setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
+        # setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
         for s in sections:
