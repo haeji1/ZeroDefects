@@ -95,7 +95,7 @@ async def draw_graph(request_body: GraphQueryRequest):
             steps_times_info.append(StepData(
                 facility=s['facility'],
                 batchName=s['batchName'],
-                stepsTime = s['stepsTimes']
+                stepsTime=s['stepsTimes']
             ))
 
         print("steps_times_info", steps_times_info)

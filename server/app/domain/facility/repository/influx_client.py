@@ -19,7 +19,7 @@ from starlette.responses import JSONResponse
 from urllib3.exceptions import NewConnectionError
 
 from app.domain.facility.service.facility_function import get_measurement_code
-from app.domain.facility.service.facility_query import field_time_query, execute_query, info_measurements_query, \
+from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
     info_field_query, TGLife_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
@@ -101,7 +101,7 @@ class InfluxGTRClient:
 
         # conditions length == 1
         if len(conditions) == 1:
-            query = field_time_query(
+            query = field_by_time_query(
                 b=self.bucket_name, facility=conditions[0].facility, field=conditions[0].parameter,
                 start_date=conditions[0].startTime, end_date=conditions[0].endTime)
             try:
@@ -115,7 +115,7 @@ class InfluxGTRClient:
         # conditions length > 1
         if len(conditions) > 1:
             for condition in conditions:
-                query = field_time_query(
+                query = field_by_time_query(
                     b=self.bucket_name, facility=condition.facility, field=condition.parameter,
                     start_date=condition.startTime, end_date=condition.endTime)
 
