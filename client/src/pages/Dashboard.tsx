@@ -1,22 +1,34 @@
 import { Card } from "@/components/base/card";
+import { Sidebar } from 'react-pro-sidebar';
 import GraphSection from "@/components/domain/dashboard/GraphSection";
 import BookmarkTable from "@/components/domain/dashboard/BookmarkTable";
 import Addlist from "@/components/domain/dashboard/AddList";
 import GetGraph from "@/components/domain/dashboard/GetGraph";
+import { useGraphDataStore } from "@/stores/GraphData";
+
 
 function Dashboard() {
 
+    const { isCollapse } = useGraphDataStore();
+
     return (
-        <div className="grid grid-cols-3 m-5">
-            <div className="col-span-2">
-                <GraphSection />
-            </div>
-            <Card className="p-4">
+        <div className="flex flex-row-reverse m-5">
+            <Sidebar
+                collapsed={isCollapse}
+                width="40%"
+                collapsedWidth="0%"
+                backgroundColor="null"
+            >
                 <BookmarkTable />
                 <Addlist />
                 <GetGraph />
-            </Card>
+            </Sidebar>
+            <div className="w-full">
+                <GraphSection />
+            </div>
         </div>
+
+
     )
 }
 
