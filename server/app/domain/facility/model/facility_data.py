@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -10,3 +11,10 @@ class FacilityData(BaseModel):
     endTime: str
     batchName: Optional[str] = None
     step: Optional[int] = None
+
+
+class TGLifeData(BaseModel):
+    facility: str
+    tg_life: str
+    startTime: str = '1970-01-01T00:00:00.0Z'
+    endTime: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z"

@@ -63,6 +63,59 @@ def field_time_query(b: str, facility: str, field: str, start_date: str, end_dat
             '''
 
 
+def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str):
+    return f"""
+            import "experimental"
+            import "join"
+
+            voltage = from(bucket: "{b}")
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}V[V]")
+                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> mean()
+
+            current = from(bucket: "{b}")
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}I[A]")
+                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> mean()
+
+            power = from(bucket: "{b}")
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}Pwr[kW]")
+                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> mean()
+
+            firstjoin = join.tables(
+                method: "left",
+                left: voltage,
+                right: current,
+                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
+                as: (l, r) => ({{"TG{tg_life_num}Life[kWh]": l["TG{tg_life_num}Life[kWh]"], 
+                "P.TG{tg_life_num}V[V]": l._value, "P.TG{tg_life_num}I[A]": r._value, _start:l._start, _stop:l._stop}}),
+            )
+
+            secondjoin = join.tables(
+                method: "left",
+                left: firstjoin,
+                right: power,
+                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
+                as: (l, r) => ({{"TG{tg_life_num}Life[kWh]": l["TG{tg_life_num}Life[kWh]"], 
+                "P.TG{tg_life_num}V[V]": l["P.TG{tg_life_num}V[V]"], 
+                "P.TG{tg_life_num}I[A]": l["P.TG{tg_life_num}I[A]"], 
+                "P.TG{tg_life_num}Pwr[kW]": r._value, _start:l._start, _stop:l._stop}}),
+            )
+
+            secondjoin
+            |> keep(columns: ["TG{tg_life_num}Life[kWh]", "P.TG{tg_life_num}V[V]", 
+            "P.TG{tg_life_num}I[A]", "P.TG{tg_life_num}Pwr[kW]"])
+            |> yield(name: "TGLife")
+            """
+
+
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
