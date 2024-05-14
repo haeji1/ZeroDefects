@@ -12,7 +12,7 @@ import pandas as pd
 from influxdb_client import InfluxDBClient
 
 from app.domain.facility.model.facility_data import FacilityData
-from app.domain.facility.service.facility_query import section_query, execute_query, field_time_query, info_field_query, \
+from app.domain.facility.service.facility_query import section_query, execute_query, field_by_time_query, info_field_query, \
     info_measurements_query
 from app.domain.section.model.section_data import SectionData
 from config import settings
@@ -41,58 +41,28 @@ def get_facilities_info():
 
 # get data
 def get_datas(conditions: List[SectionData]):
-    start_time = time.time()
-    # result_df = pd.DataFrame()
     client = InfluxDBClient(url=url, token=token, org=organization, timeout=1200000)
-    # print('get data init ...')
     result_df: [pd.DataFrame] = []
-    # print('conditions: ', conditions)
+
     for condition in conditions:
-        query = field_time_query(
+        query = field_by_time_query(
                         b=bucket, facility=condition.facility, field=condition.parameter,
                         start_date=condition.startTime, end_date=condition.endTime)
         try:
+            query_s = time.time()
             df = execute_query(client, query)
+            print('query time ', time.time() - query_s)
+
             if df is None:
                 continue
             df.rename(
-                columns={f'{condition.parameter}': f'{condition.facility}-{condition.parameter}'},
+                columns={'_value': f'{condition.facility}-{condition.parameter}'},
                 inplace=True)
-            # print('df: ', df)
+
             result_df.append(df)
         except Exception as e:
             raise HTTPException(500, str(e))
 
-    # # conditions length == 1
-    # if len(conditions) == 1:
-    #     query = field_time_query(
-    #         b=bucket, facility=conditions[0].facility, field=conditions[0].parameter,
-    #         start_date=conditions[0].startTime, end_date=conditions[0].endTime)
-    #     try:
-    #         result_df = execute_query(client, query)
-    #         result_df.rename(columns={f'{conditions[0].parameter}': f'{conditions[0].facility}-{conditions[0].parameter}'}, inplace=True)
-    #     except Exception as e:
-    #         raise HTTPException(500, str(e))
-    #
-    # # conditions length > 1
-    # if len(conditions) > 1:
-    #     for condition in conditions:
-    #         query = field_time_query(
-    #             b=bucket, facility=condition.facility, field=condition.parameter,
-    #             start_date=condition.startTime, end_date=condition.endTime)
-    #
-    #         try:
-    #             result_df['Time'] = execute_query(client, query)[['Time']]
-    #         except Exception as e:
-    #             print(e)
-    #
-    #         try:
-    #             result_df[f'{condition.facility}-{condition.parameter}'] = execute_query(client, query)[[condition.parameter]]
-    #             # df_list.append(df)
-    #         except Exception as e:
-    #             raise HTTPException(500, str(e))
-    # print('result_df', result_df)
-    # print('time: ', time.time() - start_time)
     return result_df
 # get df TRC
 def get_df_TRC(condition: FacilityData):
