@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -9,18 +10,23 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
-} from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
-import { Bookmark, useBookmarkStore, useSelectedBookmarkStore } from "@/stores/Bookmark";
-import { Checkbox } from "@/components/base/checkbox";
+} from "@tanstack/react-table";
+import { ScrollArea } from "@/components/base/scroll-area";
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/base/select";
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/base/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/base/popover";
+import { Check, ChevronsUpDown, MoreHorizontal } from "lucide-react"
+import { Bookmark, useBookmarkStore, useSelectedRowStore } from "@/stores/Bookmark";
+import { Checkbox } from "@/components/base/checkbox";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -37,17 +43,22 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { useFacilityStore } from "@/stores/Facility";
+import { useFacilityStore, useBatchStore } from "@/stores/Facility";
+import useDidMountEffect from "@/hooks/useDidMountEffect";
 
 function BookmarkTable() {
 
     const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
-    const { setSelectedBookmark } = useSelectedBookmarkStore();
+    const { selectedRow, setSelectedRow } = useSelectedRowStore();
     const { facilityList } = useFacilityStore();
+    const { batchList } = useBatchStore();
+
+
+
 
     // 테이블 관련 hook
     // ==============================
-    const data: Bookmark[] = bookmark
+    const data: Bookmark[] = bookmark.sort((a: Bookmark, b: Bookmark) => a.id - b.id)
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = useState({})
@@ -57,6 +68,17 @@ function BookmarkTable() {
         pageSize: 5,
     });
     // ==============================
+
+
+    // zustand에 선택된 row 정보 저장
+    useEffect(() => {
+        setSelectedRow(rowSelection)
+    }, [rowSelection])
+
+
+    useEffect(() => {
+        console.log(bookmark)
+    }, [bookmark])
 
     const columns: ColumnDef<Bookmark>[] = [
         {
@@ -106,38 +128,65 @@ function BookmarkTable() {
             header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
 
-                const batches = facilityList[row.original.facility].batches;
+                const [open, setOpen] = useState(false);
+                const [selectedBatchData, setSelectedBatchData] = useState({
+                    id: row.original.id,
+                    facility: row.original.facility,
+                    parameter: row.original.parameter,
+                    selectedBatchName: "",
+                });
+                const batches = batchList[row.original.facility];
+
+                useDidMountEffect(() => {
+                    updateBookmark(selectedBatchData)
+                }, [selectedBatchData])
 
 
                 return <div className="text-center font-medium min-w-[250px]">
-                    <Select
-                    // onValueChange={(e) => {
-                    //     const data = {
-                    //         id: row.original.id,
-                    //         facility: row.original.facility,
-                    //         parameter: row.original.parameter,
-                    //         selectedBatchName: e,
-                    //     }
-                    //     updateBookmark(data)
-                    // }}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="조회할 배치 구간을 선택해주세요." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                {batches?.map((batch) =>
-                                    <SelectItem
-                                        key={batch.batchName}
-                                        value={batch.batchName}
-                                    >
-                                        {batch.batchName}
-                                    </SelectItem>
-                                )}
-                                <SelectItem value="asdfas">asdfas</SelectItem>
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
+
+                    <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={open}
+                                className="w-full justify-between"
+                            >
+                                {bookmark.find((e) => e.id === row.original.id)?.selectedBatchName || "배치를 선택해 주세요."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                            <ScrollArea className="h-[400px] w-full">
+                                <Command>
+                                    <CommandInput placeholder="배치명을 검색해주세요." />
+                                    <CommandEmpty>검색된 배치 없음</CommandEmpty>
+                                    <CommandGroup>
+                                        {batches?.map((batch) =>
+                                            <CommandItem
+                                                key={batch.batchName}
+                                                value={batch.batchName}
+                                                onSelect={() => {
+                                                    setSelectedBatchData(prevState => ({
+                                                        ...prevState,
+                                                        selectedBatchName: batch.batchName,
+                                                    }));
+                                                    setOpen(false);
+                                                }}
+                                            >            {batch.batchName}
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        bookmark.find((e) => e.id === row.original.id)?.selectedBatchName === batch.batchName ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                            </CommandItem>
+                                        )}
+                                    </CommandGroup>
+                                </Command>
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
                 </div>
             },
         },
@@ -173,12 +222,7 @@ function BookmarkTable() {
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: async (row) => {
-            await setRowSelection(row)
-            // const a = table.getSelectedRowModel().rows
-            // console.log(a)
-            // setSelectedBookmark(table.getSelectedRowModel().rows.map((row) => row.original))
-        },
+        onRowSelectionChange: setRowSelection,
         onPaginationChange: setPagination,
         state: {
             sorting,
@@ -188,6 +232,7 @@ function BookmarkTable() {
             pagination,
         },
     })
+
     return (
         <>
             <div className="flex items-center py-4">

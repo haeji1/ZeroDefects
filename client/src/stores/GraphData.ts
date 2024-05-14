@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 
 interface GraphDataStore {
-    graphData: any;
+    graphData: any[];
     isFetching: boolean;
     setIsFetching: (fetching: boolean) => void;
     setGraphData: (data: any) => void;
