@@ -31,6 +31,10 @@ def draw_graph_time_standard(graph_df):
 
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
+        print("==============time_value=================")
+        print(time_values)
+        print("=============y==========================")
+        print(df[df.columns[-1]])
         df["Time"] = pd.to_datetime(df["Time"])
         # print("===============time_values=============")
         # print(time_values)
