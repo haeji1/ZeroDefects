@@ -1,4 +1,5 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -8,6 +9,7 @@ class Comment(BaseModel):
     author: str
     content: str
     password: str
+    date: Optional[datetime] = datetime.now()
 
 
 class Post(BaseModel):
@@ -17,3 +19,4 @@ class Post(BaseModel):
     nickname: str
     password: str
     comments: List[Comment] = []
+    date: Optional[datetime] = datetime.now()

@@ -18,7 +18,7 @@ from app.domain.section.model.step_request import StepsRequest
 from config import settings
 
 from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
-    get_step_info_using_facility_name_on_mongoDB, get_steps_info
+    get_steps_info
 
 url = settings.mongo_furl
 

@@ -1,6 +1,7 @@
 from typing import List
 
-from fastapi import HTTPException, APIRouter, Body
+from fastapi import HTTPException, APIRouter, Body, Depends
+from fastapi_pagination import Page, Params, paginate
 
 from app.domain.board.model.board import Post, Comment
 from app.domain.board.service.comment_service import create_comment_from_db, get_comments_from_db, \
@@ -15,9 +16,10 @@ async def create_post(post: Post):
     return create_post_from_db(post)
 
 
-@post_router.get("/posts", response_model=List[Post])
-async def get_posts():
-    return get_post_from_db()
+@post_router.get("/posts", response_model=Page[Post])
+async def get_posts(params: Params = Depends()):
+    params.size = 5
+    return paginate(list(get_post_from_db()),params)
 
 
 @post_router.get("/posts/{post_id}")

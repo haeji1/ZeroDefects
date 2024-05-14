@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import HTTPException
 from pymongo import MongoClient
 from starlette import status

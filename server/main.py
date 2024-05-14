@@ -1,6 +1,7 @@
 # fastapi
 import uvicorn
 from fastapi import FastAPI
+from fastapi_pagination import add_pagination
 
 from app.domain.board.controller import board_controller
 from app.domain.facility.controller import facility_controller
@@ -13,8 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "*",
 ]
-
 app = FastAPI()
+add_pagination(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
