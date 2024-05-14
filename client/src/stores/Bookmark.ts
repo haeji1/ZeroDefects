@@ -16,10 +16,10 @@ interface BookmarkStore {
     updateBookmark: (data: Bookmark) => void;
 }
 
-interface SelectedBookmarkStore {
-    selectedBookmark: Bookmark[],
-    setSelectedBookmark: (data: Bookmark[]) => void,
-}
+// interface SelectedBookmarkStore {
+//     selectedBookmark: Bookmark[],
+//     setSelectedBookmark: (data: Bookmark[]) => void,
+// }
 
 
 
@@ -31,7 +31,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
                 bookmark: [
                     ...state.bookmark,
                     {
-                        id: state.bookmark.length > 0 ? state.bookmark.at(-1).id + 1 : 1,
+                        id: state.bookmark.length > 0 ? state.bookmark.at(-1).id + 1 : 0,
                         facility: facilInfo.facility,
                         parameter: facilInfo.parameter,
                         selectedBatchName: null,
@@ -55,7 +55,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
     )
 );
 
-export const useSelectedBookmarkStore = create<SelectedBookmarkStore>()((set) => ({
-    selectedBookmark: [],
-    setSelectedBookmark: (data) => set({ selectedBookmark: data }),
+export const useSelectedRowStore = create<any>()((set) => ({
+    selectedRow: {},
+    setSelectedRow: (rows) => set({ selectedRow: rows }),
 }))

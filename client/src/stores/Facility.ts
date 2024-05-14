@@ -7,6 +7,12 @@ interface Batch {
     batchEndTime: Date;
 }
 
+interface BatchStore {
+    batchList: { [key: string]: Batch[] };
+    addBatch: (facilityName: string, batches: Batch[]) => void;
+}
+
+
 export interface Facility {
     [key: string]: {
         parameters: string[];
@@ -17,7 +23,6 @@ export interface Facility {
 interface FacilityStore {
     facilityList: Facility,
     updateFacilityList: (data: Facility) => void,
-    updateBatch: (facilityName: string, batchList: Batch[]) => void,
 }
 
 export const useFacilityStore = create<FacilityStore>()(
@@ -25,20 +30,23 @@ export const useFacilityStore = create<FacilityStore>()(
         (set) => ({
             facilityList: {},
             updateFacilityList: (data) => set({ facilityList: data }),
-            updateBatch: (facilityName, batchList) => {
-                set((state) => ({
-                    facilityList: {
-                        ...state.facilityList,
-                        [facilityName]: {
-                            ...state.facilityList[facilityName],
-                            batches: batchList
-                        }
-                    }
-                }));
-            }
         }), { name: 'facilityStorage' }
     ));
 
+export const useBatchStore = create<BatchStore>()(
+    persist(
+        (set) => ({
+            batchList: {},
+            addBatch: (facilityName, batches) => {
+                set((state) => ({
+                    batchList: {
+                        ...state.batchList,
+                        [facilityName]: batches
+                    }
+                }))
+            }
+        }), { name: 'batchStorage' })
+)
 
 // batchList = {
 //     'F1492': [

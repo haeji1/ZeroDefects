@@ -10,20 +10,21 @@ import { useEffect, useState } from "react";
 import { Calendar } from "@/components/base/calendar";
 import { Input } from "@/components/base/input";
 import { useGraphDataStore } from "@/stores/GraphData";
-import { useSelectedBookmarkStore } from "@/stores/Bookmark";
+import { useSelectedRowStore, useBookmarkStore } from "@/stores/Bookmark";
 import { Label } from "@/components/base/label";
 import { getGraph } from "@/apis/api/api";
 
 function GetGraph() {
     // 그래프 조회에 필요한 인자들
-    const [startDate, setStartDate] = useState()
-    const [startTime, setStartTime] = useState()
-    const [endDate, setEndDate] = useState()
-    const [endTime, setEndTime] = useState()
-    const [startStep, setStartStep] = useState();
-    const [endStep, setEndStep] = useState();
+    const [startDate, setStartDate] = useState<undefined | Date>()
+    const [startTime, setStartTime] = useState<undefined | string>()
+    const [endDate, setEndDate] = useState<undefined | Date>()
+    const [endTime, setEndTime] = useState<undefined | string>()
+    const [startStep, setStartStep] = useState<undefined | number>();
+    const [endStep, setEndStep] = useState<undefined | number>();
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-    const { selectedBookmark } = useSelectedBookmarkStore();
+    const { bookmark } = useBookmarkStore();
+    const { selectedRow } = useSelectedRowStore();
     const { setIsFetching, setGraphData } = useGraphDataStore()
 
     const [selectedButton, setSelectedButton] = useState('time');
@@ -32,12 +33,12 @@ function GetGraph() {
     const [isTimeButtonSelected, setTimeButtonSelected] = useState(true);
 
 
-    const handleButtonClick = (id) => {
+    const handleButtonClick = (id: 'time' | 'step') => {
         setSelectedButton(id)
         setTimeButtonSelected(id === 'time')
     };
 
-    const buttonStyle = (buttonName) => ({
+    const buttonStyle = (buttonName: 'time' | 'step') => ({
         border: selectedButton === buttonName ? '1px solid black' : '',
     });
 
@@ -55,9 +56,9 @@ function GetGraph() {
                 step: null,
             }
         }
-        else if (selectedButton === 'step') {
-            const step = [];
-            for (let i = startStep; i <= endStep; i++) {
+        else if (selectedButton === 'step' && startStep && endStep) {
+            const step: number[] = [];
+            for (let i: number = startStep; i <= endStep; i++) {
                 step.push(i);
             }
             queryCondition = {
@@ -66,12 +67,12 @@ function GetGraph() {
                 step: step,
             }
         }
-
-        setIsFetching(true)
         const data = {
             queryType: selectedButton,
             queryCondition: queryCondition,
-            queryData: selectedBookmark.map((val) => {
+            queryData: Object.keys(selectedRow).map((idx) => {
+                console.log(idx);
+                const val = bookmark.find((obj) => obj.id == idx);
                 console.log(val)
                 return {
                     facility: val.facility,
@@ -80,10 +81,17 @@ function GetGraph() {
                 }
             })
         }
+
+        console.log(data);
+
+        setIsFetching(true)
         const res = await getGraph(data)
-        setGraphData(res.data);
+        console.log(res);
+        setGraphData(res?.data);
         setIsFetching(false)
     }
+
+
 
 
     useEffect(() => {
@@ -91,7 +99,7 @@ function GetGraph() {
         if (selectedButton === 'time') {
             startDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
         }
-        else if (selectedButton === 'step'){
+        else if (selectedButton === 'step') {
             startStep && endStep ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
         }
     }, [startDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
@@ -99,7 +107,7 @@ function GetGraph() {
 
 
     // 시작 및 종료 시간을 설정하는 Input 핸들러
-    const handleTime = (e) => {
+    const handleTime = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.id === "startTime") {
             setStartTime(e.target.value)
         }
@@ -108,7 +116,7 @@ function GetGraph() {
         }
     }
 
-    const handleStep = (e) => {
+    const handleStep = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.id === "startStep") {
             setStartStep(e.target.value)
         }

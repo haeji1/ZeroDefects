@@ -19,7 +19,7 @@ import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/base/label";
-import { useFacilityStore, Facility } from "@/stores/Facility"
+import { useFacilityStore, Facility, useBatchStore } from "@/stores/Facility"
 import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
 import { Card } from "@/components/base/card";
 import { useBookmarkStore } from "@/stores/Bookmark";
@@ -31,7 +31,8 @@ function Addlist() {
     const [selectedFacility, setSelectedFacility] = useState<string>("")
     const [selectedParameter, setSelectedParameter] = useState<string | null>("")
     const [isButtonEnabled, setIsButtonEnabled] = useState<boolean>(false);
-    const { facilityList, updateFacilityList, updateBatch } = useFacilityStore();
+    const { facilityList, updateFacilityList } = useFacilityStore();
+    const { addBatch } = useBatchStore();
     const { addBookmark } = useBookmarkStore()
     const [open, setOpen] = useState(false)
     const { toast } = useToast()
@@ -42,7 +43,7 @@ function Addlist() {
         const fetchData = async () => {
             const res: AxiosResponse | undefined = await fetchFacilityInfos();
             const data: Facility = {}
-            const result: Facility = res?.data.result;
+            const result: { [key: string]: string[] } = res?.data.result;
             for (const [facilityName, value] of Object.entries(result)) {
                 data[facilityName] = {
                     parameters: value,
@@ -72,7 +73,7 @@ function Addlist() {
 
         if (facilityList[selectedFacility].batches === undefined) {
             const res: AxiosResponse<any, any> | undefined = await getBatches(selectedFacility)
-            updateBatch(selectedFacility, res?.data.batches);
+            addBatch(selectedFacility, res?.data.batches);
             addBookmark(newBookmark);
         }
         else { addBookmark(newBookmark) }
