@@ -9,12 +9,12 @@ from bokeh.plotting import figure
 import pandas as pd
 
 
-def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info):
+def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None):
     # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
-    if (graph_type == "time"):
+    if graph_type == "time":
         return draw_graph_time_standard(graph_df)
-    elif (graph_type == "step"):
+    elif graph_type == "step":
         return draw_graph_step_standard(graph_df, steps_times_info)
 
 
@@ -484,7 +484,7 @@ def save_graph_data(graph_df):
 #
 
 # ColumnDataSource의 max, min, 평균 값 구하기
-def calc_df_values(source, df_name,column_name):
+def calc_df_values(source, df_name, column_name):
     print("========== source 테스트 ===========")
     print(f'source : {source} facility : {df_name} column : {column_name}')
     max_value = max(source.data[column_name])
@@ -495,4 +495,3 @@ def calc_df_values(source, df_name,column_name):
     print(f'{df_name} 의 평균값 {average}')
     print("===================================")
     return max_value, min_value, average
-

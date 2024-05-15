@@ -1,25 +1,24 @@
-from datetime import datetime, timedelta
-
 import warnings
-from typing import Any, List
+from datetime import datetime
 
 from influxdb_client.client.warnings import MissingPivotFunction
 
 import pandas as pd
 from influxdb_client import InfluxDBClient
-from pandas import DataFrame
 
 from config import settings
 
+# settings
 url = settings.influx_url
 token = settings.influx_token
 organization = settings.influx_org
 bucket = settings.influx_bucket
 
+# ignore related pivot warnings
 warnings.simplefilter('ignore', MissingPivotFunction)
 
 
-# query for factor list
+# query for measurement list
 def measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
     return f'''
             from(bucket: "{b}")
@@ -28,10 +27,8 @@ def measurement_query(b: str, measurement: str, start_date: str, end_date: str) 
             '''
 
 
-# query for fields time
-def fields_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
-    print("fields", fields)
-    print("date", start_date, " ", end_date)
+# query fields by time
+def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
     fields_filter = " or ".join([f'r["_field"] == "{field}"' for field in fields])
 
     return f"""
@@ -42,25 +39,81 @@ def fields_time_query(b: str, facility: str, fields, start_date: str, end_date: 
             """
 
 
-# query for field time
-def field_time_query(b: str, facility: str, field: str, start_date: str, end_date: str) -> str:
-    # date string -> date obj
-    # start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
-    # end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+# query field by time
+def field_by_time_query(b: str, facility: str, field: str,
+                        start_date: str = '1970-01-01T00:00:00.0Z',
+                        end_date: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z") -> str:
 
-    # calculate window size
-    # window_size_seconds = (end_dt - start_dt).total_seconds()
-    # window_size_seconds = 1
-    # window_size = f"{int(window_size_seconds)}s"  # Flux에서 사용할 수 있는 형태의 문자열로 변환
+    end_time = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+    start_time = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+    time_difference = end_time - start_time
+    window_size = int(int(time_difference.total_seconds()) / 14400)
+    if window_size == 0:
+        window_size = 1
 
     return f'''
             from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
-                |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-            //  |> rename(columns: {{"{field}": "Value"}})
-                |> keep(columns: ["_time", "{field}"])
+                |> group()
+                |> sort(columns: ["_time"], desc: false)
+                |> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false)
+                |> keep(columns: ["_time", "_value"])
             '''
+
+
+# query tg_life by num
+def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str):
+    return f"""
+            import "experimental"
+            import "join"
+
+            voltage = from(bucket: "{b}")
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}V[V]")
+                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> mean()
+
+            current = from(bucket: "{b}")
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}I[A]")
+                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> mean()
+
+            power = from(bucket: "{b}")
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}Pwr[kW]")
+                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> mean()
+
+            firstjoin = join.tables(
+                method: "left",
+                left: voltage,
+                right: current,
+                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
+                as: (l, r) => ({{"TG{tg_life_num}Life[kWh]": l["TG{tg_life_num}Life[kWh]"], 
+                "P.TG{tg_life_num}V[V]": l._value, "P.TG{tg_life_num}I[A]": r._value, _start:l._start, _stop:l._stop}}),
+            )
+
+            secondjoin = join.tables(
+                method: "left",
+                left: firstjoin,
+                right: power,
+                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
+                as: (l, r) => ({{"TG{tg_life_num}Life[kWh]": l["TG{tg_life_num}Life[kWh]"], 
+                "P.TG{tg_life_num}V[V]": l["P.TG{tg_life_num}V[V]"], 
+                "P.TG{tg_life_num}I[A]": l["P.TG{tg_life_num}I[A]"], 
+                "P.TG{tg_life_num}Pwr[kW]": r._value, _start:l._start, _stop:l._stop}}),
+            )
+
+            secondjoin
+            |> keep(columns: ["TG{tg_life_num}Life[kWh]", "P.TG{tg_life_num}V[V]", 
+            "P.TG{tg_life_num}I[A]", "P.TG{tg_life_num}Pwr[kW]"])
+            |> yield(name: "TGLife")
+            """
 
 
 # query for get section
@@ -69,8 +122,7 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             from(bucket: "{b}")
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{facility}")
-            |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]") 
-            
+            |> filter(fn: (r) => r["_field"] == "RcpReq[]" or r["_field"] == "CoatingLayerN[Layers]")
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
