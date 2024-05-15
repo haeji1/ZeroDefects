@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-type QueryType = "time" | "step";
+export type QueryType = "time" | "step";
 
 interface QueryDateTime {
     queryStartDate: Date;
@@ -12,7 +12,7 @@ interface QueryDateTime {
     queryEndTime: string;
     setQueryEndTime: (time: string) => void;
     timeValid: boolean;
-    setTimeValid: () => void;
+    setTimeValid: (valid: boolean) => void;
 }
 
 interface QueryStep {
@@ -21,7 +21,7 @@ interface QueryStep {
     queryEndStep: number;
     setQueryEndStep: (step: number) => void;
     stepValid: boolean;
-    setStepValid: () => void;
+    setStepValid: (valid: boolean) => void;
 }
 
 
@@ -40,7 +40,7 @@ export const useQueryDateTimeStore = create<QueryDateTime>((set) => ({
     queryEndTime: "",
     setQueryEndTime: (time) => set({ queryEndTime: time }),
     timeValid: false,
-    setTimeValid: () => set((state) => ({ timeValid: !state.timeValid })),
+    setTimeValid: (valid) => set({ timeValid: valid }),
 }));
 
 export const useQueryStepStore = create<QueryStep>((set) => ({
@@ -48,8 +48,8 @@ export const useQueryStepStore = create<QueryStep>((set) => ({
     setQueryStartStep: (step) => set({ queryStartStep: step }),
     queryEndStep: 0,
     setQueryEndStep: (step) => set({ queryEndStep: step }),
-    stepValid: false,
-    setStepValid: () => set((state) => ({ stepValid: !state.stepValid })),
+    stepValid: true,
+    setStepValid: (valid) => set({ stepValid: valid }),
 }));
 
 export const useQueryButtonStore = create<QueryButton>((set) => ({

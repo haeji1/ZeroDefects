@@ -7,11 +7,13 @@ import { useGraphDataStore } from "@/stores/GraphData";
 import { useSelectedRowStore, useBookmarkStore } from "@/stores/Bookmark";
 import { Label } from "@/components/base/label";
 import { getGraph } from "@/apis/api/api";
-import { useQueryDateTimeStore, useQueryStepStore } from "@/stores/QueryCondition";
+import { useQueryDateTimeStore, useQueryStepStore, useQueryButtonStore, QueryType } from "@/stores/QueryCondition";
 import StepSelect from "@/components/domain/dashboard/StepSelect";
 import TimeSelect from "@/components/domain/dashboard/TimeSelect";
 function GetGraph() {
     // 그래프 조회에 필요한 인자들
+
+    const { queryTypeButton, setQueryTypeButton } = useQueryButtonStore();
 
     const {
         queryStartDate, setQueryStartDate,
@@ -35,17 +37,8 @@ function GetGraph() {
     const [isTimeButtonSelected, setTimeButtonSelected] = useState(true);
 
 
-
-
-
-
-    const handleButtonClick = (id: 'time' | 'step') => {
-        setSelectedButton(id)
-        setTimeButtonSelected(id === 'time')
-    };
-
-    const buttonStyle = (buttonName: 'time' | 'step') => ({
-        border: selectedButton === buttonName ? '1px solid black' : '',
+    const buttonStyle = (buttonName: QueryType) => ({
+        border: queryTypeButton === buttonName ? '1px solid black' : '',
     });
 
 
@@ -112,17 +105,19 @@ function GetGraph() {
 
 
 
+
+
     return (
         <Card className="flex flex-col gap-5 px-5 py-5">
             <Label htmlFor="" className="font-bold text-[20px]">조회</Label>
             <div className="grid grid-cols-10 gap-5">
                 <div className="col-span-3 flex flex-col gap-2 h-[200px]">
-                    <Button id="time" variant="outline" className="h-full flex-col gap-1" onClick={() => handleButtonClick('time')}
+                    <Button id="time" variant="outline" className="h-full flex-col gap-1" onClick={() => setQueryTypeButton('time')}
                         style={buttonStyle('time')}>
                         <TimeIcon />
                         <p>시간대로 조회</p>
                     </Button>
-                    <Button id="step" variant="outline" className="h-full flex-col gap-1" onClick={() => handleButtonClick('step')}
+                    <Button id="step" variant="outline" className="h-full flex-col gap-1" onClick={() => setQueryTypeButton('step')}
                         style={buttonStyle('step')}>
                         <StepIcon />
                         <p>스텝으로 조회</p>
