@@ -98,8 +98,6 @@ async def draw_graph(request_body: GraphQueryRequest):
                 stepsTime=s['stepsTimes']
             ))
 
-        print("steps_times_info", steps_times_info)
-
         graph_df = get_datas(sections_list)
         plots = draw_dataframe_to_graph("step", graph_df, steps_times_info)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]

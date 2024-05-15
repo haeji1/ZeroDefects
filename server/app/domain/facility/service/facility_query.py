@@ -48,11 +48,15 @@ def field_by_time_query(b: str, facility: str, field: str,
     start_time = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
     time_difference = end_time - start_time
     window_size = int(int(time_difference.total_seconds()) / 14400)
+    if window_size == 0:
+        window_size = 1
 
     return f'''
             from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
+                |> group()
+                |> sort(columns: ["_time"], desc: false)
                 |> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false)
                 |> keep(columns: ["_time", "_value"])
             '''
