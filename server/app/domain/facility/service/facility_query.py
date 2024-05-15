@@ -63,7 +63,18 @@ def field_by_time_query(b: str, facility: str, field: str,
 
 
 # query tg_life by num
-def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str):
+def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str):
+    statistics_type = 'None'
+
+    if type == 'AVG':
+        statistics_type = 'mean'
+    elif type == 'MAX':
+        statistics_type = 'max'
+    elif type == 'MIN':
+        statistics_type = 'min'
+    elif type == 'STDDEV':
+        statistics_type = 'stddev'
+
     return f"""
             import "experimental"
             import "join"
@@ -73,21 +84,21 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
                 |> filter(fn: (r) => r["_measurement"] == "{facility}")
                 |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}V[V]")
                 |> group(columns: ["TG{tg_life_num}Life[kWh]"])
-                |> mean()
+                |> {statistics_type}()
 
             current = from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}")
                 |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}I[A]")
                 |> group(columns: ["TG{tg_life_num}Life[kWh]"])
-                |> mean()
+                |> {statistics_type}()
 
             power = from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}")
                 |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}Pwr[kW]")
                 |> group(columns: ["TG{tg_life_num}Life[kWh]"])
-                |> mean()
+                |> {statistics_type}()
 
             firstjoin = join.tables(
                 method: "left",
