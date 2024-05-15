@@ -9,7 +9,7 @@ import statistics
 import numpy as np
 from bokeh.embed import json_item
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation, Glyph,
-                          GlyphRenderer, Toggle, Column, CustomJS,Label)
+                          GlyphRenderer, Toggle, Button)
 
 from bokeh.models.formatters import NumeralTickFormatter
 from bokeh.models import Span
@@ -167,7 +167,13 @@ def draw_graph_step_standard(graph_df, step_times):
             end_x -= time_values.min()
 
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+
             p.add_layout(box_annotation)
+
+            toggle = Toggle(label="Toggle", button_type="success", active=True)
+            toggle.js_link('active', box_annotation, 'visible')
+            # toggles.append(toggle)
+            # print(toggles)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
             min_value = step_df.iloc[:, -1].min()
@@ -180,9 +186,62 @@ def draw_graph_step_standard(graph_df, step_times):
 
             print(f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
 
-            # toggle = Toggle(label="box", button_type="success", active=True)
-            # toggle.js_link('active', box_annotation, 'visible')
-            # toggles.append(toggle)
+        time_values -= time_values.min()
+
+        source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+        line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+        hover = HoverTool(renderers=[line], tooltips=[
+            ('facility', f'{facility}'),
+            ('time', '@Time seconds'),
+            ('Value', '$y')
+        ])
+
+        p.add_tools(hover)
+
+    p.x_range.start = 0
+    p.xaxis.formatter = NumeralTickFormatter(format="0")
+    p.legend.location = "top_left"
+    p.toolbar.autohide = True
+    plots.append(p)
+
+    return plots
+
+
+def draw_detail_section_graph(graph_df, step_times):
+    plots = []
+
+    for df in graph_df:
+        colors = Category10_10
+        p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+        start_time = min(df["Time"].min() for df in graph_df)
+        time_values = (df["Time"] - start_time).dt.total_seconds()
+        facility, column_name = df.columns[-1].split('-')
+
+        facility_step_times = step_times.get(facility, {})
+
+        color = colors[len(p.renderers) % len(colors)]
+
+        for step, step_time in facility_step_times.items():
+            start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            start_x -= time_values.min()
+            end_x -= time_values.min()
+
+            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+
+            p.add_layout(box_annotation)
+
+            step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
+            min_value = step_df.iloc[:, -1].min()
+            max_value = step_df.iloc[:, -1].max()
+            std_deviation = step_df.iloc[:, -1].std()
+            variance = step_df.iloc[:, -1].var()
+            mean_value = step_df.iloc[:, -1].mean()
+            median_value = step_df.iloc[:, -1].median()
+            mode_value = statistics.mode(step_df.iloc[:, -1])
+
+            print(f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
 
         time_values -= time_values.min()
 
