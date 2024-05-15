@@ -57,7 +57,7 @@ def update_comment_in_db(post_id: int, comment_id: int, updated_comment: Comment
     return {"message": "Comment updated successfully."}
 
 
-def delete_comment_from_db(post_id: int, comment_id: int):
+def delete_comment_from_db(post_id: int, comment_id: int, author: str, password: str):
     # 특정 게시물 찾기
     post = db.posts.find_one({"id": post_id})
     if post is None:
@@ -66,6 +66,12 @@ def delete_comment_from_db(post_id: int, comment_id: int):
     # 댓글 목록에서 해당 댓글 찾아 삭제
     original_comments = post.get("comments", [])
     new_comments = [comment for comment in original_comments if comment["id"] != comment_id]
+    comment = original_comments[comment_id]
+    print(comment)
+    # 게시물의 작성자와 비밀번호가 요청과 일치하는지 확인
+    if comment.get("author") != author or comment.get("password") != password:
+        # 작성자 이름 또는 비밀번호가 일치하지 않는 경우, 오류 메시지 반환
+        return JSONResponse(status_code=403, content={"detail": "Authorization failed"})
 
     if len(original_comments) == len(new_comments):
         raise HTTPException(status_code=404, detail="Comment not found")

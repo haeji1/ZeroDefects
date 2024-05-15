@@ -3,6 +3,7 @@ from typing import List
 from fastapi import HTTPException, APIRouter, Body, Depends
 from fastapi_pagination import Page, Params, paginate
 
+from app.domain.board.model.User import User
 from app.domain.board.model.board import Post, Comment
 from app.domain.board.service.comment_service import create_comment_from_db, get_comments_from_db, \
     delete_comment_from_db, update_comment_in_db
@@ -28,8 +29,8 @@ async def read_post(post_id: int):
 
 
 @post_router.delete("/posts/{post_id}")
-async def delete_post(post_id: int):
-    return delete_post_from_db(post_id)
+async def delete_post(post_id: int, user_form: User = Body(...)):
+    return delete_post_from_db(post_id, user_form.author, user_form.password)
 
 
 @post_router.put("/posts/{post_id}")
@@ -48,8 +49,8 @@ async def get_comments(post_id: int):
 
 
 @post_router.delete("/posts/{post_id}/comments/{comment_id}")
-async def delete_comment(post_id: int, comment_id: int):
-    return delete_comment_from_db(post_id, comment_id)
+async def delete_comment(post_id: int,comment_id: int, user_form: User = Body(...)):
+    return delete_comment_from_db(post_id, comment_id, user_form.author, user_form.password)
 
 
 @post_router.put("/posts/{post_id}/comments/{comment_id}")

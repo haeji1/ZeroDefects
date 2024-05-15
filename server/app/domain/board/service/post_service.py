@@ -44,10 +44,14 @@ def update_post_from_db(post_id: int, post: Post):
     return JSONResponse(status_code=200, content={"message": "Post updated successfully."})
 
 
-def delete_post_from_db(post_id: int):
+def delete_post_from_db(post_id: int, author: str, password: str):
     post = db.posts.find_one({"id": post_id})
     if post is None:
         return JSONResponse(status_code=404, content={"detail": "Post not found"})
+    # 게시물의 작성자와 비밀번호가 요청과 일치하는지 확인
+    if post.get("author") != author or post.get("password") != password:
+        # 작성자 이름 또는 비밀번호가 일치하지 않는 경우, 오류 메시지 반환
+        return JSONResponse(status_code=403, content={"detail": "Authorization failed"})
 
     db.posts.delete_one({"id": post_id})
     return JSONResponse(status_code=200, content={"message": "Post deleted successfully."})
