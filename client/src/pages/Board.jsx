@@ -1,4 +1,4 @@
-import Posts from "@/components/domain/board/Posts";
+import Posts from "@/components/domain/board/post/Posts";
 function Board() {
     return (
         <>

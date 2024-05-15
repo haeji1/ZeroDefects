@@ -14,7 +14,7 @@ import Lottie from "lottie-react";
 import ChartLoadingGIF from "@/assets/chartloading.json"
 import SamsungLogo from "@/assets/images/Logo_BLUE.png"
 import { useEffect } from "react";
-import CreatePostModal from "../board/CreatePost";
+import CreatePostModal from "@/components/domain/board/post/CreatePost";
 
 Chart.register(zoomPlugin);
 
