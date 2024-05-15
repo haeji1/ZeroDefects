@@ -1,10 +1,11 @@
 import { Label } from "@/components/base/label";
 import { Input } from "@/components/base/input";
 import { useQueryStepStore, useQueryButtonStore } from "@/stores/QueryCondition";
+import { useEffect } from "react";
 
 export default function StepSelect() {
 
-    const { queryStartStep, setQueryStartStep, queryEndStep, setQueryEndStep } = useQueryStepStore();
+    const { queryStartStep, setQueryStartStep, queryEndStep, setQueryEndStep, stepValid, setStepValid } = useQueryStepStore();
     const { queryTypeButton } = useQueryButtonStore();
 
     // 숫자 이외의 입력 값들을 제거하고, Number 타입으로 변환하여 전역값으로 저장
@@ -14,10 +15,11 @@ export default function StepSelect() {
         else if (e.target.id === 'endStep') setQueryEndStep(Number(filteredValue));
     };
 
-    function StepInputAlert() {
-        if (queryStartStep - queryEndStep > 0) return <p className="ml-auto text-sm text-red-500">시작 스텝이 종료 스텝보다 큽니다.</p>
-        return <p className="ml-auto text-sm text-white">null</p>
-    };
+    useEffect(() => {
+        if (queryStartStep - queryEndStep > 0) setStepValid(false);
+        else setStepValid(true)
+    }, [queryStartStep, queryEndStep])
+
 
     return (
         <div className="h-full flex flex-col gap-2 justify-center">
@@ -31,7 +33,12 @@ export default function StepSelect() {
                     <Input id="endStep" type="number" min={0} value={queryEndStep} onChange={handleStepChange} disabled={queryTypeButton !== "step"} />
                 </div>
             </div>
-            <StepInputAlert />
+            {queryStartStep - queryEndStep > 0 ?
+                <p className="ml-auto text-sm text-red-500">시작 스텝은 종료 스텝보다 늦을 수 없습니다.</p>
+                :
+                <p className="ml-auto text-sm text-white">null</p>
+            }
+
         </div>
     )
 }

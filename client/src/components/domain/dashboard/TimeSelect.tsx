@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/base/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popover";
 import { Input } from "@/components/base/input";
+import { Label } from "@/components/base/label";
 import { Calendar } from "@/components/base/calendar";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns"
@@ -24,6 +25,7 @@ export default function TimeSelect() {
     // 시작 및 종료 시간을 설정하는 Input 핸들러
     const handleTime = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.id === "startTime") {
+            console.log(e.target.value);
             setQueryStartTime(e.target.value)
         }
         else if (e.target.id === "endTime") {
@@ -34,7 +36,7 @@ export default function TimeSelect() {
     return (
         <div className="h-full w-full flex flex-col gap-2 justify-center">
             <div className="flex flex-row gap-3 items-center">
-                <p>시작 :</p>
+                <Label>시작 : </Label>
                 <Popover open={startDateOpen}>
                     <PopoverTrigger asChild>
                         <Button
@@ -68,7 +70,7 @@ export default function TimeSelect() {
 
 
             <div className="flex flex-row gap-3 items-center">
-                <p>종료 :</p>
+                <Label>종료 : </Label>
                 <Popover open={endDateOpen}>
                     <PopoverTrigger asChild>
                         <Button
