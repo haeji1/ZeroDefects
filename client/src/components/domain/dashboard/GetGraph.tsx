@@ -20,17 +20,21 @@ function GetGraph() {
     const [startTime, setStartTime] = useState<undefined | string>()
     const [endDate, setEndDate] = useState<undefined | Date>()
     const [endTime, setEndTime] = useState<undefined | string>()
-    const [startStep, setStartStep] = useState<undefined | number>();
-    const [endStep, setEndStep] = useState<undefined | number>();
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
     const { bookmark } = useBookmarkStore();
     const { selectedRow } = useSelectedRowStore();
     const { setIsFetching, setGraphData } = useGraphDataStore()
-
+    const [startStep, setStartStep] = useState<undefined | number>();
+    const [endStep, setEndStep] = useState<undefined | number>();
     const [selectedButton, setSelectedButton] = useState('time');
-
-
     const [isTimeButtonSelected, setTimeButtonSelected] = useState(true);
+
+
+    const [isStepValid, setIsStepValid] = useState<boolean>(false);
+    const [isTimeValid, setIsTimeValid] = useState<boolean>(false);
+
+
+
 
 
     const handleButtonClick = (id: 'time' | 'step') => {
@@ -94,15 +98,15 @@ function GetGraph() {
 
 
 
-    useEffect(() => {
-        // 시간으로 
-        if (selectedButton === 'time') {
-            startDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
-        }
-        else if (selectedButton === 'step') {
-            startStep && endStep ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
-        }
-    }, [startDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
+    // useEffect(() => {
+    //     // 시간으로 
+    //     if (selectedButton === 'time') {
+    //         startDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+    //     }
+    //     else if (selectedButton === 'step') {
+    //         startStep && endStep ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+    //     }
+    // }, [startDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
 
 
 
@@ -116,13 +120,37 @@ function GetGraph() {
         }
     }
 
-    const handleStep = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.id === "startStep") {
-            setStartStep(e.target.value)
-        }
-        else if (e.target.id === "endStep") {
-            setEndStep(e.target.value)
-        }
+
+
+    function StepSelect({ startStep, setStartStep, endStep, setEndStep }) {
+
+        const handleStepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const filteredValue = e.target.value.replace(/\D/g, '');
+            if (e.target.id === 'startStep') setStartStep(Number(filteredValue));
+            else if (e.target.id === 'endStep') setEndStep(Number(filteredValue));
+        };
+
+        function StepInputAlert() {
+            if (startStep === undefined || endStep === undefined) return <p className="ml-auto text-sm text-white">null</p>
+            if (startStep - endStep > 0) return <p className="ml-auto text-sm text-red-500">시작 스텝이 종료 스텝보다 큽니다.</p>
+            return <p className="ml-auto text-sm text-white">null</p>
+        };
+
+        return (
+            <div className="h-full flex flex-col gap-2 justify-center">
+                <div className="flex flex-row gap-3">
+                    <div className="w-full">
+                        <Label>시작 스텝</Label>
+                        <Input id="startStep" type="number" min={0} value={startStep} onChange={handleStepChange} disabled={isTimeButtonSelected} />
+                    </div>
+                    <div className="w-full">
+                        <Label>종료 스텝</Label>
+                        <Input id="endStep" type="number" min={0} value={endStep} onChange={handleStepChange} disabled={isTimeButtonSelected} />
+                    </div>
+                </div>
+                <StepInputAlert />
+            </div>
+        )
     }
 
 
@@ -206,18 +234,7 @@ function GetGraph() {
                         </div>
 
                     </div>
-                    <div className="h-full flex flex-col gap-2 justify-center">
-                        <div className="flex flex-row gap-3">
-                            <div className="w-full">
-                                <Label>시작 스텝</Label>
-                                <Input id="startStep" type="number" min={0} max={19} onChange={handleStep} disabled={isTimeButtonSelected} />
-                            </div>
-                            <div className="w-full">
-                                <Label>종료 스텝</Label>
-                                <Input id="endStep" type="number" min={0} max={19} onChange={handleStep} disabled={isTimeButtonSelected} />
-                            </div>
-                        </div>
-                    </div>
+                    <StepSelect startStep={startStep} setStartStep={setStartStep} endStep={endStep} setEndStep={setEndStep} />
                 </div>
             </div>
             <div className="ml-auto">
