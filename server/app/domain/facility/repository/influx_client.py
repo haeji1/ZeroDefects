@@ -152,17 +152,26 @@ class InfluxGTRClient:
 
         # conditions length == 1
         # def TGLife_query(b: str, facility: str, tg_life: str, start_date: str, end_date: str):
+        statistics_list = ["AVG", "MAX", "MIN", "STDDEV"]
+        answer_df = pd.DataFrame()
+        for idx, statistics in enumerate(statistics_list):
+            query = TGLife_query(b=self.bucket_name, facility=facility, tg_life_num=tg_life_num,
+                                 start_date=start_date, end_date=end_date, type=statistics)
+            try:
+                result_df = execute_query(self.client, query)
 
-        query = TGLife_query(b=self.bucket_name, facility=facility, tg_life_num=tg_life_num, start_date=start_date, end_date=end_date)
-        try:
-            result_df = execute_query(self.client, query)
+                result_df.rename(
+                    columns={f'P.TG{tg_life_num}I[A]': f'{statistics}-P.TG{tg_life_num}I[A]',
+                             f'P.TG{tg_life_num}Pwr[kW]': f'{statistics}-P.TG{tg_life_num}Pwr[kW]',
+                             f'P.TG{tg_life_num}V[V]': f'{statistics}-P.TG{tg_life_num}V[V]'},
+                    inplace=True)
 
-            print('result df : ', result_df)
-            # result_df.rename(
-            #     columns={f'{conditions[0].parameter}': f'{conditions[0].facility}_{conditions[0].parameter}'},
-            #     inplace=True)
-        except Exception as e:
-            raise HTTPException(500, str(e))
+                if idx == len(statistics_list) - 1:
+                    answer_df = pd.concat([answer_df, result_df], axis=1)
+                else:
+                    answer_df = pd.concat([answer_df, result_df.iloc[:, :-1]], axis=1)
+            except Exception as e:
+                raise HTTPException(500, str(e))
 
         print('time: ', time.time() - start_time)
         return ["step", result_df]
