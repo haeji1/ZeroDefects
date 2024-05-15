@@ -13,11 +13,26 @@ import { useGraphDataStore } from "@/stores/GraphData";
 import { useSelectedRowStore, useBookmarkStore } from "@/stores/Bookmark";
 import { Label } from "@/components/base/label";
 import { getGraph } from "@/apis/api/api";
+import { useQueryDateTimeStore, useQueryStepStore } from "@/stores/QueryCondition";
+import StepSelect from "./StepSelect";
 
 function GetGraph() {
     // 그래프 조회에 필요한 인자들
-    const [startDate, setStartDate] = useState<undefined | Date>()
-    const [startTime, setStartTime] = useState<undefined | string>()
+
+    const {
+        queryStartDate, setQueryStartDate,
+        queryStartTime, setQueryStartTime,
+        queryEndDate, setQueryEndDate,
+        queryEndTime, setQueryEndTime
+    } = useQueryDateTimeStore();
+
+    const {
+        queryStartStep, setQueryStartStep,
+        queryEndStep, setQueryEndStep,
+    } = useQueryStepStore();
+
+
+    const [startTime, setQuerySltartTime] = useState<undefined | string>()
     const [endDate, setEndDate] = useState<undefined | Date>()
     const [endTime, setEndTime] = useState<undefined | string>()
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
@@ -52,11 +67,11 @@ function GetGraph() {
         let queryCondition;
 
         if (selectedButton === 'time') {
-            const startParts = startTime.split(":");
-            const endParts = endTime.split(":");
+            const startParts = queryStartTime.split(":");
+            const endParts = queryEndTime.split(":");
             queryCondition = {
-                startTime: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startParts[0], startParts[1]).toISOString(),
-                endTime: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endParts[0], endParts[1]).toISOString(),
+                startTime: new Date(queryStartDate.getFullYear(), queryStartDate.getMonth(), queryStartDate.getDate(), startParts[0], startParts[1]).toISOString(),
+                endTime: new Date(queryEndDate.getFullYear(), queryEndDate.getMonth(), queryEndDate.getDate(), endParts[0], endParts[1]).toISOString(),
                 step: null,
             }
         }
@@ -101,19 +116,19 @@ function GetGraph() {
     // useEffect(() => {
     //     // 시간으로 
     //     if (selectedButton === 'time') {
-    //         startDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+    //         queryStartDate && startTime && endDate && endTime ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
     //     }
     //     else if (selectedButton === 'step') {
     //         startStep && endStep ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
     //     }
-    // }, [startDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
+    // }, [queryStartDate, startTime, endDate, endTime, selectedButton, startStep, endStep])
 
 
 
     // 시작 및 종료 시간을 설정하는 Input 핸들러
     const handleTime = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.id === "startTime") {
-            setStartTime(e.target.value)
+            setQueryStartTime(e.target.value)
         }
         else if (e.target.id === "endTime") {
             setEndTime(e.target.value)
@@ -122,36 +137,7 @@ function GetGraph() {
 
 
 
-    function StepSelect({ startStep, setStartStep, endStep, setEndStep }) {
 
-        const handleStepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const filteredValue = e.target.value.replace(/\D/g, '');
-            if (e.target.id === 'startStep') setStartStep(Number(filteredValue));
-            else if (e.target.id === 'endStep') setEndStep(Number(filteredValue));
-        };
-
-        function StepInputAlert() {
-            if (startStep === undefined || endStep === undefined) return <p className="ml-auto text-sm text-white">null</p>
-            if (startStep - endStep > 0) return <p className="ml-auto text-sm text-red-500">시작 스텝이 종료 스텝보다 큽니다.</p>
-            return <p className="ml-auto text-sm text-white">null</p>
-        };
-
-        return (
-            <div className="h-full flex flex-col gap-2 justify-center">
-                <div className="flex flex-row gap-3">
-                    <div className="w-full">
-                        <Label>시작 스텝</Label>
-                        <Input id="startStep" type="number" min={0} value={startStep} onChange={handleStepChange} disabled={isTimeButtonSelected} />
-                    </div>
-                    <div className="w-full">
-                        <Label>종료 스텝</Label>
-                        <Input id="endStep" type="number" min={0} value={endStep} onChange={handleStepChange} disabled={isTimeButtonSelected} />
-                    </div>
-                </div>
-                <StepInputAlert />
-            </div>
-        )
-    }
 
 
     return (
@@ -182,19 +168,19 @@ function GetGraph() {
                                         variant={"outline"}
                                         className={cn(
                                             "w-[180px] justify-start text-left font-normal",
-                                            !startDate && "text-muted-foreground"
+                                            !queryStartDate && "text-muted-foreground"
                                         )}
                                         disabled={!isTimeButtonSelected}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {startDate ? format(startDate, "yyyy년 MM월 dd일") : <span>시작 날짜</span>}
+                                        {queryStartDate ? format(queryStartDate, "yyyy년 MM월 dd일") : <span>시작 날짜</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
                                         mode="single"
-                                        selected={startDate}
-                                        onSelect={setStartDate}
+                                        selected={queryStartDate}
+                                        onSelect={setQueryStartDate}
                                         locale={ko}
                                         initialFocus
                                     />
@@ -232,9 +218,8 @@ function GetGraph() {
                             </Popover>
                             <Input className="w-[130px]" type="time" id="endTime" onChange={handleTime} disabled={!isTimeButtonSelected} />
                         </div>
-
+                        <StepSelect />
                     </div>
-                    <StepSelect startStep={startStep} setStartStep={setStartStep} endStep={endStep} setEndStep={setEndStep} />
                 </div>
             </div>
             <div className="ml-auto">
