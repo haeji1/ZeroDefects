@@ -37,7 +37,7 @@ function CreateComments({ postId }) {
         setAuthor('');
         setContent('');
         setPassword('');
-        window.location.reload();
+        window.location.reload(); 
       }
     } catch (error) {
       console.error(error);
