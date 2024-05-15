@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+type QueryType = "time" | "step";
+
 interface QueryDateTime {
     queryStartDate: Date;
     setQueryStartDate: (date: Date) => void;
@@ -20,6 +22,12 @@ interface QueryStep {
     setQueryEndStep: (step: number) => void;
     stepValid: boolean;
     setStepValid: () => void;
+}
+
+
+interface QueryButton {
+    queryTypeButton: QueryType;
+    setQueryTypeButton: (type: QueryType) => void;
 }
 
 export const useQueryDateTimeStore = create<QueryDateTime>((set) => ({
@@ -43,3 +51,8 @@ export const useQueryStepStore = create<QueryStep>((set) => ({
     stepValid: false,
     setStepValid: () => set((state) => ({ stepValid: !state.stepValid })),
 }));
+
+export const useQueryButtonStore = create<QueryButton>((set) => ({
+    queryTypeButton: "time",
+    setQueryTypeButton: (type) => set({ queryTypeButton: type })
+}))

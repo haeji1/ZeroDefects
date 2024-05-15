@@ -1,15 +1,13 @@
 import { Label } from "@/components/base/label";
 import { Input } from "@/components/base/input";
-import { useQueryStepStore } from "@/stores/QueryCondition";
+import { useQueryStepStore, useQueryButtonStore } from "@/stores/QueryCondition";
 
 export default function StepSelect() {
 
-    const {
-        queryStartStep, setQueryStartStep,
-        queryEndStep, setQueryEndStep,
-    } = useQueryStepStore();
+    const { queryStartStep, setQueryStartStep, queryEndStep, setQueryEndStep } = useQueryStepStore();
+    const { queryTypeButton } = useQueryButtonStore();
 
-
+    // 숫자 이외의 입력 값들을 제거하고, Number 타입으로 변환하여 전역값으로 저장
     const handleStepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const filteredValue = e.target.value.replace(/\D/g, '');
         if (e.target.id === 'startStep') setQueryStartStep(Number(filteredValue));
@@ -26,11 +24,11 @@ export default function StepSelect() {
             <div className="flex flex-row gap-3">
                 <div className="w-full">
                     <Label>시작 스텝</Label>
-                    <Input id="startStep" type="number" min={0} value={queryStartStep} onChange={handleStepChange} />
+                    <Input id="startStep" type="number" min={0} value={queryStartStep} onChange={handleStepChange} disabled={queryTypeButton !== "step"} />
                 </div>
                 <div className="w-full">
                     <Label>종료 스텝</Label>
-                    <Input id="endStep" type="number" min={0} value={queryEndStep} onChange={handleStepChange} />
+                    <Input id="endStep" type="number" min={0} value={queryEndStep} onChange={handleStepChange} disabled={queryTypeButton !== "step"} />
                 </div>
             </div>
             <StepInputAlert />
