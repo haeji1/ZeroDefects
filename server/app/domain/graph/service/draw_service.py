@@ -5,12 +5,7 @@ from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Ra
                           BoxAnnotation)
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
 import statistics
-
-import numpy as np
-from bokeh.embed import json_item
-from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation, Glyph,
-                          GlyphRenderer, Toggle, Button)
-
+from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
 from bokeh.models import Span
 from bokeh.palettes import Category10_10
@@ -18,6 +13,7 @@ from bokeh.plotting import figure
 
 # data frame
 import pandas as pd
+import json
 
 
 def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None):
@@ -229,7 +225,6 @@ def draw_detail_section_graph(graph_df, step_times):
             end_x -= time_values.min()
 
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
-
             p.add_layout(box_annotation)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
@@ -253,7 +248,6 @@ def draw_detail_section_graph(graph_df, step_times):
             ('time', '@Time seconds'),
             ('Value', '$y')
         ])
-
         p.add_tools(hover)
 
     # DataTable 생성
@@ -281,6 +275,7 @@ def draw_detail_section_graph(graph_df, step_times):
     plots.append(layout)
 
     return plots
+
 
 # 홀수번째에만 색칠
 # def draw_graph_step_standard(graph_df, step_times):
