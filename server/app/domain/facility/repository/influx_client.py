@@ -133,6 +133,7 @@ class InfluxGTRClient:
 
         print('time: ', time.time() - start_time)
         return ["step", result_df]
+
     def read_info(self):
         answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
 
@@ -204,7 +205,6 @@ class InfluxGTRClient:
             if 'Time' not in df.columns:
                 return {'filename': file.filename, 'message': 'csv file has no column', 'status': 'fail'}
 
-
             df['TempTime'] = pd.to_datetime(ymd_string + df['Time'], format='%Y-%m-%d %H:%M:%S')
             df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
             df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
@@ -212,12 +212,12 @@ class InfluxGTRClient:
             batch_steps_cnt, section_list = save_section_data(measurement,
                                                               df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
 
-            print('batch_steps_cnt', batch_steps_cnt)
-            print('section_list', section_list)
+            # print('batch_steps_cnt', batch_steps_cnt)
+            # print('section_list', section_list)
             if batch_steps_cnt is None and section_list is None:
                 return {"filename": file.filename,
-                        'status': 'fail',
                         "message": "File write failed. Batch is still in progress on the first or last row of the file.",
+                        'status': 'fail',
                         }
 
             if len(section_list) == 0:
@@ -237,15 +237,19 @@ class InfluxGTRClient:
                         section_end_time = section.steps[step][f'step{step}'][f'step{step}EndTime']
 
                         df.loc[(df['DateTime'] >= section_start_time) & (
-                            df['DateTime'] <= section_end_time), 'section'] = f'{step}'
+                                df['DateTime'] <= section_end_time), 'section'] = f'{step}'
 
-            df_modified = df.drop(columns=['Time', 'TempTime', 'shift'])
-            float_cols = df_modified.columns.drop(['DateTime', 'batch', 'section'])
-            df_modified[float_cols] = df_modified[float_cols].astype(float)
+            df.drop(columns=['Time', 'TempTime', 'shift'], inplace=True)
+
+            for column in df.columns:
+                if pd.api.types.is_numeric_dtype(df[column]):
+                    df[column] = df[column].astype(float)
+                elif pd.api.types.is_string_dtype(df[column]):
+                    df[column] = df[column].astype('string')
 
             tags = ['batch', 'section', 'TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']
 
-            data = data_frame_to_list_of_points(data_frame=df_modified,
+            data = data_frame_to_list_of_points(data_frame=df,
                                                 data_frame_measurement_name=measurement,
                                                 data_frame_timestamp_column='DateTime',
                                                 data_frame_tag_columns=tags,
