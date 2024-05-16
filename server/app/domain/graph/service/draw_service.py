@@ -75,6 +75,7 @@ def draw_graph_time_standard(graph_df):
     p.legend.location = "top_left"
     p.legend.click_policy = "hide"
     p.toolbar.autohide = True
+    p.toolbar.logo = None
 
     # 그래프와 데이터 테이블을 수직으로 배치
     layout = column([p, data_table], sizing_mode="stretch_both")
@@ -242,6 +243,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     p.legend.location = "top_left"
     p.legend.click_policy = "hide"
     p.toolbar.autohide = True
+    p.toolbar.logo = None
 
     # 그래프와 데이터 테이블을 수직으로 배치
     layout = column([p, data_table, row(toggles)], sizing_mode="stretch_both")
