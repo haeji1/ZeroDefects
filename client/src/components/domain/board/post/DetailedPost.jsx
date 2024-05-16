@@ -10,6 +10,7 @@ import BokehPlot from "@/components/common/BokehPlot";
 import ReadComment from "../comment/ReadComments";
 import CreateComments from "../comment/CreateComment";
 import axios from "axios"; // 상단에 엑시오스 import
+import Loading from "@/components/domain/settings/Loading";
 
 function BoardDetail() {
   const { ids } = useParams();
@@ -44,19 +45,15 @@ function BoardDetail() {
   };
 
   if (!post) {
-    return <div>Loading...</div>;
+    return <div><Loading/></div>;
   }
 
   return (
-    <div style={{ marginLeft: "100px", marginRight: "100px" }}>
+    <div style={{ marginLeft: "20%", marginRight: "20%" }}>
       <div style={{ padding: "20px" }} />
-      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-        Detailed View
-      </h1>
-      <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-        작성자: {post.author}
+      <h2 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight first:mt-0">
+        {post.title}
       </h2>
-      <h1>제목: {post.title}</h1>
       <p>유저 이름: {post.author}</p>
       <p>날짜: {post.date}</p>
       <p>글: {post.content}</p>
