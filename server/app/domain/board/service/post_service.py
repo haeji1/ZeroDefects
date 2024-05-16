@@ -69,7 +69,7 @@ def read_post_from_db(post_id: int):
 
 
 def get_post_from_db():
-    posts = db.posts.find()
+    posts = db.posts.find().sort("_id", -1)
     return posts
 
 

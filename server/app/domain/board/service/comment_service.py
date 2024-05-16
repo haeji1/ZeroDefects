@@ -67,7 +67,7 @@ def delete_comment_from_db(post_id: int, comment_id: int, author: str, password:
     original_comments = post.get("comments", [])
     new_comments = [comment for comment in original_comments if comment["id"] != comment_id]
     comment = original_comments[comment_id]
-    print(comment)
+
     # 게시물의 작성자와 비밀번호가 요청과 일치하는지 확인
     if comment.get("author") != author or comment.get("password") != password:
         # 작성자 이름 또는 비밀번호가 일치하지 않는 경우, 오류 메시지 반환
