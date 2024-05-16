@@ -32,11 +32,11 @@ function Navbar() {
                     </Link>
                     <Link to="/analysis">
                         <p id='analysis' className={`link ${selectedLinkClass('analysis')}`} onClick={handleClickLink}
-                        >분석</p>
+                        >상관 분석</p>
                     </Link>
                     <Link to="/notification">
                         <p id='notification' className={`link ${selectedLinkClass('notification')}`} onClick={handleClickLink}>
-                            알림
+                            이상 탐지
                             </p>
                     </Link>
                     <Link to="/settings">
