@@ -2,7 +2,7 @@
 from datetime import datetime
 from bokeh.layouts import column, row
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle,
-                          BoxAnnotation)
+                          BoxAnnotation, CrosshairTool)
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
 import statistics
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
@@ -33,7 +33,7 @@ def draw_graph_time_standard(graph_df):
     colors = Category10_10
 
     plots = []
-    p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time',
+    p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label='Time',
                y_axis_label='Value', max_height=1000)
 
     for df in graph_df:
@@ -53,6 +53,22 @@ def draw_graph_time_standard(graph_df):
 
         p.add_tools(hover)
 
+        # CrosshairTool 생성
+        width = Span(dimension="width", line_dash="dotted", line_width=1)
+        height = Span(dimension="height", line_dash="dotted", line_width=1)
+        p.add_tools(CrosshairTool(overlay=[width, height]))
+
+    # DataTable 생성
+    combined_df = pd.concat(graph_df)
+    source = ColumnDataSource(combined_df)
+
+    columns = [
+        TableColumn(field=c, title=c) for c in combined_df.columns
+    ]
+
+    data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
+                           sizing_mode="stretch_width")
+
     all_time_values = pd.concat([df['Time'] for df in graph_df])
     min_time = all_time_values.min()
     max_time = all_time_values.max()
@@ -64,7 +80,10 @@ def draw_graph_time_standard(graph_df):
     p.legend.location = "top_left"
     p.legend.click_policy = "hide"
     p.toolbar.autohide = True
-    plots.append(p)
+
+    # 그래프와 데이터 테이블을 수직으로 배치
+    layout = column([p, data_table], sizing_mode="stretch_both")
+    plots.append(layout)
 
     return plots
 
@@ -199,6 +218,11 @@ def draw_graph_step_standard(graph_df, step_times):
 
         p.add_tools(hover)
 
+        # CrosshairTool 생성
+        width = Span(dimension="width", line_dash="dotted", line_width=1)
+        height = Span(dimension="height", line_dash="dotted", line_width=1)
+        p.add_tools(CrosshairTool(overlay=[width, height]))
+
     # DataTable 생성
     combined_df = pd.concat(graph_df)
     source = ColumnDataSource(combined_df)
@@ -210,17 +234,13 @@ def draw_graph_step_standard(graph_df, step_times):
     data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
-    # 토글 버튼 테스트
-    toggle = Toggle(label="test", button_type="success", active=True)
-    toggle.js_link('active', line, 'visible')
-
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
     p.toolbar.autohide = True
 
     # 그래프와 데이터 테이블을 수직으로 배치
-    layout = column([p, data_table, toggle, row(toggles)], sizing_mode="stretch_both")
+    layout = column([p, data_table, row(toggles)], sizing_mode="stretch_both")
     plots.append(layout)
 
     return plots
