@@ -150,13 +150,15 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         ])
         plot.add_tools(hover2)
         plot.legend.location = "top_left"
+        plot.legend.click_policy = "hide"
+        plot.toolbar.logo = None
 
         # CrosshairTool 생성
         width = Span(dimension="width", line_dash="dotted", line_width=1)
         height = Span(dimension="height", line_dash="dotted", line_width=1)
         p.add_tools(CrosshairTool(overlay=[width, height]))
 
-        tab_list.append(TabPanel(child=plot, title=f'{facility} - {column_name}'))
+        tab_list.append(TabPanel(child=plot, title=f'{column_name} - {batch_name}'))
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
