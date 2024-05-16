@@ -181,12 +181,12 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
             start_x -= min_time
             end_x -= min_time
-            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1, visible=False)
             p.add_layout(box_annotation)
 
             toggle_label = f"{facility} - {column_name}- {step}"
-            toggle1 = Toggle(label=toggle_label, button_type="default", active=True)
-            toggle1.js_link('active', box_annotation, 'visible')
+            toggle1 = Toggle(label=toggle_label, button_type="default", active=False)
+            toggle1.js_link('active',  box_annotation, 'visible')
             df_toggles.append(toggle1)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
