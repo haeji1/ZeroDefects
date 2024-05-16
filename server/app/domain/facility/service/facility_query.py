@@ -1,9 +1,9 @@
 import warnings
 from datetime import datetime
 
-from influxdb_client.client.warnings import MissingPivotFunction
-
 import pandas as pd
+
+from influxdb_client.client.warnings import MissingPivotFunction
 from influxdb_client import InfluxDBClient
 
 from config import settings
@@ -17,7 +17,6 @@ bucket = settings.influx_bucket
 # ignore related pivot warnings
 warnings.simplefilter('ignore', MissingPivotFunction)
 
-
 # query for measurement list
 def measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -25,7 +24,6 @@ def measurement_query(b: str, measurement: str, start_date: str, end_date: str) 
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
             '''
-
 
 # query fields by time
 def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
@@ -38,12 +36,10 @@ def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_dat
             |> filter(fn: (r) => {fields_filter})
             """
 
-
 # query field by time
 def field_by_time_query(b: str, facility: str, field: str,
                         start_date: str = '1970-01-01T00:00:00.0Z',
                         end_date: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z") -> str:
-
     end_time = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
     start_time = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
     time_difference = end_time - start_time
@@ -61,9 +57,9 @@ def field_by_time_query(b: str, facility: str, field: str,
                 |> keep(columns: ["_time", "_value"])
             '''
 
-
 # query tg_life by num
-def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str, count: bool) -> str:
+def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str,
+                 count: bool) -> str:
     statistics_type = 'None'
 
     if type == 'AVG':
@@ -75,45 +71,6 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
     elif type == 'STDDEV':
         statistics_type = 'stddev'
 
-    # default additional query
-    additional_query = f"""
-                        secondjoin
-                            |> keep(columns: ["TG{tg_life_num}Life[kWh]", "P.TG{tg_life_num}V[V]", 
-                            "P.TG{tg_life_num}I[A]", "P.TG{tg_life_num}Pwr[kW]"])
-                            |> yield(name: "TGLife")
-    """
-
-    # query for count value
-    if count is True:
-        additional_query = f"""
-                            count_elements = from(bucket: "{b}")
-                                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
-                                |> filter(fn: (r) => r["_measurement"] == "{facility}")
-                                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}V[V]")
-                                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
-                                |> count()
-
-                            final_join = join.tables(
-                                method: "left",
-                                left: secondjoin,
-                                right: count_elements,
-                                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
-                                as: (l, r) => ({{
-                                    "TG1Life[kWh]": l["TG{tg_life_num}Life[kWh]"],
-                                    "P.TG1V[V]": l["P.TG{tg_life_num}V[V]"],
-                                    "P.TG1I[A]": l["P.TG{tg_life_num}I[A]"],
-                                    "P.TG1Pwr[kW]": l["P.TG{tg_life_num}Pwr[kW]"],
-                                    "count": r._value,
-                                    _start: l._start,
-                                    _stop: l._stop
-                                }})
-                            )
-                            
-                            final_join
-                                |> keep(columns: ["TG{tg_life_num}Life[kWh]", "P.TG{tg_life_num}V[V]", "P.TG{tg_life_num}I[A]", "P.TG{tg_life_num}Pwr[kW]", "count"])
-                                |> yield(name: "leftJoinResult")
-                            """
-
     return f"""
             import "experimental"
             import "join"
@@ -122,45 +79,49 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}")
                 |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}V[V]")
-                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> group(columns: ["TG{tg_life_num}Life[kWh]_TAG"])
                 |> {statistics_type}()
 
             current = from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}")
                 |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}I[A]")
-                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> group(columns: ["TG{tg_life_num}Life[kWh]_TAG"])
                 |> {statistics_type}()
 
             power = from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}")
                 |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}Pwr[kW]")
-                |> group(columns: ["TG{tg_life_num}Life[kWh]"])
+                |> group(columns: ["TG{tg_life_num}Life[kWh]_TAG"])
                 |> {statistics_type}()
 
             firstjoin = join.tables(
                 method: "left",
                 left: voltage,
                 right: current,
-                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
-                as: (l, r) => ({{"TG{tg_life_num}Life[kWh]": l["TG{tg_life_num}Life[kWh]"], 
-                "P.TG{tg_life_num}V[V]": l._value, "P.TG{tg_life_num}I[A]": r._value, _start:l._start, _stop:l._stop}}),
+                on: (l, r) => l["TG{tg_life_num}Life[kWh]_TAG"] == r["TG{tg_life_num}Life[kWh]_TAG"],
+                as: (l, r) => (
+                {{"TG{tg_life_num}Life[kWh]_TAG": l["TG{tg_life_num}Life[kWh]_TAG"],
+                "P.TG{tg_life_num}V[V]": l._value, 
+                "P.TG{tg_life_num}I[A]": r._value, 
+                _start:l._start, _stop:l._stop}}),
             )
 
             secondjoin = join.tables(
                 method: "left",
                 left: firstjoin,
                 right: power,
-                on: (l, r) => l["TG{tg_life_num}Life[kWh]"] == r["TG{tg_life_num}Life[kWh]"],
-                as: (l, r) => ({{"TG{tg_life_num}Life[kWh]": l["TG{tg_life_num}Life[kWh]"], 
+                on: (l, r) => l["TG{tg_life_num}Life[kWh]_TAG"] == r["TG{tg_life_num}Life[kWh]_TAG"],
+                as: (l, r) => (
+                {{"TG{tg_life_num}Life[kWh]_TAG": l["TG{tg_life_num}Life[kWh]_TAG"], 
                 "P.TG{tg_life_num}V[V]": l["P.TG{tg_life_num}V[V]"], 
                 "P.TG{tg_life_num}I[A]": l["P.TG{tg_life_num}I[A]"], 
-                "P.TG{tg_life_num}Pwr[kW]": r._value, _start:l._start, _stop:l._stop}}),
+                "P.TG{tg_life_num}Pwr[kW]": r._value, 
+                _start:l._start, _stop:l._stop}}),
             )
-
-            """ + additional_query
-
+            """ + count_query(b=b, facility=facility, tg_life_num=tg_life_num,
+                              start_date=start_date, end_date=end_date, count=count)
 
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
@@ -173,14 +134,12 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
 
-
 # info facility
 def info_measurements_query(b: str) -> str:
     return f"""
             import "influxdata/influxdb/schema"
             schema.measurements(bucket: "{b}")
             """
-
 
 # info parameter
 def info_field_query(b: str, measurement: str) -> str:
@@ -193,6 +152,55 @@ def info_field_query(b: str, measurement: str) -> str:
             )
             """
 
+def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, count: bool) -> str:
+    # query for count value
+    if count is True:
+        additional_query = f"""
+                            count_elements = from(bucket: "{b}")
+                                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                                |> filter(fn: (r) => r["_measurement"] == "{facility}")
+                                |> filter(fn: (r) => r["_field"] == "P.TG{tg_life_num}V[V]")
+                                |> group(columns: ["TG{tg_life_num}Life[kWh]_TAG"])
+                                |> count()
+
+                            final_join = join.tables(
+                                method: "left",
+                                left: secondjoin,
+                                right: count_elements,
+                                on: (l, r) => l["TG{tg_life_num}Life[kWh]_TAG"] == r["TG{tg_life_num}Life[kWh]_TAG"],
+                                as: (l, r) => ({{
+                                    "TG{tg_life_num}Life[kWh]_TAG": l["TG{tg_life_num}Life[kWh]_TAG"],
+                                    "P.TG1V[V]": l["P.TG{tg_life_num}V[V]"],
+                                    "P.TG1I[A]": l["P.TG{tg_life_num}I[A]"],
+                                    "P.TG1Pwr[kW]": l["P.TG{tg_life_num}Pwr[kW]"],
+                                    "count": r._value,
+                                    _start: l._start,
+                                    _stop: l._stop
+                                }})
+                            )
+
+                            final_join
+                                |> keep(columns: [
+                                "TG{tg_life_num}Life[kWh]_TAG", 
+                                "P.TG{tg_life_num}V[V]", 
+                                "P.TG{tg_life_num}I[A]", 
+                                "P.TG{tg_life_num}Pwr[kW]", 
+                                "count"])
+                                |> yield(name: "leftJoinResult")
+                            """
+    else:
+        # default additional query
+        additional_query = f"""
+                            secondjoin
+                                |> keep(columns: [
+                                "TG{tg_life_num}Life[kWh]_TAG", 
+                                "P.TG{tg_life_num}V[V]", 
+                                "P.TG{tg_life_num}I[A]", 
+                                "P.TG{tg_life_num}Pwr[kW]"])
+                                |> yield(name: "TGLife")
+                            """
+
+    return additional_query
 
 # execute query
 def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:

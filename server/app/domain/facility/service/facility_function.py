@@ -1,24 +1,17 @@
-import os
-from collections import defaultdict
-import time
-from datetime import datetime, timedelta
+from fastapi import UploadFile, File
 from http.client import HTTPException
-from typing import List, Dict, Any
+from typing import List
 
 import warnings
 
-from fastapi import UploadFile, File
 from influxdb_client.client.warnings import MissingPivotFunction
-
-import pandas as pd
 from influxdb_client import InfluxDBClient
 
 from app.domain.facility.model.facility_data import FacilityData, TGLifeData
 from app.domain.facility.repository.influx_client import InfluxGTRClient
-from app.domain.facility.service.facility_query import section_query, execute_query, field_by_time_query, \
-    info_field_query, \
-    info_measurements_query
+from app.domain.facility.service.facility_query import section_query, execute_query
 from app.domain.section.model.section_data import SectionData
+
 from config import settings
 
 url = settings.influx_url
