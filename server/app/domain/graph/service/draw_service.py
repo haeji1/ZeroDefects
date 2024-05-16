@@ -1,6 +1,6 @@
 # bokeh
 from datetime import datetime
-from bokeh.layouts import column
+from bokeh.layouts import column, row
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle,
                           BoxAnnotation)
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
@@ -152,7 +152,11 @@ def draw_graph_step_standard(graph_df, step_times):
 
         facility_step_times = step_times.get(facility, {})
 
+        time_values -= time_values.min()
+
         color = colors[len(p.renderers) % len(colors)]
+
+        df_toggles = []
 
         for step, step_time in facility_step_times.items():
 
@@ -166,9 +170,11 @@ def draw_graph_step_standard(graph_df, step_times):
 
             p.add_layout(box_annotation)
 
-            toggle = Toggle(label="Toggle", button_type="success", active=True)
-            toggle.js_link('active', box_annotation, 'visible')
-            # toggles.append(toggle)
+            toggle_label = f"{facility} - {column_name}- {step}"
+            toggle1 = Toggle(label=toggle_label, button_type="success", active=True)
+            toggle1.js_link('active', box_annotation, 'visible')
+            # toggles.append(toggle1)
+            df_toggles.append(toggle1)
             # print(toggles)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
@@ -182,8 +188,7 @@ def draw_graph_step_standard(graph_df, step_times):
 
             print(f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
 
-        time_values -= time_values.min()
-
+        toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
         hover = HoverTool(renderers=[line], tooltips=[
@@ -194,11 +199,29 @@ def draw_graph_step_standard(graph_df, step_times):
 
         p.add_tools(hover)
 
+    # DataTable 생성
+    combined_df = pd.concat(graph_df)
+    source = ColumnDataSource(combined_df)
+
+    columns = [
+        TableColumn(field=c, title=c) for c in combined_df.columns
+    ]
+
+    data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
+                           sizing_mode="stretch_width")
+
+    # 토글 버튼 테스트
+    toggle = Toggle(label="test", button_type="success", active=True)
+    toggle.js_link('active', line, 'visible')
+
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
     p.toolbar.autohide = True
-    plots.append(p)
+
+    # 그래프와 데이터 테이블을 수직으로 배치
+    layout = column([p, data_table, toggle, row(toggles)], sizing_mode="stretch_both")
+    plots.append(layout)
 
     return plots
 
@@ -250,19 +273,6 @@ def draw_detail_section_graph(graph_df, step_times):
         ])
         p.add_tools(hover)
 
-    # DataTable 생성
-    combined_df = pd.concat(graph_df)
-    source = ColumnDataSource(combined_df)
-
-    columns = [
-        TableColumn(field=c, title=c) for c in combined_df.columns
-    ]
-
-    data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row", sizing_mode="stretch_width")
-
-    # 토글 버튼 테스트
-    toggle = Toggle(label="test", button_type="success", active=True)
-    toggle.js_link('active', line, 'visible')
 
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
@@ -270,9 +280,7 @@ def draw_detail_section_graph(graph_df, step_times):
     p.legend.click_policy = "hide"
     p.toolbar.autohide = True
 
-    # 그래프와 데이터 테이블을 수직으로 배치
-    layout = column([p, data_table, toggle], sizing_mode="stretch_both")
-    plots.append(layout)
+    plots.append(p)
 
     return plots
 
