@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 
-interface Bookmark {
-    id?: number;
+export interface Bookmark {
+    id: number;
     facility: string;
     parameter: string;
     selectedBatchName?: string | null;
@@ -16,12 +16,10 @@ interface BookmarkStore {
     updateBookmark: (data: Bookmark) => void;
 }
 
-// interface SelectedBookmarkStore {
-//     selectedBookmark: Bookmark[],
-//     setSelectedBookmark: (data: Bookmark[]) => void,
-// }
-
-
+interface SelectedRowStoreStore {
+    selectedRow: object;
+    setSelectedRow: (rows: object) => void;
+}
 
 export const useBookmarkStore = create<BookmarkStore>()(
     persist(
@@ -31,7 +29,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
                 bookmark: [
                     ...state.bookmark,
                     {
-                        id: state.bookmark.length > 0 ? state.bookmark.at(-1).id + 1 : 0,
+                        id: state.bookmark.length > 0 ? state.bookmark.at(-1)!.id + 1 : 0,
                         facility: facilInfo.facility,
                         parameter: facilInfo.parameter,
                         selectedBatchName: null,
@@ -55,7 +53,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
     )
 );
 
-export const useSelectedRowStore = create<any>()((set) => ({
+export const useSelectedRowStore = create<SelectedRowStoreStore>()((set) => ({
     selectedRow: {},
     setSelectedRow: (rows) => set({ selectedRow: rows }),
 }))
