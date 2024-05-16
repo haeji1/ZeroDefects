@@ -24,9 +24,9 @@ warnings.simplefilter('ignore', MissingPivotFunction)
 
 # --------- functions --------- #
 
-def write_files(files: List[UploadFile] = File(...)):
+async def write_files(files: List[UploadFile] = File(...)):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    contents = client.write_csv(files)
+    contents = await client.write_csv(files)
     return contents
 def get_facilities_info():
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
