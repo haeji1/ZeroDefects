@@ -149,8 +149,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             mean_values.append(mean_value)
             median_value = step_df.iloc[:, -1].median()
             median_values.append(median_value)
-            # mode_value = step_df.iloc[:, -1].mode()
-            # mode_values.append(mode_value)
+            mode_value = step_df.iloc[:, -1].mode()
+            mode_values.append(mode_value)
 
             data = {
                 'facility': facility+column_name+batch_name,
@@ -161,7 +161,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
                 'Variance': variance_values,
                 'MeanValue': mean_values,
                 'MedianValue': median_values,
-                # 'ModeValue': mode_values
+                'ModeValue': mode_values
             }
         data_list.append(data)
         # statistics_df = pd.DataFrame(data)
