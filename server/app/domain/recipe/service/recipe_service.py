@@ -1,9 +1,11 @@
+from datetime import datetime
+
 from fastapi import HTTPException
 from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-from app.domain.facility.service.facility_function import get_measurement_code
+from app.domain.facility.service.facility_utils import get_measurement_code
 from config import settings
 
 url = settings.mongo_furl
@@ -79,12 +81,17 @@ def recipe_service(files):
                 }
             }
 
+        # 현재 날짜와 시간을 추가
+        data_to_insert['last_updated'] = datetime.now()
+
         try:
             data_list = [data_to_insert]  # 딕셔너리를 리스트 안에 넣어줌
             if data_list:
-                collection.insert_many(data_list)  # insert_many 메서드에 리스트 형식의 데이터 전달
+                # upsert=True 옵션을 사용하여 문서가 없으면 삽입하고, 이미 있으면 업데이트합니다.
+                # 문서를 구별할 수 있는 고유한 키 "facility_name" 사용
+                collection.update_one({"facility_name": facility}, {"$set": data_to_insert}, upsert=True)
                 responses.append(
-                    {"filename": file.filename, "message": "File uploaded and data inserted successfully!"})
+                    {"filename": file.filename, "message": "File uploaded and data inserted/updated successfully!"})
             else:
                 responses.append({"filename": file.filename, "message": "No documents to insert"})
         except Exception as e:

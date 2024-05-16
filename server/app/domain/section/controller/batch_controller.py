@@ -18,7 +18,7 @@ from app.domain.section.model.step_request import StepsRequest
 from config import settings
 
 from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
-    get_steps_info
+    get_steps_info, extract_step_times
 
 url = settings.mongo_furl
 
@@ -54,6 +54,7 @@ async def get_steps(request: StepsRequest):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
+    batch_name_list = []
     steps_times_info = []
     # get_step_info_using_facility_name_on_mongoDB(request_body)
     if request_body.queryType == "time":
@@ -68,19 +69,18 @@ async def draw_graph(request_body: GraphQueryRequest):
             ))
 
         graph_df = get_datas(sections)
-
-        # plots = draw_dataframe_to_graph("time", graph_df)
-        # print(graph_df)
-        # print("=============graph_df끝==========")
-        #
-        # print("============draw_dataframe시작===================")
-        plots = draw_dataframe_to_graph("time", graph_df, steps_times_info)
+        plots = draw_dataframe_to_graph("time", graph_df, steps_times_info, batch_name_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
+
     elif request_body.queryType == "step":
+        for query_data in request_body.queryData:
+            batch_name = query_data.batchName
+            batch_name_list.append(batch_name)
         # setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
+
         for s in sections:
             s['startTime'] = datetime.strptime(s['startTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             s['endTime'] = datetime.strptime(s['endTime'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -91,16 +91,21 @@ async def draw_graph(request_body: GraphQueryRequest):
                 startTime=s['startTime'],
                 endTime=s['endTime']
             ))
-
             steps_times_info.append(StepData(
                 facility=s['facility'],
                 batchName=s['batchName'],
                 stepsTime=s['stepsTimes']
             ))
 
+        step_times = extract_step_times(steps_times_info)
         graph_df = get_datas(sections_list)
-        plots = draw_dataframe_to_graph("step", graph_df, steps_times_info)
+        plots = draw_dataframe_to_graph("step", graph_df, step_times, batch_name_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
+        # toggle_json = [json_item(toggle, f"my_toggle_{idx}") for idx, toggle in enumerate(toggles)]
+
+        # combined_json = plot_json + toggle_json
+        # print("======combined_json=======")
+        # print(combined_json)
 
         if not sections:
             raise HTTPException(status_code=404, detail="Sections not found")

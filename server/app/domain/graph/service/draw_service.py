@@ -1,5 +1,8 @@
 # bokeh
-from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
+from bokeh.layouts import column, row
+from bokeh.models import ( TableColumn, DataTable, Toggle,CrosshairTool)
+
+from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
 from bokeh.models import Span
 from bokeh.palettes import Category10_10
@@ -8,14 +11,13 @@ from bokeh.plotting import figure
 # data frame
 import pandas as pd
 
-
-def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None):
+def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None):
     # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
     if graph_type == "time":
         return draw_graph_time_standard(graph_df)
     elif graph_type == "step":
-        return draw_graph_step_standard(graph_df, steps_times_info)
+        return draw_graph_step_standard(graph_df, steps_times_info, batch_name_list)
 
 
 def draw_graph_time_standard(graph_df):
@@ -26,21 +28,13 @@ def draw_graph_time_standard(graph_df):
     colors = Category10_10
 
     plots = []
-    p = figure(title="Facility Comparison", sizing_mode="scale_both", x_axis_label='Time',
+    p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label='Time',
                y_axis_label='Value', max_height=1000)
 
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
-        print("==============time_value=================")
-        print(time_values)
-        print("=============y==========================")
-        print(df[df.columns[-1]])
         df["Time"] = pd.to_datetime(df["Time"])
-        # print("===============time_values=============")
-        # print(time_values)
-        # print("===============time_values끝===========")
-        # print("================value==================")
-        # print(df[df.columns[-1]])
+
         facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
@@ -53,8 +47,23 @@ def draw_graph_time_standard(graph_df):
                  ], formatters={'@Time': 'datetime'})
 
         p.add_tools(hover)
-    # print("============df=============")
-    # print(df)
+
+        # CrosshairTool 생성
+        width = Span(dimension="width", line_dash="dotted", line_width=1)
+        height = Span(dimension="height", line_dash="dotted", line_width=1)
+        p.add_tools(CrosshairTool(overlay=[width, height]))
+
+    # DataTable 생성
+    combined_df = pd.concat(graph_df)
+    source = ColumnDataSource(combined_df)
+
+    columns = [
+        TableColumn(field=c, title=c) for c in combined_df.columns
+    ]
+
+    data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
+                           sizing_mode="stretch_width")
+
     all_time_values = pd.concat([df['Time'] for df in graph_df])
     min_time = all_time_values.min()
     max_time = all_time_values.max()
@@ -64,24 +73,220 @@ def draw_graph_time_standard(graph_df):
     p.xaxis.formatter = DatetimeTickFormatter(hours='%H:%M:%S')
     p.yaxis.formatter = NumeralTickFormatter(format="0,0")
     p.legend.location = "top_left"
+    p.legend.click_policy = "hide"
     p.toolbar.autohide = True
-    plots.append(p)
+    p.toolbar.logo = None
+
+    # 그래프와 데이터 테이블을 수직으로 배치
+    layout = column([p, data_table], sizing_mode="stretch_both")
+    plots.append(layout)
 
     return plots
 
 
-def draw_graph_step_standard(graph_df, step_time_info):
-    # print("graph_df", graph_df)
+# def draw_graph_step_standard(graph_df, step_times):
+#     # print("graph_df", graph_df)
+#     colors = Category10_10
+#
+#     plots = []
+#     toggles = []
+#     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+#     start_time = min(df["Time"].min() for df in graph_df)
+#
+#
+#     for df in graph_df:
+#         time_values = (df["Time"] - start_time).dt.total_seconds()
+#         facility, column_name = df.columns[-1].split('-')
+#
+#         # 각 facility에 대한 step_times 가져오기
+#         facility_step_times = step_times.get(facility, {})
+#
+#         color = colors[len(p.renderers) % len(colors)]
+#
+#         # Step별 BoxAnnotation 추가
+#         for step, step_time in facility_step_times.items():
+#
+#             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')  # Timestamp를 문자열로 변환
+#             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#             end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#             start_x -= time_values.min()
+#             end_x -= time_values.min()
+#
+#             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+#             p.add_layout(box_annotation)
+#
+#             toggle = Toggle(label="box", button_type="success", active=True)
+#             toggle.js_link('active', box_annotation, 'visible')
+#             toggles.append(toggle)
+#
+#             # toggle = Toggle(label="box", button_type="success", active=True)
+#             # toggle.js_link('active', box, 'visible')
+#             # p.add_layout(toggle)
+#
+#             # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
+#             # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
+#             #     annotation.visible = !annotation.visible;
+#             # """))
+#             # toggles.append(toggle)
+#
+#         time_values -= time_values.min()
+#
+#         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+#         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+#         hover = HoverTool(renderers=[line], tooltips=[
+#             ('facility', f'{facility}'),
+#             ('time', '@Time seconds'),
+#             ('Value', '$y')
+#         ])
+#
+#         p.add_tools(hover)
+#
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
+
+def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     colors = Category10_10
 
     plots = []
-    p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+    toggles = []
+    tabs = []
 
+    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
     start_time = min(df["Time"].min() for df in graph_df)
+    line_cnt = 0
+    batch_cnt = 0
+    for df in graph_df:
+        line_cnt += 1
+        time_values = (df["Time"] - start_time).dt.total_seconds()
+        min_time = time_values.min()
+        facility, column_name = df.columns[-1].split('-')
+        batch_name = batch_name_list[batch_cnt]
+        facility_step_times = step_times.get(facility+batch_name, {})
+        batch_cnt += 1
+        time_values -= time_values.min()
+
+        color = colors[len(p.renderers) % len(colors)]
+
+        df_toggles = []
+        df_plots = []
+
+        for step, step_time in facility_step_times.items():
+            start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            start_x -= min_time
+            end_x -= min_time
+            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1, visible=False)
+            p.add_layout(box_annotation)
+
+            toggle_label = f"{facility} - {column_name}- {step}"
+            toggle1 = Toggle(label=toggle_label, button_type="default", active=False)
+            toggle1.js_link('active',  box_annotation, 'visible')
+            df_toggles.append(toggle1)
+
+            step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
+            min_value = step_df.iloc[:, -1].min()
+            max_value = step_df.iloc[:, -1].max()
+            std_deviation = step_df.iloc[:, -1].std()
+            variance = step_df.iloc[:, -1].var()
+            mean_value = step_df.iloc[:, -1].mean()
+            median_value = step_df.iloc[:, -1].median()
+            mode_value = step_df.iloc[:, -1].mode()
+
+        df_plots.append(p)
+
+        toggles.extend(df_toggles)
+        source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+        line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+        hover = HoverTool(renderers=[line], tooltips=[
+            ('facility', f'{facility}'),
+            ('time', '@Time seconds'),
+            ('Value', '$y')
+        ])
+        p.add_tools(hover)
+
+        # CrosshairTool 생성
+        width = Span(dimension="width", line_dash="dotted", line_width=1)
+        height = Span(dimension="height", line_dash="dotted", line_width=1)
+        p.add_tools(CrosshairTool(overlay=[width, height]))
+
+        # tab = Panel(child=p, title=f"{facility} - {column_name}")
+        # tabs.append(tab)
+        # tabs0 = Tabs(tabs=[
+        #     TabPanel(child=p, title="circle"),
+        # ])
+        # plots.append(tabs0)
+
+    # DataTable 생성
+    combined_df = pd.concat(graph_df)
+    source = ColumnDataSource(combined_df)
+
+    columns = [
+        TableColumn(field=c, title=c) for c in combined_df.columns
+    ]
+
+    data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
+                           sizing_mode="stretch_width")
+
+    # 토글 버튼 테스트
+    # toggle = Toggle(label="test", button_type="success", active=True)
+    # toggle.js_link('active', line, 'visible')
+    # tabs_obj = Tabs(tabs=tabs)
+
+    p.x_range.start = 0
+    p.xaxis.formatter = NumeralTickFormatter(format="0")
+    p.legend.location = "top_left"
+    p.legend.click_policy = "hide"
+    p.toolbar.autohide = True
+    p.toolbar.logo = None
+
+    # 그래프와 데이터 테이블을 수직으로 배치
+    layout = column([p, data_table, row(toggles)], sizing_mode="stretch_both")
+    plots.append(layout)
+
+    return plots
+
+
+
+def draw_detail_section_graph(graph_df, step_times):
+    plots = []
 
     for df in graph_df:
+        colors = Category10_10
+        p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+        start_time = min(df["Time"].min() for df in graph_df)
         time_values = (df["Time"] - start_time).dt.total_seconds()
         facility, column_name = df.columns[-1].split('-')
+
+        facility_step_times = step_times.get(facility, {})
+
+        color = colors[len(p.renderers) % len(colors)]
+
+        for step, step_time in facility_step_times.items():
+            start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            start_x -= time_values.min()
+            end_x -= time_values.min()
+
+            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+            p.add_layout(box_annotation)
+
+            # step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
+            # min_value = step_df.iloc[:, -1].min()
+            # max_value = step_df.iloc[:, -1].max()
+            # std_deviation = step_df.iloc[:, -1].std()
+            # variance = step_df.iloc[:, -1].var()
+            # mean_value = step_df.iloc[:, -1].mean()
+            # median_value = step_df.iloc[:, -1].median()
+            # mode_value = statistics.mode(step_df.iloc[:, -1])
+
+            # print(f"Step: {step}, Min: {min_value}, Max: {max_value}, Std Deviation: {std_deviation}, Variance: {variance}, Mean: {mean_value}, Median: {median_value}, Mode: {mode_value}")
 
         time_values -= time_values.min()
 
@@ -93,17 +298,90 @@ def draw_graph_step_standard(graph_df, step_time_info):
             ('time', '@Time seconds'),
             ('Value', '$y')
         ])
-
         p.add_tools(hover)
+
 
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
+    p.legend.click_policy = "hide"
     p.toolbar.autohide = True
+
     plots.append(p)
 
     return plots
 
+
+
+
+# 홀수번째에만 색칠
+# def draw_graph_step_standard(graph_df, step_times):
+#     # print("graph_df", graph_df)
+#     colors = Category10_10
+#
+#     plots = []
+#     toggles = []
+#     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+#     start_time = min(df["Time"].min() for df in graph_df)
+#
+#     for df_index, df in enumerate(graph_df):
+#         time_values = (df["Time"] - start_time).dt.total_seconds()
+#         facility, column_name = df.columns[-1].split('-')
+#
+#         # 각 facility에 대한 step_times 가져오기
+#         facility_step_times = step_times.get(facility, {})
+#
+#         color = colors[df_index % len(colors)]  # df_index가 홀수인 경우에만 색상 변경
+#
+#         # Step별 BoxAnnotation 추가
+#         for step_index, (step, step_time) in enumerate(facility_step_times.items()):
+#             if step_index % 2 == 0:  # step_index가 홀수인 경우에만 BoxAnnotation 추가
+#                 start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')  # Timestamp를 문자열로 변환
+#                 start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#                 end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
+#                 start_x -= time_values.min()
+#                 end_x -= time_values.min()
+#
+#                 box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
+#                 p.add_layout(box_annotation)
+#
+#                 text = Label(x=(start_x + end_x) / 2, y=0, text=f"Step {step}", text_font_size="10pt",
+#                              text_align="center", text_baseline="middle")
+#                 p.add_layout(text)
+#
+#                 # toggle = Toggle(label="box", button_type="success", active=True)
+#                 # toggle.js_link('active', box_annotation, 'visible')
+#                 # toggles.append(toggle)
+#
+#                 # toggle = Toggle(label="box", button_type="success", active=True)
+#                 # toggle.js_link('active', box, 'visible')
+#                 # p.add_layout(toggle)
+#
+#                 # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
+#                 # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
+#                 #     annotation.visible = !annotation.visible;
+#                 # """))
+#                 # toggles.append(toggle)
+#
+#         time_values -= time_values.min()
+#
+#         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
+#         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+#         hover = HoverTool(renderers=[line], tooltips=[
+#             ('facility', f'{facility}'),
+#             ('time', '@Time seconds'),
+#             ('Value', '$y')
+#         ])
+#
+#         p.add_tools(hover)
+#
+#     p.x_range.start = 0
+#     p.xaxis.formatter = NumeralTickFormatter(format="0")
+#     p.legend.location = "top_left"
+#     p.toolbar.autohide = True
+#     plots.append(p)
+#
+#     return plots
 
 # def draw_graph_step_standard(graph_df, end_time_list):
 #     print("===============graph_df==================")
@@ -484,7 +762,7 @@ def save_graph_data(graph_df):
 #
 
 # ColumnDataSource의 max, min, 평균 값 구하기
-def calc_df_values(source, df_name, column_name):
+def calc_df_values(source, df_name,column_name):
     print("========== source 테스트 ===========")
     print(f'source : {source} facility : {df_name} column : {column_name}')
     max_value = max(source.data[column_name])
@@ -495,3 +773,4 @@ def calc_df_values(source, df_name, column_name):
     print(f'{df_name} 의 평균값 {average}')
     print("===================================")
     return max_value, min_value, average
+

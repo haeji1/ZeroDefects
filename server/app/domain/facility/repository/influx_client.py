@@ -18,7 +18,8 @@ from loguru import logger
 from starlette.responses import JSONResponse
 from urllib3.exceptions import NewConnectionError
 
-from app.domain.facility.service.facility_function import get_measurement_code
+from app.domain.facility.model.facility_data import TGLifeData
+from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
     info_field_query, TGLife_query
 from app.domain.section.model.section_data import SectionData
@@ -33,39 +34,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class InfluxNotAvailableException(Exception):
-    STATUS_CODE = 503
-    DESCRIPTION = "InfluxDB API client is not available"
-
-
-class BucketNotFoundException(Exception):
-    STATUS_CODE = 404
-    DESCRIPTION = "Bucket not found"
-
-
-class DataNotFoundException(Exception):
-    STATUS_CODE = 404
-    DESCRIPTION = "Data not found"
-
-
-class BadQueryException(Exception):
-    STATUS_CODE = 400
-    DESCRIPTION = "Bad query"
-
-
-class InfluxGTRClient:
+class InfluxGTRClient:  # GTR: Global Technology Research
 
     # constructor
     def __init__(self, url: str, token: str, org: str, bucket_name: str) -> None:
         self.bucket_name = bucket_name
-        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=60000)
+        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=120000)  # timeout: 2 minute
 
     # write
-    def write_csv(self, files: List[UploadFile] = File(...), batch_size=900) -> []:
-        total_time = time.time()
+    def write_csv(self, files: List[UploadFile] = File(...), batch_size=5000) -> []:
+        total_time = time.time()  # start total time for check time taken
+
         # create write api
-        write_api = self.client.write_api(write_options=
-        WriteOptions(
+        write_api = self.client.write_api(write_options=WriteOptions(
             batch_size=batch_size,
             write_type=ASYNCHRONOUS
         ))
@@ -73,98 +54,190 @@ class InfluxGTRClient:
         # create bucket if not exist
         self.createBucket(self.client)
 
-        response = []
-        cnt = 0
+        response = []  # result list for csv file input
+        success_cnt = 0  # success count
         for file in files:
-            # start time
+
+            # start time for check time taken
             start_time = time.time()
 
-            # await self.write_not_df(write_api, file, batch_size)
-            res = self.write_df(write_api, file, batch_size)
+            res = self.write_df(write_api, file)
             if res['status'] == 'success':
-                cnt += 1
+                success_cnt += 1
             response.append(res)
 
-            # end time
+            # end time for check time taken
             print('time: ', time.time() - start_time)
             print('-----------------------')
 
         write_api.close()
-        count = {'count': cnt}
+        count = {'count': success_cnt}
+
+        # end total time for check time taken
         print('total time: ', time.time() - total_time)
 
         return count, response
 
-    def read_data(self, conditions: List[SectionData]) -> []:
-        start_time = time.time()
-        result_df = pd.DataFrame()
+    @classmethod
+    def write_df(cls, write_api, file: File()):
+        # write csv file to influxDB
 
-        # conditions length == 1
-        if len(conditions) == 1:
+        # check file format
+        if not file.content_type == 'text/csv':
+            return {"filename": file.filename, "message": "Invalid CSV file", 'status': 'fail',
+                    'batch_steps_cnt': ''}
+
+        # check file name
+        if len(file.filename.split('-')) < 3:
+            return {"filename": file.filename, "message": "Invalid file name", 'status': 'fail'}
+
+        measurement = get_measurement_code(file.filename.split('-')[0])  # measurement : facility name (ex. MASS09)
+        date_string = file.filename.rsplit('-')[2]  # date_string : date string from file (ex. 240101)
+        ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "  # ymd_string : (ex. "2024-01-01 ")
+
+        try:
+            df = pd.read_csv(file.file)
+
+            # exception for not exist columns
+            if 'Time' not in df.columns:
+                return {'filename': file.filename, 'message': 'csv file has no column', 'status': 'fail'}
+
+            # date('2024-01-01 ') + time('12:00:00') and checking the day pass by 'shift' column
+            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'], format='%Y-%m-%d %H:%M:%S')
+            df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
+            df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
+
+            # save batch, step to mongo
+            batch_steps_cnt, section_list = save_section_data(measurement,
+                                                              df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
+
+            # 파일의 첫번 째 행 혹은 마지막 행에 배치나 스탭이 존재하는 경우 해당 배치나 스탭을 하나의 온전한 사이클로 볼 수 없어서 예외 처리
+            if batch_steps_cnt is None and section_list is None:
+                return {"filename": file.filename,
+                        "message": "File write failed. Batch is still in progress on the first or last row of the file.",
+                        'status': 'fail',
+                        }
+
+            if len(section_list) == 0:  # no batch in file
+                df['batch'] = '-'
+                df['section'] = '-'
+            else:  # exist batch in file
+                for section in section_list:  # write value to 'batch' column
+                    batch_start_time = pd.to_datetime(section.batchStartTime)
+                    batch_end_time = pd.to_datetime(section.batchEndTime)
+
+                    # if (batch_start_time < 'DateTime' < batch_end_time) 'batch' is section.batchName else '-'
+                    df['batch'] = np.where((df['DateTime'] >= batch_start_time) & (df['DateTime'] <= batch_end_time),
+                                           section.batchName, '-')
+                    df['section'] = '-'
+                    for step in range(len(section.steps)):  # write value to 'section' column
+                        section_start_time = section.steps[step][f'step{step}'][f'step{step}StartTime']
+                        section_end_time = section.steps[step][f'step{step}'][f'step{step}EndTime']
+
+                        # if (section_start_time < 'DateTime' < section_end_time) 'batch' is step number
+                        df.loc[(df['DateTime'] >= section_start_time) & (
+                                df['DateTime'] <= section_end_time), 'section'] = f'{step}'
+
+            # drop not using columns
+            df.drop(columns=['Time', 'TempTime', 'shift'], inplace=True)
+
+            # if dtype is number, dtype to float
+            for column in df.columns:
+                if pd.api.types.is_numeric_dtype(df[column]):
+                    df[column] = df[column].astype(float)
+
+            # setting tags
+            tags = ['batch', 'section', 'TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']
+            # pd.set_option('display.max_rows', None)
+            # pd.set_option('display.max_columns', None)
+            # print(df.dtypes)
+
+            # data for write
+            data = data_frame_to_list_of_points(data_frame=df,  # data
+                                                data_frame_measurement_name=measurement,  # measurement(ex. MASS09)
+                                                data_frame_timestamp_column='DateTime',  # timestamp
+                                                data_frame_tag_columns=tags,  # tags
+                                                point_settings=PointSettings())  # default settings
+
+            write_api.write(bucket=settings.influx_bucket, record=data)
+
+            return {"filename": file.filename, "message": "File successfully written.",
+                    'status': 'success',
+                    "batch_steps_cnt": batch_steps_cnt}
+
+        except Exception as e:
+            logger.error(f"Error fetching item : {e}", exc_info=True)
+            return {"filename": file.filename, "message": str(e), 'status': 'fail'}
+
+    def read_data(self, conditions: List[SectionData]) -> []:
+        result_df: [pd.DataFrame] = []
+
+        for condition in conditions:
             query = field_by_time_query(
-                b=self.bucket_name, facility=conditions[0].facility, field=conditions[0].parameter,
-                start_date=conditions[0].startTime, end_date=conditions[0].endTime)
+                b=self.bucket_name, facility=condition.facility, field=condition.parameter,
+                start_date=condition.startTime, end_date=condition.endTime)
             try:
-                result_df = execute_query(self.client, query)
-                result_df.rename(
-                    columns={f'{conditions[0].parameter}': f'{conditions[0].facility}_{conditions[0].parameter}'},
+                query_s = time.time()
+                df = execute_query(self.client, query)
+                print('query time ', time.time() - query_s)
+
+                if df is None:
+                    continue
+                df.rename(
+                    columns={'_value': f'{condition.facility}-{condition.parameter}'},
                     inplace=True)
+
+                result_df.append(df)
             except Exception as e:
                 raise HTTPException(500, str(e))
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        # print(result_df)
+        return result_df
 
-        # conditions length > 1
-        if len(conditions) > 1:
-            for condition in conditions:
-                query = field_by_time_query(
-                    b=self.bucket_name, facility=condition.facility, field=condition.parameter,
-                    start_date=condition.startTime, end_date=condition.endTime)
-
-                try:
-                    result_df['Time'] = execute_query(self.client, query)[['Time']]
-                except Exception as e:
-                    print(e)
-
-                try:
-                    result_df[f'{condition.facility}_{condition.parameter}'] = execute_query(self.client, query)[
-                        [condition.parameter]]
-                    # df_list.append(df)
-                except Exception as e:
-                    raise HTTPException(500, str(e))
-
-        print('time: ', time.time() - start_time)
-        return ["step", result_df]
-
+    # facility info
     def read_info(self):
+        # facility list (ex. MASS09, MASS 10)
         answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
 
         facilities = defaultdict(list)
         for measurement in answer_measurements['_value']:
+            # column list (ex. volt, press ...)
             answer_fields = self.client.query_api().query_data_frame(
                 info_field_query(b=self.bucket_name, measurement=measurement))
 
+            # answer_fields to list
             fields = [field for field in answer_fields['_value']]
+
+            # key: measurement, value: fields
             facilities[measurement] = fields
 
         return {'result': dict(facilities)}
 
-    def read_TG_data(self, facility: object, tg_life_num: str, start_date: object, end_date: object) -> object:
-        start_time = time.time()
-        result_df = pd.DataFrame()
+    def read_TG_data(self, condition: TGLifeData) -> object:
+        statistics_list = None
+        if condition.statistics_list is None or len(condition.statistics_list) == 0:
+            statistics_list = ["AVG", "MAX", "MIN", "STDDEV"]
+        else:
+            statistics_list = condition.statistics_list
 
-        # conditions length == 1
-        # def TGLife_query(b: str, facility: str, tg_life: str, start_date: str, end_date: str):
-        statistics_list = ["AVG", "MAX", "MIN", "STDDEV"]
+        start_time = time.time()
+
         answer_df = pd.DataFrame()
         for idx, statistics in enumerate(statistics_list):
-            query = TGLife_query(b=self.bucket_name, facility=facility, tg_life_num=tg_life_num,
-                                 start_date=start_date, end_date=end_date, type=statistics)
+            count_flag = False
+            if idx == len(statistics_list) - 1:
+                count_flag = True
+
+            query = TGLife_query(b=self.bucket_name, facility=condition.facility, tg_life_num=condition.tg_life_num,
+                                 start_date=condition.startTime, end_date=condition.endTime, type=statistics, count=count_flag)
             try:
                 result_df = execute_query(self.client, query)
 
                 result_df.rename(
-                    columns={f'P.TG{tg_life_num}I[A]': f'{statistics}-P.TG{tg_life_num}I[A]',
-                             f'P.TG{tg_life_num}Pwr[kW]': f'{statistics}-P.TG{tg_life_num}Pwr[kW]',
-                             f'P.TG{tg_life_num}V[V]': f'{statistics}-P.TG{tg_life_num}V[V]'},
+                    columns={f'P.TG{condition.tg_life_num}I[A]': f'{statistics}-P.TG{condition.tg_life_num}I[A]',
+                             f'P.TG{condition.tg_life_num}Pwr[kW]': f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
+                             f'P.TG{condition.tg_life_num}V[V]': f'{statistics}-P.TG{condition.tg_life_num}V[V]'},
                     inplace=True)
 
                 if idx == len(statistics_list) - 1:
@@ -174,141 +247,10 @@ class InfluxGTRClient:
             except Exception as e:
                 raise HTTPException(500, str(e))
 
+        answer_df[f'TG{condition.tg_life_num}Life[kWh]'] = answer_df[f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+        answer_df.sort_values(f'TG{condition.tg_life_num}Life[kWh]', axis=0, inplace=True)
         print('time: ', time.time() - start_time)
-        return ["step", result_df]
-
-    @classmethod
-    def write_df(cls, write_api, file: File(), batch_size=1000):
-        print('write csv', file.filename)
-
-        # check file format
-        if not file.content_type == 'text/csv':
-            return {"filename": file.filename, "message": "Invalid CSV file", 'status': 'fail',
-                    'batch_steps_cnt': ''}
-        # check file name
-        if len(file.filename.split('-')) < 3:
-            return {"filename": file.filename, "message": "Invalid file name", 'status': 'fail'}
-
-        measurement_before = file.filename.split('-')[0]
-        measurement = get_measurement_code(measurement_before)
-        date_string = file.filename.rsplit('-')[2]
-        ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
-
-        try:
-            # initial_rows = pd.read_csv(file.file, nrows=20)
-            # header_row = initial_rows.apply(lambda row: 'Time' in row.values, axis=1).idxmax()+1
-            # file.file.seek(0)
-            # df = pd.read_csv(file.file, header=header_row)
-
-            df = pd.read_csv(file.file)
-
-            if 'Time' not in df.columns:
-                return {'filename': file.filename, 'message': 'csv file has no column', 'status': 'fail'}
-
-            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'], format='%Y-%m-%d %H:%M:%S')
-            df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
-            df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
-
-            batch_steps_cnt, section_list = save_section_data(measurement,
-                                                              df[['DateTime', 'RcpReq[]', 'CoatingLayerN[Layers]']])
-
-            # print('batch_steps_cnt', batch_steps_cnt)
-            # print('section_list', section_list)
-            if batch_steps_cnt is None and section_list is None:
-                return {"filename": file.filename,
-                        "message": "File write failed. Batch is still in progress on the first or last row of the file.",
-                        'status': 'fail',
-                        }
-
-            if len(section_list) == 0:
-                df['batch'] = '-'
-                df['section'] = '-'
-            else:
-                for section in section_list:
-                    batch_start_time = pd.to_datetime(section.batchStartTime)
-                    batch_end_time = pd.to_datetime(section.batchEndTime)
-
-                    df['batch'] = np.where((df['DateTime'] >= batch_start_time) & (df['DateTime'] <= batch_end_time),
-                                           section.batchName, '-')
-                    df['section'] = '-'
-
-                    for step in range(len(section.steps)):
-                        section_start_time = section.steps[step][f'step{step}'][f'step{step}StartTime']
-                        section_end_time = section.steps[step][f'step{step}'][f'step{step}EndTime']
-
-                        df.loc[(df['DateTime'] >= section_start_time) & (
-                                df['DateTime'] <= section_end_time), 'section'] = f'{step}'
-
-            df.drop(columns=['Time', 'TempTime', 'shift'], inplace=True)
-
-            for column in df.columns:
-                if pd.api.types.is_numeric_dtype(df[column]):
-                    df[column] = df[column].astype(float)
-                elif pd.api.types.is_string_dtype(df[column]):
-                    df[column] = df[column].astype('string')
-
-            tags = ['batch', 'section', 'TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']
-
-            data = data_frame_to_list_of_points(data_frame=df,
-                                                data_frame_measurement_name=measurement,
-                                                data_frame_timestamp_column='DateTime',
-                                                data_frame_tag_columns=tags,
-                                                point_settings=PointSettings())
-
-            write_api.write(bucket=settings.influx_bucket, record=data)
-            return {"filename": file.filename, "message": "File successfully written.",
-                    'status': 'success',
-                    "batch_steps_cnt": batch_steps_cnt}
-        except Exception as e:
-            logger.error(f"Error fetching item : {e}", exc_info=True)
-            return {"filename": file.filename, "message": str(e), 'status': 'fail'}
-
-    @classmethod  # 현재 사용 안함
-    async def write_not_df(cls, write_api, file: File(), batch_size=1000):
-        global point
-        print('write csv', file.filename)
-
-        # check file format
-        if not file.content_type == 'text/csv':
-            return {"filename": file.filename, "message": "Invalid CSV file"}
-        # check file name
-        if not cls.checkFileName(file.filename):
-            return {"filename": file.filename, "message": "Invalid file name"}
-
-        measurement = file.filename.rsplit('-')[0]
-        date_string = file.filename.rsplit('-')[2]
-        ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
-
-        content = await file.read()
-        data = StringIO(content.decode('utf-8'))
-        reader = csv.reader(data)
-
-        try:
-            cnt = 0
-            points = []
-            header = [string for string in next(reader) if string != '']  # read first row
-            for row in reader:  # read second row ~
-                for idx, column in enumerate(header):
-
-                    if idx == 0:
-                        point = Point(measurement).time(
-                            datetime.strptime(ymd_string + row[idx], '%Y-%m-%d %H:%M:%S')
-                            , write_precision=WritePrecision.S)
-                    else:
-                        value = float(row[idx])
-                        point = point.field(column, value)
-                        points.append(point)
-
-                if (cnt % batch_size) == 0:
-                    write_api.write(settings.influx_bucket, settings.influx_org, points)
-                    points.clear()
-
-            # write_api.write(client=self.client, bucket=settings.influx_bucket, org=settings.influx_org,
-            #                 record=points)
-        except Exception as e:
-            return {"filename": file.filename, "message": str(e)}
-
-        return {"filename": file.filename, "message": "Data written"}
+        return answer_df
 
     @classmethod
     def createBucket(cls, client: InfluxDBClient):
