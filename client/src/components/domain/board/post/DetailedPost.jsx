@@ -9,14 +9,14 @@ import {
 import BokehPlot from "@/components/common/BokehPlot";
 import ReadComment from "../comment/ReadComments";
 import CreateComments from "../comment/CreateComment";
-import axios from 'axios'; // 상단에 엑시오스 import
+import axios from "axios"; // 상단에 엑시오스 import
 
 function BoardDetail() {
   const { ids } = useParams();
   const [post, setPost] = useState(null);
   const navigate = useNavigate(); // useHistory 대신 useNavigate를 사용
-  const [author, setAuthor] = useState('');
-  const [password, setPassword] = useState('');
+  const [author, setAuthor] = useState("");
+  const [password, setPassword] = useState("");
   useEffect(() => {
     fetch(`http://localhost:8000/post/posts/${ids}`)
       .then((response) => response.json())
@@ -25,21 +25,22 @@ function BoardDetail() {
   }, [ids]);
 
   const deletePost = () => {
-    axios.delete(`http://localhost:8000/post/posts/${ids}`, {
-      data: { author, password }
-    })
-    .then((response) => {
-      if(response.status === 200) {
-        alert("게시글이 삭제되었습니다.");
-        navigate('/board');
-      } else {
-        alert("게시글 삭제에 실패했습니다.");
-      }
-    })
-    .catch((error) => {
-      console.error("Deleting post failed", error);
-      alert("게시글 삭제 중 오류가 발생했습니다.");
-    });
+    axios
+      .delete(`http://localhost:8000/post/posts/${ids}`, {
+        data: { author, password },
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          alert("게시글이 삭제되었습니다.");
+          navigate("/board");
+        } else {
+          alert("게시글 삭제에 실패했습니다.");
+        }
+      })
+      .catch((error) => {
+        console.error("Deleting post failed", error);
+        alert("게시글 삭제 중 오류가 발생했습니다.");
+      });
   };
 
   if (!post) {
@@ -47,7 +48,14 @@ function BoardDetail() {
   }
 
   return (
-    <div>
+    <div style={{ marginLeft: "100px", marginRight: "100px" }}>
+      <div style={{ padding: "20px" }} />
+      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+        Detailed View
+      </h1>
+      <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+        작성자: {post.author}
+      </h2>
       <h1>제목: {post.title}</h1>
       <p>유저 이름: {post.author}</p>
       <p>날짜: {post.date}</p>
@@ -83,7 +91,9 @@ function BoardDetail() {
         />
         <button onClick={deletePost}>게시글 삭제</button>
       </div>
+      
     </div>
+    
   );
 }
 
