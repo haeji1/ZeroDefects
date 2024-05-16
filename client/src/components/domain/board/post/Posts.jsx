@@ -16,7 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/base/card";
-import BokehPlot from "@/components/common/BokehPlot";
+
+
 function Posts() {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1); // 현재 페이지 상태 추가
@@ -58,7 +59,7 @@ function Posts() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          height: "100%",
+          height: "730px",
         }}
       >
         <div
