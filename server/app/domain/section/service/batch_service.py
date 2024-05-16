@@ -274,17 +274,18 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
 
 def extract_step_times(steps_times_info):
     step_times_by_facility = {}
+
     for step_data in steps_times_info:
         facility = step_data.facility
+        batch_name = step_data.batchName
         steps_time = step_data.stepsTime
         step_times = {}
+
         for step, times in steps_time.items():
             start_time = times[f"{step}startTime"]
             end_time = times[f"{step}endTime"]
             step_times[step] = {'startTime': start_time, 'endTime': end_time}
 
-        step_times_by_facility[facility] = step_times
-    print("*************************")
-    print(step_times_by_facility)
-    print("*************************")
+        step_times_by_facility[facility+batch_name] = step_times
+
     return step_times_by_facility
