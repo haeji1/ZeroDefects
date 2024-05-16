@@ -29,7 +29,7 @@ def draw_graph_time_standard(graph_df):
 
     plots = []
     p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label='Time',
-               y_axis_label='Value', max_height=1000)
+               y_axis_label='Value', height=200)
 
     for df in graph_df:
         time_values = pd.to_datetime(df['Time'], utc=True)
@@ -156,12 +156,10 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     toggles = []
     tabs = []
 
-    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
+    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=200)
     start_time = min(df["Time"].min() for df in graph_df)
-    line_cnt = 0
     batch_cnt = 0
     for df in graph_df:
-        line_cnt += 1
         time_values = (df["Time"] - start_time).dt.total_seconds()
         min_time = time_values.min()
         facility, column_name = df.columns[-1].split('-')
@@ -184,7 +182,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1, visible=False)
             p.add_layout(box_annotation)
 
-            toggle_label = f"{facility} - {column_name}- {step}"
+            toggle_label = f"{batch_name} - {step}"
             toggle1 = Toggle(label=toggle_label, button_type="default", active=False)
             toggle1.js_link('active',  box_annotation, 'visible')
             df_toggles.append(toggle1)
@@ -202,7 +200,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
-        line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+        line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         hover = HoverTool(renderers=[line], tooltips=[
             ('facility', f'{facility}'),
             ('time', '@Time seconds'),
