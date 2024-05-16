@@ -1,10 +1,7 @@
 # bokeh
-from datetime import datetime
 from bokeh.layouts import column, row
-from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, TableColumn, DataTable, Toggle,
-                          BoxAnnotation, CrosshairTool)
-from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d)
-import statistics
+from bokeh.models import ( TableColumn, DataTable, Toggle,CrosshairTool)
+
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
 from bokeh.models import Span
@@ -13,15 +10,14 @@ from bokeh.plotting import figure
 
 # data frame
 import pandas as pd
-import statistics
 
-def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None):
+def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None):
     # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
     if graph_type == "time":
         return draw_graph_time_standard(graph_df)
     elif graph_type == "step":
-        return draw_graph_step_standard(graph_df, steps_times_info)
+        return draw_graph_step_standard(graph_df, steps_times_info, batch_name_list)
 
 
 def draw_graph_time_standard(graph_df):
@@ -152,8 +148,7 @@ def draw_graph_time_standard(graph_df):
 #
 #     return plots
 
-def draw_graph_step_standard(graph_df, step_times):
-    # print("graph_df", graph_df)
+def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     colors = Category10_10
 
     plots = []
@@ -162,46 +157,30 @@ def draw_graph_step_standard(graph_df, step_times):
 
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
     start_time = min(df["Time"].min() for df in graph_df)
-    # print("==========step_times===========")
-    # print(step_times)
     line_cnt = 0
+    batch_cnt = 0
     for df in graph_df:
         line_cnt += 1
         time_values = (df["Time"] - start_time).dt.total_seconds()
-        print("**********************")
-        print(time_values)
-        print("*************min*************")
         min_time = time_values.min()
-        print(min_time)
         facility, column_name = df.columns[-1].split('-')
-        facility_step_times = step_times.get(facility, {})
+        batch_name = batch_name_list[batch_cnt]
+        facility_step_times = step_times.get(facility+batch_name, {})
+        batch_cnt += 1
         time_values -= time_values.min()
-        # print("=========time_values===========")
-        # print(time_values)
+
         color = colors[len(p.renderers) % len(colors)]
 
         df_toggles = []
         df_plots = []
-        # min_time_val = time_values.min()
-        # print("========min_time_val============")
-        # print(min_time_val)
+
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
-            # print(start_time_str)
             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
             end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
-            # start_x -= time_values.min()
-            # end_x -= time_values.min()
             start_x -= min_time
             end_x -= min_time
-
-            # print("============steptime=========")
-            # print(pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
-            print("========start_x======")
-            print(start_x)
-
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
-
             p.add_layout(box_annotation)
 
             toggle_label = f"{facility} - {column_name}- {step}"

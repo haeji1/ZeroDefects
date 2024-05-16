@@ -54,6 +54,7 @@ async def get_steps(request: StepsRequest):
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
     print("request_body", request_body)
+    batch_name_list = []
     steps_times_info = []
     # get_step_info_using_facility_name_on_mongoDB(request_body)
     if request_body.queryType == "time":
@@ -68,11 +69,14 @@ async def draw_graph(request_body: GraphQueryRequest):
             ))
 
         graph_df = get_datas(sections)
-        plots = draw_dataframe_to_graph("time", graph_df, steps_times_info)
+        plots = draw_dataframe_to_graph("time", graph_df, steps_times_info, batch_name_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
 
     elif request_body.queryType == "step":
+        for query_data in request_body.queryData:
+            batch_name = query_data.batchName
+            batch_name_list.append(batch_name)
         # setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
@@ -95,7 +99,7 @@ async def draw_graph(request_body: GraphQueryRequest):
 
         step_times = extract_step_times(steps_times_info)
         graph_df = get_datas(sections_list)
-        plots = draw_dataframe_to_graph("step", graph_df, step_times)
+        plots = draw_dataframe_to_graph("step", graph_df, step_times, batch_name_list)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         # toggle_json = [json_item(toggle, f"my_toggle_{idx}") for idx, toggle in enumerate(toggles)]
 
