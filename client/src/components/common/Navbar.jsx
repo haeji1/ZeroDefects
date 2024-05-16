@@ -34,7 +34,7 @@ function Navbar() {
                         <p className={`link ${selectedLinkClass('notification')}`}>알림</p>
                     </Link>
                     <Link to="/settings" onClick={() => handleClick('settings')}>
-                        <p className={`link ${selectedLinkClass('settings')}`}>관리</p>
+                        <p className={`link ${selectedLinkClass('settings')}`}>데이터 관리</p>
                     </Link>
                 </div>
             </div>

@@ -40,7 +40,7 @@ function Navbar() {
                             </p>
                     </Link>
                     <Link to="/settings">
-                        <p id='settings' className={`link ${selectedLinkClass('settings')}`} onClick={handleClickLink}>관리</p>
+                        <p id='settings' className={`link ${selectedLinkClass('settings')}`} onClick={handleClickLink}>데이터 관리</p>
                     </Link>
                 </div>
             </div>
