@@ -1,11 +1,12 @@
 import Posts from "@/components/domain/board/post/Posts";
 function Board() {
-    return (
-        <>
-            게시판 페이지입니다.
-            <Posts></Posts>
-        </>
-    )
+  return (
+    <>
+      <div style={{ marginLeft: "20%", marginRight: "20%" , paddingTop:"30px"}}>
+        <Posts></Posts>
+      </div>
+    </>
+  );
 }
 
 export default Board;
