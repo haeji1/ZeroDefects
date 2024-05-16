@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 
 export interface Bookmark {
-    id: number;
+    id?: number;
     facility: string;
     parameter: string;
     selectedBatchName?: string | null;
@@ -29,7 +29,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
                 bookmark: [
                     ...state.bookmark,
                     {
-                        id: state.bookmark.length > 0 ? state.bookmark.at(-1)!.id + 1 : 0,
+                        id: state.bookmark.length > 0 ? state.bookmark[-1].id! : 0,
                         facility: facilInfo.facility,
                         parameter: facilInfo.parameter,
                         selectedBatchName: null,

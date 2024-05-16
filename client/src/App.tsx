@@ -9,7 +9,7 @@ import {
   Navigate,
   RouterProvider,
 } from 'react-router-dom'
-import Navbar from './components/common/Navbar'
+import Navbar from '@/components/common/Navbar';
 import ReactDOM from 'react-dom/client'
 import "@/app/global.css"
 import { Toaster } from "./components/base/toaster";
@@ -57,11 +57,11 @@ function App() {
         },
         {
           path: "/board",
-          element: <Board/>,
+          element: <Board />,
         },
         {
-          path:"/board/:ids",
-          element: <BoardDetail/>
+          path: "/board/:ids",
+          element: <BoardDetail />
         }
       ],
     },
