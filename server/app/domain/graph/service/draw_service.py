@@ -92,6 +92,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     tabs = []
     tab_list = []
 
+    data_list = []
+
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
     # p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
     start_time = min(df["Time"].min() for df in graph_df)
@@ -110,6 +112,15 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         color = colors[len(p.renderers) % len(colors)]
         df_toggles = []
 
+        # 통계값 리스트
+        min_values = []
+        max_values = []
+        std_values = []
+        variance_values = []
+        mean_values = []
+        median_values = []
+        mode_values = []
+
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
@@ -127,12 +138,46 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
             min_value = step_df.iloc[:, -1].min()
+            min_values.append(min_value)
             max_value = step_df.iloc[:, -1].max()
+            max_values.append(max_value)
             std_deviation = step_df.iloc[:, -1].std()
+            std_values.append(std_deviation)
             variance = step_df.iloc[:, -1].var()
+            variance_values.append(variance)
             mean_value = step_df.iloc[:, -1].mean()
+            mean_values.append(mean_value)
             median_value = step_df.iloc[:, -1].median()
-            mode_value = step_df.iloc[:, -1].mode()
+            median_values.append(median_value)
+            # mode_value = step_df.iloc[:, -1].mode()
+            # mode_values.append(mode_value)
+
+
+        data = {
+            'Step': list(facility_step_times.keys()),
+            'MinValue': min_values,
+            'MaxValue': max_values,
+            'StdValue': std_values,
+            'Variance': variance_values,
+            'MeanValue': mean_values,
+            'MedianValue': median_values,
+            # 'ModeValue': mode_values
+        }
+        print("==========data=========")
+        print(data)
+        statistics_df = pd.DataFrame(data)
+        # print(step)
+        # print("==========statics_df===========")
+        # print(statistics_df)
+        print("==========statistics==========")
+        print(statistics_df)
+
+        datasource = ColumnDataSource(data)
+        columns = [
+            TableColumn(field=s, title=s) for s in statistics_df.columns
+        ]
+
+        statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
@@ -196,6 +241,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     [
                 [Tabs(tabs=tabs)],
                 [data_table],
+                [statistics_table],
                 [toggles]
             ],
 
