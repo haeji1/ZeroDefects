@@ -72,6 +72,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         # end total time for check time taken
         print('total time: ', time.time() - total_time)
 
+        self.checking_writed_files(responses=response)
+
         return count, response
 
     @classmethod
@@ -143,8 +145,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                     df[column] = df[column].astype(float)
 
             # copy tag columns
-            df[['TG1Life[kWh]_TAG', 'TG2Life[kWh]_TAG', 'TG4Life[kWh]_TAG', 'TG5Life[kWh]_TAG']] \
-                = df[['TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']]
+            df = pd.concat([df, df[['TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']]
+                           .rename(columns=lambda x: x + '_TAG')], axis=1)
 
             # setting tags
             tags = ['batch', 'section', 'TG1Life[kWh]_TAG', 'TG2Life[kWh]_TAG', 'TG4Life[kWh]_TAG', 'TG5Life[kWh]_TAG']
@@ -239,7 +241,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
             # count_flag : flag for get tg_life count column, for performance improve
             count_flag = False
-            if idx == len(statistics_list) - 1:
+            if idx == 0:
                 count_flag = True
 
             # get tg_life
@@ -253,24 +255,38 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 result_df.rename(
                     columns={f'P.TG{condition.tg_life_num}I[A]': f'{statistics}-P.TG{condition.tg_life_num}I[A]',
                              f'P.TG{condition.tg_life_num}Pwr[kW]': f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
-                             f'P.TG{condition.tg_life_num}V[V]': f'{statistics}-P.TG{condition.tg_life_num}V[V]'},
+                             f'P.TG{condition.tg_life_num}V[V]': f'{statistics}-P.TG{condition.tg_life_num}V[V]',
+                             f'TG{condition.tg_life_num}Life[kWh]_TAG': f'TG{condition.tg_life_num}Life[kWh]'},
                     inplace=True)
 
                 # case classification, for performance improve
-                if idx == len(statistics_list) - 1:
-                    answer_df = pd.concat([answer_df, result_df], axis=1)
+                if idx == 0:
+                    answer_df = pd.concat([answer_df, result_df[[
+                        f'TG{condition.tg_life_num}Life[kWh]',
+                        'count',
+                        f'{statistics}-P.TG{condition.tg_life_num}I[A]',
+                        f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
+                        f'{statistics}-P.TG{condition.tg_life_num}V[V]',
+                    ]]], axis=1)
                 else:
-                    answer_df = pd.concat([answer_df, result_df.iloc[:, :-1]], axis=1)
-
+                    answer_df = pd.concat([answer_df, result_df[[
+                        f'{statistics}-P.TG{condition.tg_life_num}I[A]',
+                        f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
+                        f'{statistics}-P.TG{condition.tg_life_num}V[V]',
+                    ]]], axis=1)
             except Exception as e:
                 raise HTTPException(500, str(e))
 
         # sorting by TGLife[kWh]
-        answer_df[f'TG{condition.tg_life_num}Life[kWh]'] = answer_df[f'TG{condition.tg_life_num}Life[kWh]_TAG'].astype(
-            float)
+        answer_df[f'TG{condition.tg_life_num}Life[kWh]'] \
+            = answer_df[f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
         answer_df.sort_values(f'TG{condition.tg_life_num}Life[kWh]', axis=0, inplace=True)
         print('time: ', time.time() - start_time)
         return answer_df
+
+    def checking_writed_files(self, responses: []):
+        for response in responses:
+            print(response)
 
     @classmethod
     def createBucket(cls, client: InfluxDBClient):
