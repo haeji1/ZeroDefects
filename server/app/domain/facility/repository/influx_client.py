@@ -1,22 +1,17 @@
-import csv
-import gzip
+from fastapi import UploadFile, File
 from collections import defaultdict
-from datetime import datetime, timedelta
-import time
 from http.client import HTTPException
-from io import StringIO, BytesIO
+import time
 
 import numpy as np
 import pandas as pd
-from fastapi import UploadFile, File
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS, WriteOptions, ASYNCHRONOUS, PointSettings
+
+from influxdb_client import InfluxDBClient
+from influxdb_client.client.write_api import WriteOptions, ASYNCHRONOUS, PointSettings
 from influxdb_client.client.write.dataframe_serializer import data_frame_to_list_of_points
 
-from typing import List, Any
+from typing import List
 from loguru import logger
-from starlette.responses import JSONResponse
-from urllib3.exceptions import NewConnectionError
 
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
@@ -24,6 +19,7 @@ from app.domain.facility.service.facility_query import field_by_time_query, exec
     info_field_query, TGLife_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
+
 from config import settings
 
 # from influxapi.schemas import InfluxWaveRecord
@@ -146,11 +142,12 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 if pd.api.types.is_numeric_dtype(df[column]):
                     df[column] = df[column].astype(float)
 
+            # copy tag columns
+            df[['TG1Life[kWh]_TAG', 'TG2Life[kWh]_TAG', 'TG4Life[kWh]_TAG', 'TG5Life[kWh]_TAG']] \
+                = df[['TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']]
+
             # setting tags
-            tags = ['batch', 'section', 'TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']
-            # pd.set_option('display.max_rows', None)
-            # pd.set_option('display.max_columns', None)
-            # print(df.dtypes)
+            tags = ['batch', 'section', 'TG1Life[kWh]_TAG', 'TG2Life[kWh]_TAG', 'TG4Life[kWh]_TAG', 'TG5Life[kWh]_TAG']
 
             # data for write
             data = data_frame_to_list_of_points(data_frame=df,  # data
@@ -169,10 +166,31 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             logger.error(f"Error fetching item : {e}", exc_info=True)
             return {"filename": file.filename, "message": str(e), 'status': 'fail'}
 
+    # facility info
+    def read_info(self):
+        # facility list (ex. MASS09, MASS 10)
+        answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
+
+        facilities = defaultdict(list)
+        for measurement in answer_measurements['_value']:
+            # column list (ex. volt, press ...)
+            answer_fields = self.client.query_api().query_data_frame(
+                info_field_query(b=self.bucket_name, measurement=measurement))
+
+            # answer_fields to list
+            fields = [field for field in answer_fields['_value']]
+
+            # key: measurement, value: fields
+            facilities[measurement] = fields
+
+        return {'result': dict(facilities)}
+
+    # get data by parameter & time from influxdb
     def read_data(self, conditions: List[SectionData]) -> []:
         result_df: [pd.DataFrame] = []
 
         for condition in conditions:
+            # query that get data by parameter & time
             query = field_by_time_query(
                 b=self.bucket_name, facility=condition.facility, field=condition.parameter,
                 start_date=condition.startTime, end_date=condition.endTime)
@@ -195,59 +213,61 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         # print(result_df)
         return result_df
 
-    # facility info
-    def read_info(self):
-        # facility list (ex. MASS09, MASS 10)
-        answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
-
-        facilities = defaultdict(list)
-        for measurement in answer_measurements['_value']:
-            # column list (ex. volt, press ...)
-            answer_fields = self.client.query_api().query_data_frame(
-                info_field_query(b=self.bucket_name, measurement=measurement))
-
-            # answer_fields to list
-            fields = [field for field in answer_fields['_value']]
-
-            # key: measurement, value: fields
-            facilities[measurement] = fields
-
-        return {'result': dict(facilities)}
-
     def read_TG_data(self, condition: TGLifeData) -> object:
-        statistics_list = None
-        if condition.statistics_list is None or len(condition.statistics_list) == 0:
-            statistics_list = ["AVG", "MAX", "MIN", "STDDEV"]
-        else:
-            statistics_list = condition.statistics_list
 
         start_time = time.time()
 
+        # exception not exist facility
+        if condition.facility not in self.read_info()['result'].keys():
+            return None
+
+        # exception not exist tg_life number
+        if condition.tg_life_num not in ['1', '2', '4', '5']:
+            return None
+
+        if condition.statistics_list is None or len(condition.statistics_list) == 0:
+            statistics_list = ["AVG"]
+        else:
+            statistics_list = condition.statistics_list
+
+        # exception statistics elements
+        statistics_list = [statistics for statistics in statistics_list
+                           if statistics in ["AVG", "MAX", "MIN", "STDDEV"]]
+
         answer_df = pd.DataFrame()
         for idx, statistics in enumerate(statistics_list):
+
+            # count_flag : flag for get tg_life count column, for performance improve
             count_flag = False
             if idx == len(statistics_list) - 1:
                 count_flag = True
 
+            # get tg_life
             query = TGLife_query(b=self.bucket_name, facility=condition.facility, tg_life_num=condition.tg_life_num,
-                                 start_date=condition.startTime, end_date=condition.endTime, type=statistics, count=count_flag)
+                                 start_date=condition.startTime, end_date=condition.endTime, type=statistics,
+                                 count=count_flag)
             try:
                 result_df = execute_query(self.client, query)
 
+                # rename (ex. P.TG1I[A] -> AVG-P.TG1I[A])
                 result_df.rename(
                     columns={f'P.TG{condition.tg_life_num}I[A]': f'{statistics}-P.TG{condition.tg_life_num}I[A]',
                              f'P.TG{condition.tg_life_num}Pwr[kW]': f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
                              f'P.TG{condition.tg_life_num}V[V]': f'{statistics}-P.TG{condition.tg_life_num}V[V]'},
                     inplace=True)
 
+                # case classification, for performance improve
                 if idx == len(statistics_list) - 1:
                     answer_df = pd.concat([answer_df, result_df], axis=1)
                 else:
                     answer_df = pd.concat([answer_df, result_df.iloc[:, :-1]], axis=1)
+
             except Exception as e:
                 raise HTTPException(500, str(e))
 
-        answer_df[f'TG{condition.tg_life_num}Life[kWh]'] = answer_df[f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+        # sorting by TGLife[kWh]
+        answer_df[f'TG{condition.tg_life_num}Life[kWh]'] = answer_df[f'TG{condition.tg_life_num}Life[kWh]_TAG'].astype(
+            float)
         answer_df.sort_values(f'TG{condition.tg_life_num}Life[kWh]', axis=0, inplace=True)
         print('time: ', time.time() - start_time)
         return answer_df
