@@ -187,7 +187,7 @@ def draw_graph_step_standard(graph_df, step_times):
             p.add_layout(box_annotation)
 
             toggle_label = f"{facility} - {column_name}- {step}"
-            toggle1 = Toggle(label=toggle_label, button_type="success", active=True)
+            toggle1 = Toggle(label=toggle_label, button_type="default", active=True)
             toggle1.js_link('active', box_annotation, 'visible')
             df_toggles.append(toggle1)
 
