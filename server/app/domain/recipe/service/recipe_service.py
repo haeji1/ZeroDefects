@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-from app.domain.facility.service.facility_function import get_measurement_code
+from app.domain.facility.service.facility_utils import get_measurement_code
 from config import settings
 
 url = settings.mongo_furl
