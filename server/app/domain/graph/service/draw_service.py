@@ -238,6 +238,7 @@ def draw_graph_step_standard(graph_df, step_times):
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
+    p.legend.click_policy = "hide"
     p.toolbar.autohide = True
 
     # 그래프와 데이터 테이블을 수직으로 배치
