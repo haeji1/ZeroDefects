@@ -43,21 +43,17 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { useFacilityStore, useBatchStore } from "@/stores/Facility";
+import { useBatchStore } from "@/stores/Facility";
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 
 function BookmarkTable() {
 
     const { bookmark, deleteBookmark, updateBookmark } = useBookmarkStore();
-    const { selectedRow, setSelectedRow } = useSelectedRowStore();
-    const { facilityList } = useFacilityStore();
+    const { setSelectedRow } = useSelectedRowStore();
     const { batchList } = useBatchStore();
 
 
-
-
-    // 테이블 관련 hook
-    // ==============================
+    // Tanstack Table 세팅에 필요한 Hook 들
     const data: Bookmark[] = bookmark.sort((a: Bookmark, b: Bookmark) => a.id - b.id)
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -67,18 +63,12 @@ function BookmarkTable() {
         pageIndex: 0,
         pageSize: 5,
     });
-    // ==============================
 
 
     // zustand에 선택된 row 정보 저장
     useEffect(() => {
         setSelectedRow(rowSelection)
     }, [rowSelection])
-
-
-    useEffect(() => {
-        console.log(bookmark)
-    }, [bookmark])
 
     const columns: ColumnDef<Bookmark>[] = [
         {
@@ -124,7 +114,7 @@ function BookmarkTable() {
             }
         },
         {
-            accessorKey: "times",
+            accessorKey: "batches",
             header: () => <div className="text-center">배치</div>,
             cell: ({ row }) => {
 
@@ -238,7 +228,7 @@ function BookmarkTable() {
             <div className="flex items-center py-4">
                 <Input
                     placeholder="설비명으로 검색"
-                    value={(table.getColumn("facility")?.getFilterValue()) ?? ""}
+                    value={(table.getColumn("facility")?.getFilterValue() as string) ?? ""}
                     onChange={(event) =>
                         table.getColumn("facility")?.setFilterValue(event.target.value)
                     }
