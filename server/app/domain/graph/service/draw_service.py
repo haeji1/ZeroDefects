@@ -152,32 +152,31 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             # mode_value = step_df.iloc[:, -1].mode()
             # mode_values.append(mode_value)
 
-
-        data = {
-            'Step': list(facility_step_times.keys()),
-            'MinValue': min_values,
-            'MaxValue': max_values,
-            'StdValue': std_values,
-            'Variance': variance_values,
-            'MeanValue': mean_values,
-            'MedianValue': median_values,
-            # 'ModeValue': mode_values
-        }
-        print("==========data=========")
-        print(data)
-        statistics_df = pd.DataFrame(data)
-        # print(step)
-        # print("==========statics_df===========")
+            data = {
+                'facility': facility+column_name+batch_name,
+                'Step': list(facility_step_times.keys()),
+                'MinValue': min_values,
+                'MaxValue': max_values,
+                'StdValue': std_values,
+                'Variance': variance_values,
+                'MeanValue': mean_values,
+                'MedianValue': median_values,
+                # 'ModeValue': mode_values
+            }
+        data_list.append(data)
+        # statistics_df = pd.DataFrame(data)
+        # # print(step)
+        # # print("==========statics_df===========")
+        # # print(statistics_df)
+        # print("==========statistics==========")
         # print(statistics_df)
-        print("==========statistics==========")
-        print(statistics_df)
-
-        datasource = ColumnDataSource(data)
-        columns = [
-            TableColumn(field=s, title=s) for s in statistics_df.columns
-        ]
-
-        statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
+        #
+        # datasource = ColumnDataSource(data)
+        # columns = [
+        #     TableColumn(field=s, title=s) for s in statistics_df.columns
+        # ]
+        #
+        # statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
@@ -205,6 +204,24 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         p.add_tools(CrosshairTool(overlay=[width, height]))
 
         tab_list.append(TabPanel(child=plot, title=f'{column_name} - {batch_name}'))
+    # print("==========data_list=========")
+    # print(data_list)
+    statistics_df = pd.DataFrame(data_list)
+    print("===========statics_df=========")
+    print(statistics_df)
+
+    datasource = ColumnDataSource(statistics_df)
+    columns = [
+        TableColumn(field=s, title=s) for s in statistics_df.columns
+    ]
+
+    print("============s============")
+    for s in statistics_df.columns:
+        print(statistics_df[s])
+    print("============s=============")
+
+    statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
+    # # print(step)
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
