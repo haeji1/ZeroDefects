@@ -273,18 +273,51 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
 #     return result
 
 def extract_step_times(steps_times_info):
+    print("=====steps_times_info=====")
+    print(steps_times_info)
     step_times_by_facility = {}
+
     for step_data in steps_times_info:
+        print("*&&&&&&&&&&&&&&&&&&&&")
+        print(step_data)
+        print("*&&&&&&&&&&&&&&&&&&&&")
         facility = step_data.facility
+        print("=======================")
+        print(facility)
         steps_time = step_data.stepsTime
         step_times = {}
+
         for step, times in steps_time.items():
             start_time = times[f"{step}startTime"]
             end_time = times[f"{step}endTime"]
             step_times[step] = {'startTime': start_time, 'endTime': end_time}
 
         step_times_by_facility[facility] = step_times
-    print("*************************")
+
+    print("=====step_times_by_facility=====")
     print(step_times_by_facility)
-    print("*************************")
     return step_times_by_facility
+
+# def extract_step_times(steps_times_info):
+#     print("=====steps_times_info=====")
+#     print(steps_times_info)
+#     print(len(steps_times_info))
+#     step_times_by_facility = {}
+#     for i in range (len(steps_times_info)):
+#         print(steps_times_info[i])
+#         for step_data in steps_times_info:
+#             facility = step_data.facility
+#             steps_time = step_data.stepsTime
+#             step_times = {}
+#             for step, times in steps_time.items():
+#                 start_time = times[f"{step}startTime"]
+#                 end_time = times[f"{step}endTime"]
+#                 step_times[step] = {'startTime': start_time, 'endTime': end_time}
+#
+#             step_times_by_facility[facility] = step_times
+#     # print("*************************")
+#     # print(step_times_by_facility)
+#     # print("*************************")
+#     print("=====step_times_by_facility=====")
+#     print(step_times_by_facility)
+#     return step_times_by_facility

@@ -162,25 +162,43 @@ def draw_graph_step_standard(graph_df, step_times):
 
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
     start_time = min(df["Time"].min() for df in graph_df)
-
+    # print("==========step_times===========")
+    # print(step_times)
     line_cnt = 0
     for df in graph_df:
         line_cnt += 1
         time_values = (df["Time"] - start_time).dt.total_seconds()
+        print("**********************")
+        print(time_values)
+        print("*************min*************")
+        min_time = time_values.min()
+        print(min_time)
         facility, column_name = df.columns[-1].split('-')
         facility_step_times = step_times.get(facility, {})
         time_values -= time_values.min()
+        # print("=========time_values===========")
+        # print(time_values)
         color = colors[len(p.renderers) % len(colors)]
 
         df_toggles = []
         df_plots = []
-
+        # min_time_val = time_values.min()
+        # print("========min_time_val============")
+        # print(min_time_val)
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            # print(start_time_str)
             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
             end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
-            start_x -= time_values.min()
-            end_x -= time_values.min()
+            # start_x -= time_values.min()
+            # end_x -= time_values.min()
+            start_x -= min_time
+            end_x -= min_time
+
+            # print("============steptime=========")
+            # print(pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
+            print("========start_x======")
+            print(start_x)
 
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
 
@@ -235,6 +253,11 @@ def draw_graph_step_standard(graph_df, step_times):
     data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
+    # 토글 버튼 테스트
+    # toggle = Toggle(label="test", button_type="success", active=True)
+    # toggle.js_link('active', line, 'visible')
+    # tabs_obj = Tabs(tabs=tabs)
+
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
@@ -245,6 +268,7 @@ def draw_graph_step_standard(graph_df, step_times):
     plots.append(layout)
 
     return plots
+
 
 
 def draw_detail_section_graph(graph_df, step_times):
@@ -304,6 +328,8 @@ def draw_detail_section_graph(graph_df, step_times):
     plots.append(p)
 
     return plots
+
+
 
 
 # 홀수번째에만 색칠

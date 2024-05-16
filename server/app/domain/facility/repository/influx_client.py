@@ -192,7 +192,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 raise HTTPException(500, str(e))
         pd.set_option('display.max_rows', None)
         pd.set_option('display.max_columns', None)
-        print(result_df)
+        # print(result_df)
         return result_df
 
     # facility info
