@@ -63,7 +63,7 @@ def field_by_time_query(b: str, facility: str, field: str,
 
 
 # query tg_life by num
-def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str, count: bool):
+def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str, count: bool) -> str:
     statistics_type = 'None'
 
     if type == 'AVG':
@@ -75,6 +75,7 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
     elif type == 'STDDEV':
         statistics_type = 'stddev'
 
+    # default additional query
     additional_query = f"""
                         secondjoin
                             |> keep(columns: ["TG{tg_life_num}Life[kWh]", "P.TG{tg_life_num}V[V]", 
@@ -82,6 +83,7 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
                             |> yield(name: "TGLife")
     """
 
+    # query for count value
     if count is True:
         additional_query = f"""
                             count_elements = from(bucket: "{b}")

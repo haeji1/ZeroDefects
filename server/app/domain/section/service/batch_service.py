@@ -9,7 +9,7 @@ from pymongo import MongoClient, ReplaceOne
 from starlette.responses import JSONResponse
 
 from app.domain.facility.model.facility_data import FacilityData
-from app.domain.facility.service.facility_function import get_datas
+# from app.domain.facility.service.facility_function import get_datas
 from app.domain.graph.service.draw_service import draw_dataframe_to_graph
 from app.domain.section.model.batch_info import BatchInfo
 from app.domain.section.model.faciltiy_info import FacilityInfo

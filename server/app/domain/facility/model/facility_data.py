@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -15,6 +15,7 @@ class FacilityData(BaseModel):
 
 class TGLifeData(BaseModel):
     facility: str
-    tg_life: str
+    tg_life_num: str
     startTime: str = '1970-01-01T00:00:00.0Z'
     endTime: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z"
+    statistics_list: Optional[List[str]] = None
