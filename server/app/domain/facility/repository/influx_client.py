@@ -156,8 +156,12 @@ class InfluxGTRClient:
         statistics_list = ["AVG", "MAX", "MIN", "STDDEV"]
         answer_df = pd.DataFrame()
         for idx, statistics in enumerate(statistics_list):
+            count_flag = False
+            if idx == len(statistics_list) - 1:
+                count_flag = True
+
             query = TGLife_query(b=self.bucket_name, facility=facility, tg_life_num=tg_life_num,
-                                 start_date=start_date, end_date=end_date, type=statistics)
+                                 start_date=start_date, end_date=end_date, type=statistics, count=count_flag)
             try:
                 result_df = execute_query(self.client, query)
 
@@ -174,8 +178,10 @@ class InfluxGTRClient:
             except Exception as e:
                 raise HTTPException(500, str(e))
 
+        answer_df[f'TG{tg_life_num}Life[kWh]'] = answer_df[f'TG{tg_life_num}Life[kWh]'].astype(float)
+        answer_df.sort_values(f'TG{tg_life_num}Life[kWh]', axis=0, inplace=True)
         print('time: ', time.time() - start_time)
-        return ["step", result_df]
+        return ["step", answer_df]
 
     @classmethod
     def write_df(cls, write_api, file: File(), batch_size=1000):
@@ -195,6 +201,7 @@ class InfluxGTRClient:
         ymd_string = f"20{date_string[:2]}-{date_string[2:4]}-{date_string[4:]} "
 
         try:
+
             # initial_rows = pd.read_csv(file.file, nrows=20)
             # header_row = initial_rows.apply(lambda row: 'Time' in row.values, axis=1).idxmax()+1
             # file.file.seek(0)
@@ -244,11 +251,12 @@ class InfluxGTRClient:
             for column in df.columns:
                 if pd.api.types.is_numeric_dtype(df[column]):
                     df[column] = df[column].astype(float)
-                elif pd.api.types.is_string_dtype(df[column]):
-                    df[column] = df[column].astype('string')
+
 
             tags = ['batch', 'section', 'TG1Life[kWh]', 'TG2Life[kWh]', 'TG4Life[kWh]', 'TG5Life[kWh]']
-
+            # pd.set_option('display.max_rows', None)
+            # pd.set_option('display.max_columns', None)
+            # print(df.dtypes)
             data = data_frame_to_list_of_points(data_frame=df,
                                                 data_frame_measurement_name=measurement,
                                                 data_frame_timestamp_column='DateTime',
