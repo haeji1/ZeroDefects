@@ -1,5 +1,5 @@
 # bokeh
-from bokeh.layouts import column, row
+from bokeh.layouts import column, layout, row
 from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
@@ -92,12 +92,13 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     tabs = []
     tab_list = []
 
-    # p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
-    p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
+    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
+    # p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
     for df in graph_df:
-        plot = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value",width=1200, height=700)
+        plot = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
+
         time_values = (df["Time"] - start_time).dt.total_seconds()
         min_time = time_values.min()
         facility, column_name = df.columns[-1].split('-')
@@ -169,9 +170,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     columns = [
         TableColumn(field=c, title=c) for c in combined_df.columns
     ]
-    print("=========combined_df==========")
-    print(combined_df)
-    print(combined_df.columns)
     data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
@@ -182,13 +180,30 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     p.toolbar.autohide = True
     p.toolbar.logo = None
 
+    toggle_column = column(toggles, sizing_mode="scale_both")
+
     tabs.append(TabPanel(child=p, title="All Facilities"))
     for tab in tab_list:
         tabs.append(tab)
 
+    # toggle_test = []
+    # for t in toggles:
+
+
     # 그래프와 데이터 테이블을 수직으로 배치
-    layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
-    plots.append(layout)
+    # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
+    layout_1 = layout(
+    [
+                [Tabs(tabs=tabs)],
+                [data_table],
+                [toggles]
+            ],
+
+        sizing_mode="stretch_width",
+    )
+
+    # layout = column([Tabs(tabs=tabs), data_table, toggle_column], sizing_mode="stretch_both")
+    plots.append(layout_1)
 
     return plots
 
