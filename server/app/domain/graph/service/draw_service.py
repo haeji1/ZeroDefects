@@ -90,6 +90,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     plots = []
     toggles = []
     tabs = []
+    tab_list = []
 
     # p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
     p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
@@ -159,7 +160,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         height = Span(dimension="height", line_dash="dotted", line_width=1)
         p.add_tools(CrosshairTool(overlay=[width, height]))
 
-        tabs.append(TabPanel(child=plot, title=f'{facility} - {column_name}'))
+        tab_list.append(TabPanel(child=plot, title=f'{facility} - {column_name}'))
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
@@ -180,6 +181,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     p.toolbar.logo = None
 
     tabs.append(TabPanel(child=p, title="All Facilities"))
+    for tab in tab_list:
+        tabs.append(tab)
 
     # 그래프와 데이터 테이블을 수직으로 배치
     layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
