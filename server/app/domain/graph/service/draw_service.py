@@ -1,5 +1,5 @@
 # bokeh
-from bokeh.layouts import column, row
+from bokeh.layouts import column, layout, row
 from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
@@ -92,12 +92,15 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     tabs = []
     tab_list = []
 
-    # p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", height=300)
-    p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
+    data_list = []
+
+    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
+    # p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
     for df in graph_df:
-        plot = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value",width=1200, height=700)
+        plot = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
+
         time_values = (df["Time"] - start_time).dt.total_seconds()
         min_time = time_values.min()
         facility, column_name = df.columns[-1].split('-')
@@ -108,6 +111,15 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
         color = colors[len(p.renderers) % len(colors)]
         df_toggles = []
+
+        # 통계값 리스트
+        min_values = []
+        max_values = []
+        std_values = []
+        variance_values = []
+        mean_values = []
+        median_values = []
+        mode_values = []
 
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -126,12 +138,45 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
             min_value = step_df.iloc[:, -1].min()
+            min_values.append(min_value)
             max_value = step_df.iloc[:, -1].max()
+            max_values.append(max_value)
             std_deviation = step_df.iloc[:, -1].std()
+            std_values.append(std_deviation)
             variance = step_df.iloc[:, -1].var()
+            variance_values.append(variance)
             mean_value = step_df.iloc[:, -1].mean()
+            mean_values.append(mean_value)
             median_value = step_df.iloc[:, -1].median()
+            median_values.append(median_value)
             mode_value = step_df.iloc[:, -1].mode()
+            mode_values.append(mode_value)
+
+            data = {
+                'facility': facility+column_name+batch_name,
+                'Step': list(facility_step_times.keys()),
+                'MinValue': min_values,
+                'MaxValue': max_values,
+                'StdValue': std_values,
+                'Variance': variance_values,
+                'MeanValue': mean_values,
+                'MedianValue': median_values,
+                'ModeValue': mode_values
+            }
+        data_list.append(data)
+        # statistics_df = pd.DataFrame(data)
+        # # print(step)
+        # # print("==========statics_df===========")
+        # # print(statistics_df)
+        # print("==========statistics==========")
+        # print(statistics_df)
+        #
+        # datasource = ColumnDataSource(data)
+        # columns = [
+        #     TableColumn(field=s, title=s) for s in statistics_df.columns
+        # ]
+        #
+        # statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
@@ -159,6 +204,24 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         p.add_tools(CrosshairTool(overlay=[width, height]))
 
         tab_list.append(TabPanel(child=plot, title=f'{column_name} - {batch_name}'))
+    # print("==========data_list=========")
+    # print(data_list)
+    statistics_df = pd.DataFrame(data_list)
+    print("===========statics_df=========")
+    print(statistics_df)
+
+    datasource = ColumnDataSource(statistics_df)
+    columns = [
+        TableColumn(field=s, title=s) for s in statistics_df.columns
+    ]
+
+    print("============s============")
+    for s in statistics_df.columns:
+        print(statistics_df[s])
+    print("============s=============")
+
+    statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
+    # # print(step)
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
@@ -169,9 +232,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     columns = [
         TableColumn(field=c, title=c) for c in combined_df.columns
     ]
-    print("=========combined_df==========")
-    print(combined_df)
-    print(combined_df.columns)
     data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
@@ -182,13 +242,31 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     p.toolbar.autohide = True
     p.toolbar.logo = None
 
+    toggle_column = column(toggles, sizing_mode="scale_both")
+
     tabs.append(TabPanel(child=p, title="All Facilities"))
     for tab in tab_list:
         tabs.append(tab)
 
+    # toggle_test = []
+    # for t in toggles:
+
+
     # 그래프와 데이터 테이블을 수직으로 배치
-    layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
-    plots.append(layout)
+    # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
+    layout_1 = layout(
+    [
+                [Tabs(tabs=tabs)],
+                [data_table],
+                [statistics_table],
+                [toggles]
+            ],
+
+        sizing_mode="stretch_width",
+    )
+
+    # layout = column([Tabs(tabs=tabs), data_table, toggle_column], sizing_mode="stretch_both")
+    plots.append(layout_1)
 
     return plots
 
