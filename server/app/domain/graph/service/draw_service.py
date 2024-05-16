@@ -107,9 +107,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         time_values -= time_values.min()
 
         color = colors[len(p.renderers) % len(colors)]
-
         df_toggles = []
-        df_plots = []
 
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -134,8 +132,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             mean_value = step_df.iloc[:, -1].mean()
             median_value = step_df.iloc[:, -1].median()
             mode_value = step_df.iloc[:, -1].mode()
-
-        df_plots.append(p)
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
@@ -164,12 +160,16 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
+    combined_df['Time'] = pd.to_datetime(combined_df['Time'], unit='s')
+    combined_df['Time'] = combined_df['Time'].dt.strftime('%Y-%m-%d %H:%M:%S')
     source = ColumnDataSource(combined_df)
 
     columns = [
         TableColumn(field=c, title=c) for c in combined_df.columns
     ]
-
+    print("=========combined_df==========")
+    print(combined_df)
+    print(combined_df.columns)
     data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
@@ -238,7 +238,6 @@ def draw_detail_section_graph(graph_df, step_times):
         ])
         p.add_tools(hover)
 
-
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
@@ -248,8 +247,6 @@ def draw_detail_section_graph(graph_df, step_times):
     plots.append(p)
 
     return plots
-
-
 
 
 # 홀수번째에만 색칠
