@@ -92,12 +92,11 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     tabs = []
     tab_list = []
 
-    data_list = []
-
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
     # p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
+    data_list = []
     for df in graph_df:
         plot = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
 
@@ -153,30 +152,19 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             mode_values.append(mode_value)
 
             data = {
-                'facility': facility+column_name+batch_name,
-                'Step': list(facility_step_times.keys()),
-                'MinValue': min_values,
-                'MaxValue': max_values,
-                'StdValue': std_values,
-                'Variance': variance_values,
-                'MeanValue': mean_values,
-                'MedianValue': median_values,
-                'ModeValue': mode_values
+                'facility': facility + column_name,
+                'Step': step,
+                'MinValue': min_value,
+                'MaxValue': max_value,
+                'StdValue': std_deviation,
+                'Variance': variance,
+                'MeanValue': mean_value,
+                'MedianValue': median_value,
+                'ModeValue': mode_value
             }
-        data_list.append(data)
-        # statistics_df = pd.DataFrame(data)
-        # # print(step)
-        # # print("==========statics_df===========")
-        # # print(statistics_df)
-        # print("==========statistics==========")
-        # print(statistics_df)
-        #
-        # datasource = ColumnDataSource(data)
-        # columns = [
-        #     TableColumn(field=s, title=s) for s in statistics_df.columns
-        # ]
-        #
-        # statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
+            data_list.append(data)
+
+
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
@@ -204,24 +192,14 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         p.add_tools(CrosshairTool(overlay=[width, height]))
 
         tab_list.append(TabPanel(child=plot, title=f'{column_name} - {batch_name}'))
-    # print("==========data_list=========")
-    # print(data_list)
-    statistics_df = pd.DataFrame(data_list)
-    print("===========statics_df=========")
-    print(statistics_df)
 
+    statistics_df = pd.DataFrame(data_list)
     datasource = ColumnDataSource(statistics_df)
     columns = [
         TableColumn(field=s, title=s) for s in statistics_df.columns
     ]
 
-    print("============s============")
-    for s in statistics_df.columns:
-        print(statistics_df[s])
-    print("============s=============")
-
     statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
-    # # print(step)
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
@@ -248,11 +226,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     for tab in tab_list:
         tabs.append(tab)
 
-    # toggle_test = []
-    # for t in toggles:
 
-
-    # 그래프와 데이터 테이블을 수직으로 배치
+        # 그래프와 데이터 테이블을 수직으로 배치
     # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
@@ -328,75 +303,6 @@ def draw_detail_section_graph(graph_df, step_times):
 
     return plots
 
-
-# 홀수번째에만 색칠
-# def draw_graph_step_standard(graph_df, step_times):
-#     # print("graph_df", graph_df)
-#     colors = Category10_10
-#
-#     plots = []
-#     toggles = []
-#     p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
-#     start_time = min(df["Time"].min() for df in graph_df)
-#
-#     for df_index, df in enumerate(graph_df):
-#         time_values = (df["Time"] - start_time).dt.total_seconds()
-#         facility, column_name = df.columns[-1].split('-')
-#
-#         # 각 facility에 대한 step_times 가져오기
-#         facility_step_times = step_times.get(facility, {})
-#
-#         color = colors[df_index % len(colors)]  # df_index가 홀수인 경우에만 색상 변경
-#
-#         # Step별 BoxAnnotation 추가
-#         for step_index, (step, step_time) in enumerate(facility_step_times.items()):
-#             if step_index % 2 == 0:  # step_index가 홀수인 경우에만 BoxAnnotation 추가
-#                 start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')  # Timestamp를 문자열로 변환
-#                 start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
-#                 end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
-#                 start_x -= time_values.min()
-#                 end_x -= time_values.min()
-#
-#                 box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
-#                 p.add_layout(box_annotation)
-#
-#                 text = Label(x=(start_x + end_x) / 2, y=0, text=f"Step {step}", text_font_size="10pt",
-#                              text_align="center", text_baseline="middle")
-#                 p.add_layout(text)
-#
-#                 # toggle = Toggle(label="box", button_type="success", active=True)
-#                 # toggle.js_link('active', box_annotation, 'visible')
-#                 # toggles.append(toggle)
-#
-#                 # toggle = Toggle(label="box", button_type="success", active=True)
-#                 # toggle.js_link('active', box, 'visible')
-#                 # p.add_layout(toggle)
-#
-#                 # toggle = Toggle(label=f"Box {step}", button_type="success", active=True)
-#                 # toggle.js_on_click(CustomJS(args=dict(annotation=box_annotation), code="""
-#                 #     annotation.visible = !annotation.visible;
-#                 # """))
-#                 # toggles.append(toggle)
-#
-#         time_values -= time_values.min()
-#
-#         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
-#         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
-#         hover = HoverTool(renderers=[line], tooltips=[
-#             ('facility', f'{facility}'),
-#             ('time', '@Time seconds'),
-#             ('Value', '$y')
-#         ])
-#
-#         p.add_tools(hover)
-#
-#     p.x_range.start = 0
-#     p.xaxis.formatter = NumeralTickFormatter(format="0")
-#     p.legend.location = "top_left"
-#     p.toolbar.autohide = True
-#     plots.append(p)
-#
-#     return plots
 
 # def draw_graph_step_standard(graph_df, end_time_list):
 #     print("===============graph_df==================")
@@ -776,16 +682,4 @@ def save_graph_data(graph_df):
 #     return [x_data_list, y_data_list, facility_list]
 #
 
-# ColumnDataSource의 max, min, 평균 값 구하기
-def calc_df_values(source, df_name,column_name):
-    print("========== source 테스트 ===========")
-    print(f'source : {source} facility : {df_name} column : {column_name}')
-    max_value = max(source.data[column_name])
-    min_value = min(source.data[column_name])
-    average = source.data[column_name].mean()
-    print(f'{df_name} 의 최댓값 {max_value}')
-    print(f'{df_name} 의 최솟값 {min_value}')
-    print(f'{df_name} 의 평균값 {average}')
-    print("===================================")
-    return max_value, min_value, average
 
