@@ -5,12 +5,8 @@ export type QueryType = "time" | "step";
 interface QueryDateTime {
     queryStartDate: Date;
     setQueryStartDate: (date: Date) => void;
-    queryStartTime: string;
-    setQueryStartTime: (time: string) => void;
     queryEndDate: Date;
     setQueryEndDate: (date: Date) => void;
-    queryEndTime: string;
-    setQueryEndTime: (time: string) => void;
     timeValid: boolean;
     setTimeValid: (valid: boolean) => void;
 }
@@ -25,20 +21,16 @@ interface QueryStep {
 }
 
 
-interface QueryButton {
-    queryTypeButton: QueryType;
-    setQueryTypeButton: (type: QueryType) => void;
+interface QueryTypeStore {
+    queryType: QueryType;
+    setQueryType: (type: QueryType) => void;
 }
 
 export const useQueryDateTimeStore = create<QueryDateTime>((set) => ({
     queryStartDate: new Date(),
     setQueryStartDate: (date) => set({ queryStartDate: date }),
-    queryStartTime: "",
-    setQueryStartTime: (time) => set({ queryStartTime: time }),
     queryEndDate: new Date(),
     setQueryEndDate: (date) => set({ queryEndDate: date }),
-    queryEndTime: "",
-    setQueryEndTime: (time) => set({ queryEndTime: time }),
     timeValid: false,
     setTimeValid: (valid) => set({ timeValid: valid }),
 }));
@@ -52,7 +44,7 @@ export const useQueryStepStore = create<QueryStep>((set) => ({
     setStepValid: (valid) => set({ stepValid: valid }),
 }));
 
-export const useQueryButtonStore = create<QueryButton>((set) => ({
-    queryTypeButton: "time",
-    setQueryTypeButton: (type) => set({ queryTypeButton: type })
+export const useQueryTypeStore = create<QueryTypeStore>((set) => ({
+    queryType: "time",
+    setQueryType: (type) => set({ queryType: type })
 }))
