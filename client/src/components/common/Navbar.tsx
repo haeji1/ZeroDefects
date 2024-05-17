@@ -19,7 +19,7 @@ function Navbar() {
     return (
         <>
             <div className="flex flex-row justify-between h-[80px] w-full bg-slate-700">
-                <a href="/dashboard">
+                <a href="/">
                     <img src={SamsungLogo} className="h-full" alt="Samsung" />
                 </a>
                 <div className='flex flex-row space-x-8 text-[25px] items-center mx-10'>
