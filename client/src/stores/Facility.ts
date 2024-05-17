@@ -5,6 +5,7 @@ interface Batch {
     batchName: string;
     batchStartTime: string;
     batchEndTime: string;
+    stepsCnt: number;
 }
 
 interface BatchStore {
