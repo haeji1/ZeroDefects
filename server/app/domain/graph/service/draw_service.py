@@ -31,15 +31,36 @@ def draw_graph_time_standard(graph_df):
     p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label='Time',
                y_axis_label='Value', height=300)
 
+    statistics_list = []
     for df in graph_df:
         # print("=========df=========")
         # print(df.iloc[:, -1])
 
+        facility, column_name = df.columns[-1].split('-')
+        # 통계값 추출
+        min_value = df.iloc[:, -1].min()
+        max_value = df.iloc[:, -1].max()
+        std_value = df.iloc[:, -1].std()
+        variance = df.iloc[:, -1].var()
+        mean_value = df.iloc[:, -1].mean()
+        median_value = df.iloc[:, -1].median()
+        mode_value = df.iloc[:, -1].mode()
+
+        data = {
+            'facility': facility + column_name,
+            'MinValue': min_value,
+            'MaxValue': max_value,
+            'StdValue': std_value,
+            'Variance': variance,
+            'MeanValue': mean_value,
+            'MedianValue': median_value,
+            'ModeValue': mode_value
+        }
+        statistics_list.append(data)
 
         time_values = pd.to_datetime(df['Time'], utc=True)
         df["Time"] = pd.to_datetime(df["Time"])
 
-        facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
         source = ColumnDataSource(data={'Time': time_values, 'Value': df[df.columns[-1]]})
@@ -56,6 +77,15 @@ def draw_graph_time_standard(graph_df):
         width = Span(dimension="width", line_dash="dotted", line_width=1)
         height = Span(dimension="height", line_dash="dotted", line_width=1)
         p.add_tools(CrosshairTool(overlay=[width, height]))
+
+    statistics_df = pd.DataFrame(statistics_list)
+    datasource = ColumnDataSource(statistics_df)
+    columns = [
+        TableColumn(field=s, title=s) for s in statistics_df.columns
+    ]
+
+    statistics_table = DataTable(source=datasource, columns=columns, editable=True, index_position=0,
+                                 index_header="row", sizing_mode="stretch_width")
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
@@ -82,8 +112,17 @@ def draw_graph_time_standard(graph_df):
     p.toolbar.logo = None
 
     # 그래프와 데이터 테이블을 수직으로 배치
-    layout = column([p, data_table], sizing_mode="stretch_both")
-    plots.append(layout)
+    # layout = column([p, data_table, statistics_table], sizing_mode="stretch_both")
+    layout_1 = layout(
+        [
+                [p],
+                [data_table],
+                [statistics_table],
+            ],
+
+        sizing_mode="stretch_width",
+    )
+    plots.append(layout_1)
 
     return plots
 
