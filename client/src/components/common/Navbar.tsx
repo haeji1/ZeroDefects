@@ -39,6 +39,9 @@ function Navbar() {
                             이상 탐지
                             </p>
                     </Link>
+                    <Link to="/board">
+                        <p id='board' className={`link ${selectedLinkClass('board')}`} onClick={handleClickLink}>게시판</p>
+                    </Link>
                     <Link to="/settings">
                         <p id='settings' className={`link ${selectedLinkClass('settings')}`} onClick={handleClickLink}>데이터 관리</p>
                     </Link>
