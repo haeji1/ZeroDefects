@@ -1,6 +1,7 @@
 # bokeh
-from bokeh.layouts import column, layout, row
-from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice)
+from bokeh.layouts import column, layout, gridplot
+from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
+                          CheckboxGroup, Dropdown)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -158,12 +159,23 @@ def draw_graph_time_standard(graph_df):
 
 
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
+    # print(graph_df)
     options = extract_setting_values(request)
-    multi_choice = MultiChoice(value=["foo", "baz"], options=options)
-    print("==========draw_graph_step_standard=========")
-    print(options)
-    colors = Category10_10
+    checkbox_group = CheckboxGroup(labels=options, active=[0])
+    ncols = 4 # 한 줄에 체크박스 4개 배치
 
+    checkboxes = []
+
+    for i, option in enumerate(options):
+        checkbox = CheckboxGroup(labels=[option], active=[])
+        checkboxes.append(checkbox)
+
+    # GridBox 레이아웃 생성
+    grid = gridplot([[checkboxes[i * ncols + j] for j in range(min(ncols, len(options) - i * ncols))] for i in range((len(options) + ncols - 1) // ncols)],
+                    sizing_mode="stretch_width")
+    # multi_choice = MultiChoice(value=["settings"], options=options, placeholder='Settings')
+
+    colors = Category10_10
     plots = []
     toggles = []
     tabs = []
@@ -288,11 +300,12 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     data_table_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
 
-        # 그래프와 데이터 테이블을 수직으로 배치
+    # 그래프와 데이터 테이블을 수직으로 배치
     # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
-                [multi_choice],
+                # [multi_choice],
+                grid,
                 [Tabs(tabs=tabs)],
                 [toggles],
                 [data_table_title],
