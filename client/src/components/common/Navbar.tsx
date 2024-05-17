@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import SamsungLogo from '@/assets/images/Logo_WHITE.png';
 import { Link, Outlet } from 'react-router-dom';
 import './Navbar.css'
 
 function Navbar() {
 
+    const defaultLink: string = 'dashboard';
+
     const [activeLink, setActiveLink] = useState('dashboard');
 
-    const selectedLinkClass = (name: string) => {
+    const selectedLinkClass = (name : string) => {
         return activeLink === name ? 'selected' : '';
     };
 
-    const handleClickLink = (e: React.MouseEvent<HTMLParagraphElement, MouseEvent>) => {
-        const { id } = e.target as React.DetailedHTMLProps<React.HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>;
-        setActiveLink(id!);
+    const handleClickLink = (e : React.MouseEvent<HTMLParagraphElement, MouseEvent>) => {
+        const {id} = e.target as React.DetailedHTMLProps<React.HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>;
+       setActiveLink(id!);
     }
 
     return (
@@ -24,16 +26,18 @@ function Navbar() {
                 </a>
                 <div className='flex flex-row space-x-8 text-[25px] items-center mx-10'>
                     <Link to="/dashboard">
-                        <p id='dashboard' className={`link ${selectedLinkClass('dashboard')}`} onClick={handleClickLink}>대시보드</p>
+                        <p id='dashboard' className={`link ${selectedLinkClass('dashboard')}`} onClick={handleClickLink}>
+                            대시보드
+                        </p>
                     </Link>
-                    <Link to="/correlation">
-                        <p id='correlation' className={`link ${selectedLinkClass('correlation')}`} onClick={handleClickLink}>상관 분석</p>
+                    <Link to="/analysis">
+                        <p id='analysis' className={`link ${selectedLinkClass('analysis')}`} onClick={handleClickLink}
+                        >상관 분석</p>
                     </Link>
-                    <Link to="/anomaly_detection">
-                        <p id='anomaly_detection' className={`link ${selectedLinkClass('anomaly_detection')}`} onClick={handleClickLink}>이상 탐지</p>
-                    </Link>
-                    <Link to="/board">
-                        <p id='board' className={`link ${selectedLinkClass('board')}`} onClick={handleClickLink}>게시판</p>
+                    <Link to="/notification">
+                        <p id='notification' className={`link ${selectedLinkClass('notification')}`} onClick={handleClickLink}>
+                            이상 탐지
+                            </p>
                     </Link>
                     <Link to="/settings">
                         <p id='settings' className={`link ${selectedLinkClass('settings')}`} onClick={handleClickLink}>데이터 관리</p>
