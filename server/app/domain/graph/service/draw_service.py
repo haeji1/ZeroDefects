@@ -1,6 +1,6 @@
 # bokeh
 from bokeh.layouts import column, layout, row
-from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel)
+from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -143,9 +143,9 @@ def draw_graph_time_standard(graph_df):
     layout_1 = layout(
         [
                 [Tabs(tabs=tabs)],
-                [data_table_title],
+            [data_table_title],
                 [data_table],
-                [statistics_table_title],
+            [statistics_table_title],
                 [statistics_table],
             ],
 
@@ -288,7 +288,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     layout_1 = layout(
     [
                 [Tabs(tabs=tabs)],
-                [toggles]
+                [toggles],
                 [data_table_title],
                 [data_table],
                 [statistics_table_title],
