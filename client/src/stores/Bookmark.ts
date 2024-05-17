@@ -29,7 +29,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
                 bookmark: [
                     ...state.bookmark,
                     {
-                        id: state.bookmark.length > 0 ? state.bookmark.at(-1).id : 0,
+                        id: state.bookmark.length > 0 ? state.bookmark.at(-1).id + 1 : 0,
                         facility: facilInfo.facility,
                         parameter: facilInfo.parameter,
                         selectedBatchName: null,
