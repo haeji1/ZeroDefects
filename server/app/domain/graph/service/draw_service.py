@@ -199,7 +199,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         TableColumn(field=s, title=s) for s in statistics_df.columns
     ]
 
-    statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
+    statistics_table = DataTable(source=datasource, columns=columns, editable=True, index_position=0,index_header="row",sizing_mode="stretch_width")
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
