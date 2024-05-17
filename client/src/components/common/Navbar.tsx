@@ -30,8 +30,8 @@ function Navbar() {
                             대시보드
                         </p>
                     </Link>
-                    <Link to="/analysis">
-                        <p id='analysis' className={`link ${selectedLinkClass('analysis')}`} onClick={handleClickLink}
+                    <Link to="/correlation">
+                        <p id='correlation' className={`link ${selectedLinkClass('correlation')}`} onClick={handleClickLink}
                         >상관 분석</p>
                     </Link>
                     <Link to="/notification">
