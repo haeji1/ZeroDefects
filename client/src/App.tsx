@@ -30,7 +30,7 @@ function App() {
           element: <Dashboard />,
         },
         {
-          path: "/correlation",
+          path: "/analysis",
           element: <Correlation />,
         },
         {
