@@ -1,6 +1,6 @@
 import Dashboard from '@/pages/Dashboard'
 import Settings from '@/pages/Settings'
-import Analysis from '@/pages/Analysis'
+import Correlation from '@/pages/Correlation'
 import Notification from '@/pages/Notification'
 import Board from "@/pages/Board";
 import {
@@ -30,8 +30,8 @@ function App() {
           element: <Dashboard />,
         },
         {
-          path: "/analysis",
-          element: <Analysis />,
+          path: "/correlation",
+          element: <Correlation />,
         },
         {
           path: "/notification",

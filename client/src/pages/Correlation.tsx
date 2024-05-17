@@ -1,4 +1,4 @@
-function Analysis() {
+function Correlation() {
     return (
         <>
             상관 분석 페이지입니다.
@@ -6,4 +6,4 @@ function Analysis() {
     )
 }
 
-export default Analysis;
+export default Correlation;
