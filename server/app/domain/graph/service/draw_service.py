@@ -11,13 +11,15 @@ from bokeh.plotting import figure
 # data frame
 import pandas as pd
 
-def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None):
+from pprint import pprint
+
+def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None, request=None):
     # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
     if graph_type == "time":
         return draw_graph_time_standard(graph_df)
     elif graph_type == "step":
-        return draw_graph_step_standard(graph_df, steps_times_info, batch_name_list)
+        return draw_graph_step_standard(graph_df, steps_times_info, batch_name_list, request)
 
 
 def draw_graph_time_standard(graph_df):
@@ -143,9 +145,9 @@ def draw_graph_time_standard(graph_df):
     layout_1 = layout(
         [
                 [Tabs(tabs=tabs)],
-            [data_table_title],
+                [data_table_title],
                 [data_table],
-            [statistics_table_title],
+                [statistics_table_title],
                 [statistics_table],
             ],
 
@@ -156,7 +158,8 @@ def draw_graph_time_standard(graph_df):
     return plots
 
 
-def draw_graph_step_standard(graph_df, step_times, batch_name_list):
+def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
+    extract_setting_values(request)
     colors = Category10_10
 
     plots = []
@@ -302,6 +305,27 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     plots.append(layout_1)
 
     return plots
+
+def extract_setting_values(request):
+    for i in range(len(request)):
+        step_length = len(request[i]['steps'])
+        for j in range(step_length):
+            step_number = f"Step{j + 1}"
+            step_values = request[i]['steps'][j]
+            # 각 steps별 column들
+            step_columns = step_values[f'Step{j + 1}']
+            # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
+            step_column_keys = list(step_columns.keys())
+            for k in range(len(step_column_keys)):
+                # step별 column의 key값 리스트에서 뽑은 key값(Step1-ICP, Step1-TG1...)
+                column_key = step_column_keys[k]
+                # column_key가 Time이면 시간 정보만 담겨있음
+                if column_key != "Time":
+                    # 안에 있는 최종 키들 (Step1-ICP-ICP1, Step1-TG1-Power)
+                    step_column_info = list(step_columns[column_key].keys())
+                    for l in range(len(step_column_info)):
+                        info_name = step_column_info[l]
+                        print(f"{step_number}-{column_key}-{info_name}")
 
 
 def draw_detail_section_graph(graph_df, step_times):
