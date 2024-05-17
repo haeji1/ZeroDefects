@@ -27,14 +27,18 @@ def draw_graph_time_standard(graph_df):
 
     colors = Category10_10
 
+    tabs = []
+    tab_list = []
     plots = []
-    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label='Time',
-               y_axis_label='Value', height=200)
+    statistics_list = []
+
+    p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label='Time',
+               y_axis_label='Value', height=300)
 
     statistics_list = []
     for df in graph_df:
-        # print("=========df=========")
-        # print(df.iloc[:, -1])
+        plot = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value",
+                      min_width=1200, height=300)
 
         facility, column_name = df.columns[-1].split('-')
         # 통계값 추출
@@ -65,18 +69,34 @@ def draw_graph_time_standard(graph_df):
         color = colors[len(p.renderers) % len(colors)]
         source = ColumnDataSource(data={'Time': time_values, 'Value': df[df.columns[-1]]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+        line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
+
         hover = HoverTool(renderers=[line], tooltips=[
                      ('facility', f'{facility}'),
                      ('time', '@Time{%F %T}'),
                      ('Value', '$y')
                  ], formatters={'@Time': 'datetime'})
 
+        hover2 = HoverTool(renderers=[line2], tooltips=[
+            ('facility', f'{facility}'),
+            ('time', '@Time{%F %T}'),
+            ('Value', '$y')
+        ], formatters={'@Time': 'datetime'})
+
         p.add_tools(hover)
+        plot.add_tools(hover2)
+        plot.xaxis.formatter = DatetimeTickFormatter(hours='%Y-%m-%d %H:%M:%S')
+        plot.legend.location = "top_left"
+        plot.legend.click_policy = "hide"
+        plot.toolbar.logo = None
 
         # CrosshairTool 생성
         width = Span(dimension="width", line_dash="dotted", line_width=1)
         height = Span(dimension="height", line_dash="dotted", line_width=1)
         p.add_tools(CrosshairTool(overlay=[width, height]))
+        plot.add_tools(CrosshairTool(overlay=[width, height]))
+
+        tab_list.append(TabPanel(child=plot, title=f'{column_name}'))
 
     statistics_df = pd.DataFrame(statistics_list)
     datasource = ColumnDataSource(statistics_df)
@@ -111,23 +131,27 @@ def draw_graph_time_standard(graph_df):
     p.toolbar.autohide = True
     p.toolbar.logo = None
 
+    tabs.append(TabPanel(child=p, title="All Facilities"))
+    for tab in tab_list:
+        tabs.append(tab)
+
     data_table_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
 
     # 그래프와 데이터 테이블을 수직으로 배치
     # layout = column([p, data_table, statistics_table], sizing_mode="stretch_both")
-    layout1 = layout(
+    layout_1 = layout(
         [
-            [p],
+                [Tabs(tabs=tabs)],
             [data_table_title],
-            [data_table],
+                [data_table],
             [statistics_table_title],
-            [statistics_table]
-        ],
+                [statistics_table],
+            ],
 
-        sizing_mode="stretch_width"
+        sizing_mode="stretch_width",
     )
-    plots.append(layout1)
+    plots.append(layout_1)
 
     return plots
 
@@ -263,13 +287,13 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
-            [Tabs(tabs=tabs)],
-            [toggles],
-            [data_table_title],
-            [data_table],
-            [statistics_table_title],
-            [statistics_table],
-        ],
+                [Tabs(tabs=tabs)],
+                [toggles],
+                [data_table_title],
+                [data_table],
+                [statistics_table_title],
+                [statistics_table],
+            ],
 
         sizing_mode="stretch_width",
     )
