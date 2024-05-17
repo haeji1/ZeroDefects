@@ -10,20 +10,24 @@ function Correlation() {
     let isCollapse = false;
 
     return (
-        <div className="flex flex-row-reverse m-5">
-            <Sidebar
-                collapsed={isCollapse}
-                width="40%"
-                collapsedWidth="0%"
-                backgroundColor="null"
-            >
-                <CorrelationTable />
+        <>
+            <div className='m-5'>
                 <GetGraph />
-            </Sidebar>
-            <div className="w-full">
-                <GraphSection />
             </div>
-        </div>
+            <div className="flex flex-row-reverse m-5">
+                <Sidebar
+                    collapsed={isCollapse}
+                    width="20%"
+                    collapsedWidth="0%"
+                    backgroundColor="null"
+                >
+                    <CorrelationTable />
+                </Sidebar>
+                <div className="w-full">
+                    <GraphSection />
+                </div>
+            </div>
+        </>
     )
 }
 
