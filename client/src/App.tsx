@@ -12,7 +12,9 @@ import Navbar from '@/components/common/Navbar';
 import ReactDOM from 'react-dom/client'
 import "@/app/global.css"
 import { Toaster } from "./components/base/toaster";
-import BoardDetail from "./components/domain/board/post/DetailedPost";
+// import BoardDetail from "./components/domain/board/post/DetailedPost";
+import BoardDetail from "./components/domain/board/post/BoardDetail";
+
 
 
 function App() {
