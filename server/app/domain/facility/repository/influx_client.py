@@ -77,7 +77,9 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         idx_list, filename_list = self.checking_writed_files(responses=response)    # checking seperated batch files
         for idx in idx_list:
             check_list.append(files[idx])
-
+        print('===========[idx, filename]===========')
+        print(idx_list)
+        print(filename_list)
         df_list = await self.assemble_csv(check_list)   # assembling seperated files and return dataframe
 
         for df, filename in zip(df_list, filename_list):    # rewrite df to influxDB
@@ -377,41 +379,40 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     def checking_writed_files(cls, responses: []) -> []:
 
         seperated_flag = 0
-        check_list = []
+        idx_list = []
         filename_list = []
         for idx, response in enumerate(responses):
             if response['message'].startswith('File write failed. '):
-                seperated_flag += 1
-                check_list.append(idx)
-            if seperated_flag == 2:
-                seperated_flag = 0
-                if idx-1 in check_list:
-                    check_list.append(idx)
-                    filename_list.append(responses[idx-1]['filename'])
+                idx_list.append(idx)
+            # if seperated_flag == 2:
+            #     if idx-1 in idx_list:
+            #         seperated_flag = 0
+            #         filename_list.append(responses[idx-1]['filename'])
+            #     else:
+            #         seperated_flag = 1
+            #         idx_list = idx_list.pop(-1)
 
-        print('check_list', check_list)
+        result_idx_list = []
+        for i in range(len(idx_list) - 1):
+            if idx_list[i] + 1 == idx_list[i + 1]:
+                filename_list.append(responses[idx_list[i]]['filename'])
+                result_idx_list.extend([idx_list[i], idx_list[i + 1]])
 
-        return check_list, filename_list
+        return result_idx_list, filename_list
 
     @classmethod
     async def assemble_csv(cls, files: []) -> List[pd.DataFrame]:
-        print('assemble csv ...')
         df_list = []
         answer_df = []
         for idx, file in enumerate(files):
-            print('filename', file.filename)
             await file.seek(0)
             df = pd.read_csv(file.file)
             df_list.append(df)
-            print('df', df)
 
             if idx % 2 == 1:
                 answer_df.append(pd.concat([df_list[idx-1], df_list[idx]], ignore_index=True))
 
-        print('answer df')
-        print(answer_df)
         return answer_df
-
 
     @classmethod
     def createBucket(cls, client: InfluxDBClient):
