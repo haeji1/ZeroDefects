@@ -1,7 +1,7 @@
 function Notification() {
     return (
         <>
-            알림입니다.
+            이상 탐지입니다.
         </>
     )
 }
