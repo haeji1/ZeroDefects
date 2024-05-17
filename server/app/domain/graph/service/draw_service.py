@@ -94,12 +94,12 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
     data_list = []
 
-    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
+    p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
     # p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
     for df in graph_df:
-        plot = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=1200, height=300)
+        plot = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
 
         time_values = (df["Time"] - start_time).dt.total_seconds()
         min_time = time_values.min()
@@ -153,7 +153,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             mode_values.append(mode_value)
 
             data = {
-                'facility': facility+column_name+batch_name,
+                'Parameter': f'{column_name} - {batch_name}',
                 'Step': list(facility_step_times.keys()),
                 'MinValue': min_values,
                 'MaxValue': max_values,
@@ -220,7 +220,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         print(statistics_df[s])
     print("============s=============")
 
-    statistics_table = DataTable(source=datasource, columns=columns, sizing_mode="stretch_width")
+    statistics_table = DataTable(source=datasource, columns=columns, index_position=None, sizing_mode="stretch_width")
     # # print(step)
 
     # DataTable 생성
@@ -232,7 +232,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     columns = [
         TableColumn(field=c, title=c) for c in combined_df.columns
     ]
-    data_table = DataTable(source=source, columns=columns, editable=True, index_position=0, index_header="row",
+    data_table = DataTable(source=source, columns=columns, editable=False, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
     p.x_range.start = 0
