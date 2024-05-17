@@ -1,6 +1,6 @@
 # bokeh
 from bokeh.layouts import column, layout, row
-from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div)
+from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -11,7 +11,6 @@ from bokeh.plotting import figure
 # data frame
 import pandas as pd
 
-from pprint import pprint
 
 def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None, request=None):
     # save_graph_data(graph_df)
@@ -159,7 +158,10 @@ def draw_graph_time_standard(graph_df):
 
 
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
-    extract_setting_values(request)
+    options = extract_setting_values(request)
+    multi_choice = MultiChoice(value=["foo", "baz"], options=options)
+    print("==========draw_graph_step_standard=========")
+    print(options)
     colors = Category10_10
 
     plots = []
@@ -290,6 +292,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
+                [multi_choice],
                 [Tabs(tabs=tabs)],
                 [toggles],
                 [data_table_title],
@@ -307,6 +310,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     return plots
 
 def extract_setting_values(request):
+    options = []
     for i in range(len(request)):
         step_length = len(request[i]['steps'])
         for j in range(step_length):
@@ -325,8 +329,9 @@ def extract_setting_values(request):
                     step_column_info = list(step_columns[column_key].keys())
                     for l in range(len(step_column_info)):
                         info_name = step_column_info[l]
-                        print(f"{step_number}-{column_key}-{info_name}")
-
+                        select_name = (f"{step_number}-{column_key}-{info_name}")
+                        options.append(select_name)
+    return options
 
 def draw_detail_section_graph(graph_df, step_times):
     plots = []
