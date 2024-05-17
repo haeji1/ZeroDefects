@@ -31,11 +31,36 @@ def draw_graph_time_standard(graph_df):
     p = figure(title="Facility Graph", sizing_mode="scale_width", x_axis_label='Time',
                y_axis_label='Value', height=200)
 
+    statistics_list = []
     for df in graph_df:
+        # print("=========df=========")
+        # print(df.iloc[:, -1])
+
+        facility, column_name = df.columns[-1].split('-')
+        # 통계값 추출
+        min_value = df.iloc[:, -1].min()
+        max_value = df.iloc[:, -1].max()
+        std_value = df.iloc[:, -1].std()
+        variance = df.iloc[:, -1].var()
+        mean_value = df.iloc[:, -1].mean()
+        median_value = df.iloc[:, -1].median()
+        mode_value = df.iloc[:, -1].mode()
+
+        data = {
+            'facility': facility + column_name,
+            'MinValue': min_value,
+            'MaxValue': max_value,
+            'StdValue': std_value,
+            'Variance': variance,
+            'MeanValue': mean_value,
+            'MedianValue': median_value,
+            'ModeValue': mode_value
+        }
+        statistics_list.append(data)
+
         time_values = pd.to_datetime(df['Time'], utc=True)
         df["Time"] = pd.to_datetime(df["Time"])
 
-        facility, column_name = df.columns[-1].split('-')
 
         color = colors[len(p.renderers) % len(colors)]
         source = ColumnDataSource(data={'Time': time_values, 'Value': df[df.columns[-1]]})
@@ -52,6 +77,15 @@ def draw_graph_time_standard(graph_df):
         width = Span(dimension="width", line_dash="dotted", line_width=1)
         height = Span(dimension="height", line_dash="dotted", line_width=1)
         p.add_tools(CrosshairTool(overlay=[width, height]))
+
+    statistics_df = pd.DataFrame(statistics_list)
+    datasource = ColumnDataSource(statistics_df)
+    columns = [
+        TableColumn(field=s, title=s) for s in statistics_df.columns
+    ]
+
+    statistics_table = DataTable(source=datasource, columns=columns, editable=True, index_position=0,
+                                 index_header="row", sizing_mode="stretch_width")
 
     # DataTable 생성
     combined_df = pd.concat(graph_df)
@@ -81,17 +115,19 @@ def draw_graph_time_standard(graph_df):
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
 
     # 그래프와 데이터 테이블을 수직으로 배치
-    layout = column(
+    # layout = column([p, data_table, statistics_table], sizing_mode="stretch_both")
+    layout1 = layout(
         [
-            p,
-            data_table_title,
-            data_table,
-            statistics_table_title
+            [p],
+            [data_table_title],
+            [data_table],
+            [statistics_table_title],
+            [statistics_table]
         ],
 
-        sizing_mode="stretch_both"
+        sizing_mode="stretch_width"
     )
-    plots.append(layout)
+    plots.append(layout1)
 
     return plots
 
@@ -123,15 +159,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         color = colors[len(p.renderers) % len(colors)]
         df_toggles = []
 
-        # 통계값 리스트
-        min_values = []
-        max_values = []
-        std_values = []
-        variance_values = []
-        mean_values = []
-        median_values = []
-        mode_values = []
-
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
@@ -149,19 +176,12 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
             min_value = step_df.iloc[:, -1].min()
-            min_values.append(min_value)
             max_value = step_df.iloc[:, -1].max()
-            max_values.append(max_value)
             std_deviation = step_df.iloc[:, -1].std()
-            std_values.append(std_deviation)
             variance = step_df.iloc[:, -1].var()
-            variance_values.append(variance)
             mean_value = step_df.iloc[:, -1].mean()
-            mean_values.append(mean_value)
             median_value = step_df.iloc[:, -1].median()
-            median_values.append(median_value)
             mode_value = step_df.iloc[:, -1].mode()
-            mode_values.append(mode_value)
 
             data = {
                 'facility': f'{column_name} - {batch_name}',
@@ -175,8 +195,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
                 'ModeValue': mode_value
             }
             data_list.append(data)
-
-
 
         toggles.extend(df_toggles)
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
