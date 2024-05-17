@@ -162,13 +162,14 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     # print(graph_df)
     options = extract_setting_values(request)
     checkbox_group = CheckboxGroup(labels=options, active=[0])
-    ncols = 4 # 한 줄에 체크박스 4개 배치
+    ncols = 10 # 한 줄에 체크박스 4개 배치
 
     checkboxes = []
 
     for i, option in enumerate(options):
         checkbox = CheckboxGroup(labels=[option], active=[])
         checkboxes.append(checkbox)
+
 
     # GridBox 레이아웃 생성
     grid = gridplot([[checkboxes[i * ncols + j] for j in range(min(ncols, len(options) - i * ncols))] for i in range((len(options) + ncols - 1) // ncols)],
@@ -238,6 +239,18 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             data_list.append(data)
 
         toggles.extend(df_toggles)
+
+        # toggle 그리드로 배치
+        tcols = 3
+
+        # Toggle 객체들을 그리드에 배치하기 위한 2차원 배열 생성
+        toggle_grid = [
+            [toggles[i * tcols + j] for j in range(min(tcols, len(toggles) - i * tcols))]
+            for i in range((len(toggles) + tcols - 1) // tcols)
+        ]
+
+        toggle_gridplot = gridplot(toggle_grid, sizing_mode="stretch_width")
+
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
@@ -305,9 +318,10 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     layout_1 = layout(
     [
                 # [multi_choice],
-                grid,
+                # grid,
                 [Tabs(tabs=tabs)],
-                [toggles],
+                # [toggles],
+                [toggle_gridplot],
                 [data_table_title],
                 [data_table],
                 [statistics_table_title],
