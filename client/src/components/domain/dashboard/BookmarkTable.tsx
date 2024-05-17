@@ -43,6 +43,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
+import { Label } from "@/components/base/label";
 import { useBatchStore } from "@/stores/Facility";
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 
@@ -125,6 +126,7 @@ function BookmarkTable() {
                     parameter: row.original.parameter,
                     selectedBatchName: "",
                 });
+                const [stepsCnt, setStepsCnt] = useState<number>();
                 const batches = batchList[row.original.facility];
 
                 useDidMountEffect(() => {
@@ -132,7 +134,7 @@ function BookmarkTable() {
                 }, [selectedBatchData])
 
 
-                return <div className="text-center font-medium min-w-[150px]">
+                return <div className="flex flex-row text-center font-medium w-auto">
 
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
@@ -142,6 +144,7 @@ function BookmarkTable() {
                                 aria-expanded={open}
                                 className="w-full justify-between"
                             >
+                                {/* {bookmark.find((e) => e.id === row.original.id)?.selectedBatchName || "배치를 선택해 주세요."} */}
                                 {bookmark.find((e) => e.id === row.original.id)?.selectedBatchName || "배치를 선택해 주세요."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -157,13 +160,15 @@ function BookmarkTable() {
                                                 key={batch.batchName}
                                                 value={batch.batchName}
                                                 onSelect={() => {
+                                                    setStepsCnt(batch.stepsCnt)
                                                     setSelectedBatchData(prevState => ({
                                                         ...prevState,
                                                         selectedBatchName: batch.batchName,
                                                     }));
                                                     setOpen(false);
+                                                    console.log(batch.stepsCnt)
                                                 }}>
-                                                {batch.batchStartTime}
+                                                {batch.batchName}
                                                 <Check
                                                     className={cn(
                                                         "mr-2 h-4 w-4",
@@ -177,6 +182,7 @@ function BookmarkTable() {
                             </ScrollArea>
                         </PopoverContent>
                     </Popover>
+                    <Label value={stepsCnt}></Label>
                 </div >
             },
         },
