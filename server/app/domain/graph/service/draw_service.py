@@ -180,7 +180,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     grid = gridplot([[checkboxes[i * ncols + j] for j in range(min(ncols, len(options) - i * ncols))] for i in range((len(options) + ncols - 1) // ncols)],
                     sizing_mode="stretch_width")
 
-    # multi_choice = MultiChoice(value=["settings"], options=options, placeholder='Settings')
+    multi_choice = MultiChoice(value=["settings"], options=options, placeholder='Settings')
 
     colors = Category10_10
     plots = []
@@ -335,7 +335,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
-                # [multi_choice],
+                [multi_choice],
                 # [grid],
                 [Tabs(tabs=tabs)],
                 [toggle_gridplot],
@@ -357,16 +357,19 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
 def extract_setting_values(request):
     options = []
     for i in range(len(request)):
-        pprint(request[i])
         step_length = len(request[i]['steps'])
         for j in range(step_length):
+            min_start_val = request[i].get('steps', [])[0].keys()
+            first_key = list(min_start_val)[0]
+            if first_key == 'Step0':
+                step_number = f"Step{j}"
+                step_values = request[i]['steps'][j]
+                step_columns = step_values[f'Step{j}']
+            else:
+                step_number = f"Step{j + 1}"
+                step_values = request[i]['steps'][j]
+                step_columns = step_values[f'Step{j + 1}']
             facility = request[i]['facilityName']
-            # step_number = f"Step{j + 1}"
-            step_number = f"Step{j}"
-            step_values = request[i]['steps'][j]
-            # 각 steps별 column들
-            step_columns = step_values[f'Step{j}']
-            # print(step_values['Step1'])
             # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
             step_column_keys = list(step_columns.keys())
             for k in range(len(step_column_keys)):
@@ -434,8 +437,10 @@ def draw_detail_section_graph(graph_df, step_times):
     p.legend.location = "top_left"
     p.legend.click_policy = "hide"
     p.toolbar.autohide = True
+    p.toolbar.logo = None
 
     plots.append(p)
+
 
     return plots
 
