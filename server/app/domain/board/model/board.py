@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Comment(BaseModel):
@@ -9,7 +9,7 @@ class Comment(BaseModel):
     author: str
     content: str
     password: str
-    date: Optional[str] = str(datetime.now())
+    date: Optional[str] = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M"))
 
 
 class Post(BaseModel):
@@ -20,4 +20,4 @@ class Post(BaseModel):
     password: str
     graphData: Optional[list] = None
     comments: List[Comment] = []
-    date: Optional[str] = str(datetime.now())
+    date: Optional[str] = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M"))

@@ -19,7 +19,7 @@ async def create_post(post: Post):
 
 @post_router.get("/posts", response_model=Page[Post])
 async def get_posts(params: Params = Depends()):
-    params.size = 15
+    params.size = 10
     return paginate(list(get_post_from_db()),params)
 
 
