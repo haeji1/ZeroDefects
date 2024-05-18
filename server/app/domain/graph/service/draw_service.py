@@ -3,7 +3,7 @@ from pprint import pprint
 
 from bokeh.layouts import column, layout, gridplot
 from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
-                          CheckboxGroup, Dropdown, TextInput)
+                          CheckboxGroup, Dropdown, TextInput, CustomJS)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -163,33 +163,17 @@ def draw_graph_time_standard(graph_df):
 
 
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
-    # print(graph_df)
     options = extract_setting_values(request)
-    # print(options)
-    checkbox_group = CheckboxGroup(labels=options, active=[0])
-    ncols = 6 # 한 줄에 체크박스 6개 배치
-
-    checkboxes = []
-
-    for i, option in enumerate(options):
-        checkbox = CheckboxGroup(labels=[option], active=[])
-        checkboxes.append(checkbox)
-
-
-    # GridBox 레이아웃 생성
-    grid = gridplot([[checkboxes[i * ncols + j] for j in range(min(ncols, len(options) - i * ncols))] for i in range((len(options) + ncols - 1) // ncols)],
-                    sizing_mode="stretch_width")
-
-    multi_choice = MultiChoice(value=["settings"], options=options, placeholder='Settings')
 
     colors = Category10_10
     plots = []
     toggles = []
     tabs = []
     tab_list = []
+    toggle_labels = []
+    box_annotations = []
 
     p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
-    # p = figure(title="Facility Graph", x_axis_label="Time", y_axis_label="Value", width=1200, height=700)
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
     data_list = []
@@ -205,14 +189,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         time_values -= time_values.min()
 
         color = colors[len(p.renderers) % len(colors)]
-        df_toggles = []
-
-        # def my_text_input_handler(attr, old, new):
-        #     print("Previous label: " + old)
-        #     print("Updated label: " + new)
-        #
-        # text_input = TextInput(value="default", title="Label:")
-        # text_input.on_change("value", my_text_input_handler)
 
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -223,12 +199,13 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1, visible=False)
             p.add_layout(box_annotation)
             plot.add_layout(box_annotation)
+            box_annotations.append(box_annotation)
 
             toggle_label = f"{batch_name} - {step}"
             toggle1 = Toggle(label=toggle_label, button_type="default", active=False)
             toggle1.js_link('active',  box_annotation, 'visible')
-            # multi_choice.js_link("active", box_annotation, "visible")
-            df_toggles.append(toggle1)
+            toggles.append(toggle1)
+            toggle_labels.append(toggle_label)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
             min_value = step_df.iloc[:, -1].min()
@@ -252,23 +229,9 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             }
             data_list.append(data)
 
-        toggles.extend(df_toggles)
-
-        # toggle 그리드로 배치
-        tcols = 3
-
-        # Toggle 객체들을 그리드에 배치하기 위한 2차원 배열 생성
-        toggle_grid = [
-            [toggles[i * tcols + j] for j in range(min(tcols, len(toggles) - i * tcols))]
-            for i in range((len(toggles) + tcols - 1) // tcols)
-        ]
-
-        toggle_gridplot = gridplot(toggle_grid, sizing_mode="stretch_width")
-
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
-
 
         hover = HoverTool(renderers=[line], tooltips=[
             ('facility', f'{facility}'),
@@ -322,8 +285,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     p.toolbar.autohide = True
     p.toolbar.logo = None
 
-    toggle_column = column(toggles, sizing_mode="scale_both")
-
     tabs.append(TabPanel(child=p, title="All Facilities"))
     for tab in tab_list:
         tabs.append(tab)
@@ -331,14 +292,28 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     data_table_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
 
+    print("toggle_labels:", toggle_labels)
+
+    multi_choice = MultiChoice(options=toggle_labels, placeholder='Steps')
+    multi_choice_callback = CustomJS(
+        args=dict(multi_choice=multi_choice, box_annotations=box_annotations, toggle_labels=toggle_labels), code="""
+        const selected = multi_choice.value;  // 현재 선택된 값
+        for (let i = 0; i < toggle_labels.length; i++) {
+            if (selected.includes(toggle_labels[i])) {
+                box_annotations[i].visible = true;
+            } else {
+                box_annotations[i].visible = false;
+            }
+        }
+    """)
+    multi_choice.js_on_change("value", multi_choice_callback)
+
     # 그래프와 데이터 테이블을 수직으로 배치
-    # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
                 [multi_choice],
-                # [grid],
                 [Tabs(tabs=tabs)],
-                [toggle_gridplot],
+                # [toggles],
                 [data_table_title],
                 [data_table],
                 [statistics_table_title],
