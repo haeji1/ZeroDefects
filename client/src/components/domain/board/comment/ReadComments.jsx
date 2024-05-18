@@ -91,7 +91,7 @@ function ReadComments({ postId }) {
                     onDelete={deletePost}
                   />
                 </div>
-                <div style={{ padding: "5px" }}></div>
+                <div style={{ padding: "3px" }}></div>
                 <div>{comment.content}</div>
               </div>
             </li>
