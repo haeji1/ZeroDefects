@@ -163,7 +163,13 @@ def draw_graph_time_standard(graph_df):
 
 
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
-    options = extract_setting_values(request)
+    # print(graph_df)
+    setting_options = extract_setting_values(request)
+    # print(len(setting_options))
+    lines_info = make_setting_lines(request)
+    # print(lines_info)
+
+    setting_multi_choice = MultiChoice(value=["settings"], options=setting_options, placeholder='Settings')
 
     colors = Category10_10
     plots = []
@@ -172,8 +178,10 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     tab_list = []
     toggle_labels = []
     box_annotations = []
+    lines = []
 
     p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
+
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
     data_list = []
@@ -202,9 +210,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             box_annotations.append(box_annotation)
 
             toggle_label = f"{batch_name} - {step}"
-            toggle1 = Toggle(label=toggle_label, button_type="default", active=False)
-            toggle1.js_link('active',  box_annotation, 'visible')
-            toggles.append(toggle1)
             toggle_labels.append(toggle_label)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
@@ -232,6 +237,19 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
+
+
+        # line5 = p.line(x='Time', y=5, source=source, color='black', visible=False)
+        # line6 = p.line(x='Time', y=6, source=source, color='brown', visible=False)
+        # P에 SetValue 관련 모든 선 추가
+        for i in range(len(lines_info)):
+            line = p.line(x='Time', y=lines_info[i], source=source, color=color, visible=False)
+            lines.append(line)
+
+        # lines.append(line5)
+        # lines.append(line6)
+
+
 
         hover = HoverTool(renderers=[line], tooltips=[
             ('facility', f'{facility}'),
@@ -300,6 +318,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         const selected = multi_choice.value;  // 현재 선택된 값
         for (let i = 0; i < toggle_labels.length; i++) {
             if (selected.includes(toggle_labels[i])) {
+                console.log(toggle_labels[i]);
                 box_annotations[i].visible = true;
             } else {
                 box_annotations[i].visible = false;
@@ -308,10 +327,28 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     """)
     multi_choice.js_on_change("value", multi_choice_callback)
 
+    setting_multi_choice_callback = CustomJS(
+        args=dict(setting_multi_choice=setting_multi_choice, lines=lines, setting_options=setting_options), code="""
+        const selected = setting_multi_choice.value;
+        for (let i = 0; i < setting_options.length; i++) {
+            if (selected.includes(setting_options[i])) {
+                console.log(setting_options[i]);
+                lines[i].visible = true;
+                } else {
+                    lines[i].visible = false;
+                }
+            }
+    """)
+    setting_multi_choice.js_on_change("value", setting_multi_choice_callback)
+
+
     # 그래프와 데이터 테이블을 수직으로 배치
+    # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
+                [setting_multi_choice],
                 [multi_choice],
+                # [grid],
                 [Tabs(tabs=tabs)],
                 # [toggles],
                 [data_table_title],
@@ -346,19 +383,62 @@ def extract_setting_values(request):
                 step_columns = step_values[f'Step{j + 1}']
             facility = request[i]['facilityName']
             # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
-            step_column_keys = list(step_columns.keys())
+            step_column_keys = list(sorted(step_columns.keys()))
             for k in range(len(step_column_keys)):
                 # step별 column의 key값 리스트에서 뽑은 key값(Step1-ICP, Step1-TG1...)
                 column_key = step_column_keys[k]
                 # column_key가 Time이면 시간 정보만 담겨있음
                 if column_key != "Time":
                     # 안에 있는 최종 키들 (Step1-ICP-ICP1, Step1-TG1-Power)
-                    step_column_info = list(step_columns[column_key].keys())
+                    step_column_info = list(sorted(step_columns[column_key].keys()))
                     for l in range(len(step_column_info)):
                         info_name = step_column_info[l]
                         select_name = (f"{facility}-{step_number}-{column_key}-{info_name}")
                         options.append(select_name)
     return options
+
+def make_setting_lines(request):
+    # pprint(request)
+    setting_info = []
+    time_info = []
+    setting_values = []
+    step_time = None
+    for i in range(len(request)):
+        step_length = len(request[i]['steps'])
+        for j in range(step_length):
+            min_start_val = request[i].get('steps', [])[0].keys()
+            first_key = list(min_start_val)[0]
+            if first_key == 'Step0':
+                step_number = f"Step{j}"
+                step_values = request[i]['steps'][j]
+                step_columns = step_values[f'Step{j}']
+            else:
+                step_number = f"Step{j + 1}"
+                step_values = request[i]['steps'][j]
+                step_columns = step_values[f'Step{j + 1}']
+            facility = request[i]['facilityName']
+            # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
+            step_column_keys = list(sorted(step_columns.keys()))
+            for k in range(len(step_column_keys)):
+                # step별 column의 key값 리스트에서 뽑은 key값(Step1-ICP, Step1-TG1...)
+                column_key = step_column_keys[k]
+                # column_key가 Time이면 시간 정보만 담겨있음
+                if column_key == "Time":
+                    step_time = step_columns['Time']
+                    time_info.append(step_time)
+                    # print(time_info)
+                else:
+                    # 안에 있는 최종 키들 (Step1-ICP-ICP1, Step1-TG1-Power)
+                    step_column_info = list(sorted(step_columns[column_key].keys()))
+                    # pprint(step_column_info)
+                    for l in range(len(step_column_info)):
+                        info_name = step_column_info[l]
+                        # pprint(step_columns[column_key][info_name])
+                        value = step_columns[column_key][info_name]
+                        setting_values.append(value)
+                        setting_info.append({"Time": step_time, "Value": value})
+    return setting_values
+
 
 def draw_detail_section_graph(graph_df, step_times):
     plots = []
@@ -406,6 +486,7 @@ def draw_detail_section_graph(graph_df, step_times):
             ('Value', '$y')
         ])
         p.add_tools(hover)
+
 
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
