@@ -118,6 +118,7 @@ async def draw_graph(request_body: GraphQueryRequest):
         # print("======combined_json=======")
         # print(combined_json)
 
+
         if not sections:
             raise HTTPException(status_code=404, detail="Sections not found")
         return JSONResponse(status_code=200, content=plot_json)
