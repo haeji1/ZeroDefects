@@ -104,11 +104,13 @@ def draw_graph_time_standard(graph_df):
         TableColumn(field=s, title=s) for s in statistics_df.columns
     ]
 
-    statistics_table = DataTable(source=datasource, columns=columns, editable=True, index_position=0,
+    # Statistics Table
+    statistics_table = DataTable(source=datasource, columns=columns, index_position=0,
                                  index_header="row", sizing_mode="stretch_width")
-
-    # DataTable 생성
+    # Raw Data Table
     combined_df = pd.concat(graph_df)
+    combined_df['Time'] = pd.to_datetime(combined_df['Time'], unit='s')
+    combined_df['Time'] = combined_df['Time'].dt.strftime('%Y-%m-%d %H:%M:%S')
     source = ColumnDataSource(combined_df)
 
     columns = [
@@ -253,9 +255,11 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
         TableColumn(field=s, title=s) for s in statistics_df.columns
     ]
 
-    statistics_table = DataTable(source=datasource, columns=columns, index_position=None,  sizing_mode="stretch_width")
+    # Statistics Table
+    statistics_table = DataTable(source=datasource, columns=columns, index_position=0,
+                                 index_header="row", sizing_mode="stretch_width")
 
-    # DataTable 생성
+    # Raw Data Table
     combined_df = pd.concat(graph_df)
     combined_df['Time'] = pd.to_datetime(combined_df['Time'], unit='s')
     combined_df['Time'] = combined_df['Time'].dt.strftime('%Y-%m-%d %H:%M:%S')

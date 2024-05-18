@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List, Optional
 
 import pymongo
@@ -86,14 +87,15 @@ def save_section_data(facility: str, df):
 
                 steps_dict.append(step_dict)
 
-        batch_steps_cnt[batch_name] = step_index
+        batch_steps_cnt[batch_name[:-6]] = step_index
 
         try:
-            section_list.append(BatchInfo(batchName=batch_name,
+            section_list.append(BatchInfo(batchName=batch_name[:-6],
                                           batchStartTime=df['DateTime'][batch_start].strftime('%Y-%m-%d %H:%M:%S'),
                                           batchEndTime=df['DateTime'][batch_end].strftime('%Y-%m-%d %H:%M:%S'),
                                           steps=steps_dict,
-                                          stepsCnt=step_index))
+                                          stepsCnt=step_index,
+                                          last_updated=datetime.now()))
         except Exception as e:
             print(f"Error appending to batch_list: {e}")
 

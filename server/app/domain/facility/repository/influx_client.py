@@ -113,9 +113,11 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 return {'filename': file.filename, 'message': 'csv file has no column', 'status': 'fail'}
 
             # date('2024-01-01 ') + time('12:00:00') and checking the day pass by 'shift' column
-            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'], format='%Y-%m-%d %H:%M:%S')
+            # UTC+0
+            df['TempTime'] = pd.to_datetime(ymd_string + df['Time'], format='%Y-%m-%d %H:%M:%S', utc=True)
             df['shift'] = (df['Time'] < df['Time'].shift(1)).cumsum()
-            df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.DateOffset(days=x['shift']), axis=1)
+            # UTC+0
+            df['DateTime'] = df.apply(lambda x: x['TempTime'] + pd.Timedelta(days=int(x['shift'])), axis=1)
 
             # save batch, step to mongo
             batch_steps_cnt, section_list = save_section_data(measurement,
@@ -133,8 +135,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 df['section'] = '-'
             else:  # exist batch in file
                 for section in section_list:  # write value to 'batch' column
-                    batch_start_time = pd.to_datetime(section.batchStartTime)
-                    batch_end_time = pd.to_datetime(section.batchEndTime)
+                    batch_start_time = pd.to_datetime(section.batchStartTime, utc=True)
+                    batch_end_time = pd.to_datetime(section.batchEndTime, utc=True)
 
                     # if (batch_start_time < 'DateTime' < batch_end_time) 'batch' is section.batchName else '-'
                     df['batch'] = np.where((df['DateTime'] >= batch_start_time) & (df['DateTime'] <= batch_end_time),
@@ -283,6 +285,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         result_df: [pd.DataFrame] = []
 
         for condition in conditions:
+            print("\n\n\ncondition:", condition)
             # query that get data by parameter & time
             query = field_by_time_query(
                 b=self.bucket_name, facility=condition.facility, field=condition.parameter,
@@ -291,6 +294,9 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 query_s = time.time()
                 df = execute_query(self.client, query)
                 print('query time ', time.time() - query_s)
+                print("\n\nbefore df:", df)
+                df['Time'] = pd.to_datetime(df['Time'])
+                print("\n\nafter df:", df)
 
                 if df is None:
                     continue
