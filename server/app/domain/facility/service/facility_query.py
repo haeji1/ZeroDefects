@@ -17,6 +17,7 @@ bucket = settings.influx_bucket
 # ignore related pivot warnings
 warnings.simplefilter('ignore', MissingPivotFunction)
 
+
 # query for measurement list
 def measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -24,6 +25,7 @@ def measurement_query(b: str, measurement: str, start_date: str, end_date: str) 
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
             '''
+
 
 # query fields by time
 def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
@@ -35,6 +37,7 @@ def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_dat
             |> filter(fn: (r) => r["_measurement"] == "{facility}") 
             |> filter(fn: (r) => {fields_filter})
             """
+
 
 # query field by time
 def field_by_time_query(b: str, facility: str, field: str,
@@ -56,6 +59,7 @@ def field_by_time_query(b: str, facility: str, field: str,
                 |> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false)
                 |> keep(columns: ["_time", "_value"])
             '''
+
 
 # query tg_life by num
 def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str,
@@ -123,6 +127,7 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
             """ + count_query(b=b, facility=facility, tg_life_num=tg_life_num,
                               start_date=start_date, end_date=end_date, count=count)
 
+
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -134,12 +139,14 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
 
+
 # info facility
 def info_measurements_query(b: str) -> str:
     return f"""
             import "influxdata/influxdb/schema"
             schema.measurements(bucket: "{b}")
             """
+
 
 # info parameter
 def info_field_query(b: str, measurement: str) -> str:
@@ -151,6 +158,7 @@ def info_field_query(b: str, measurement: str) -> str:
             start: -1y,
             )
             """
+
 
 def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, count: bool) -> str:
     # query for count value
@@ -202,6 +210,7 @@ def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_da
 
     return additional_query
 
+
 # execute query
 def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
     try:
@@ -212,3 +221,12 @@ def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
         return None
 
     return df_result
+
+
+def correlation_query(b: str, facility: str, start_date: str, end_date: str):
+    return f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => r["_measurement"] == "{facility}")
+            |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+            '''

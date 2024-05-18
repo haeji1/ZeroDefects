@@ -16,7 +16,7 @@ from loguru import logger
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
-    info_field_query, TGLife_query
+    info_field_query, TGLife_query, correlation_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
@@ -380,6 +380,35 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         answer_df.sort_values(f'TG{condition.tg_life_num}Life[kWh]', axis=0, inplace=True)
         print('time: ', time.time() - start_time)
         return answer_df
+
+    def read_correlation_data(self, condition: SectionData):
+        print("\n\n\ncondition:", condition)
+        # query that get data by parameter & time
+
+        query = correlation_query(
+            b=self.bucket_name, facility=condition.facility, start_date=condition.startTime, end_date=condition.endTime
+        )
+        try:
+            query_s = time.time()
+            df = execute_query(self.client, query)
+            print('query time ', time.time() - query_s)
+            print("\n\nbefore df:", df)
+            df['Time'] = pd.to_datetime(df['Time'])
+            df = df.drop(columns=['Time', '_start', '_stop', '_measurement', 'batch', 'section',
+                                  'TG1Life[kWh]_TAG', 'TG2Life[kWh]_TAG', 'TG4Life[kWh]_TAG', 'TG5Life[kWh]_TAG'])
+            print("\n\nafter df:", df)
+
+            if df is None:
+                return None
+            df.rename(
+                columns={'_value': f'{condition.facility}-{condition.parameter}'},
+                inplace=True)
+
+        except Exception as e:
+            raise HTTPException(500, str(e))
+        # pd.set_option('display.max_rows', None)
+        # pd.set_option('display.max_columns', None)
+        return df
 
     @classmethod
     def checking_writed_files(cls, responses: []) -> []:
