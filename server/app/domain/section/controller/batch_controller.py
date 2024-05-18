@@ -53,7 +53,6 @@ async def get_steps(request: StepsRequest):
 
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
-    request = get_step_info_using_facility_name_on_mongoDB(request_body)
     # pprint(request)
     # print("request_body", request_body)
     batch_name_list = []
@@ -85,6 +84,7 @@ async def draw_graph(request_body: GraphQueryRequest):
         return JSONResponse(status_code=200, content=plot_json)
 
     elif request_body.queryType == "step":
+        request = get_step_info_using_facility_name_on_mongoDB(request_body)
         for query_data in request_body.queryData:
             batch_name = query_data.batchName
             batch_name_list.append(batch_name)
