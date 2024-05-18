@@ -1,6 +1,6 @@
 import { Sidebar } from 'react-pro-sidebar';
 import GraphSection from '@/components/domain/correlation/GraphSection';
-import GetGraph from '@/components/domain/correlation/GetGraph';
+import QueryTypeSection from '@/components/domain/correlation/QueryTypeSection';
 import CorrelationTable from '@/components/domain/correlation/CorrelationTable';
 
 
@@ -11,17 +11,14 @@ function Correlation() {
 
     return (
         <>
-            <div className='m-5'>
-                <GetGraph />
-            </div>
             <div className="flex flex-row-reverse m-5">
                 <Sidebar
                     collapsed={isCollapse}
-                    width="20%"
+                    width="30%"
                     collapsedWidth="0%"
                     backgroundColor="null"
                 >
-                    <CorrelationTable />
+                    <QueryTypeSection />
                 </Sidebar>
                 <div className="w-full">
                     <GraphSection />
