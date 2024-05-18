@@ -31,7 +31,7 @@ function BoardDetail() {
           alert("게시글이 삭제되었습니다.");
           navigate("/board");
         } else {
-          alert("게시글 삭제에 실패했습니다.");
+          alert("게시글 삭제에 실패했습니다."); 
         }
       })
       .catch((error) => {
@@ -49,15 +49,14 @@ function BoardDetail() {
   }
 
   return (
-    <div style={{ marginLeft: "20%", marginRight: "20%", marginBottom: "5%" }}>
+    <div style={{ marginLeft: "25%", marginRight: "25%", marginBottom: "5%" }}>
       <div style={{ padding: "20px" }} />
-      <PostContent post={post} />
-      <DeletePostDialog
-        setAuthor={setAuthor}
-        setPassword={setPassword}
-        deletePost={deletePost}
-      />
+      <PostContent post={post} 
+              setAuthor={setAuthor}
+              setPassword={setPassword}
+              deletePost={deletePost}/>
       <ReadComment postId={ids} />
+      <div style={{padding:"5px"}}/>
       <CreateComments postId={ids} />
     </div>
   );

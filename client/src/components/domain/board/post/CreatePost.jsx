@@ -15,8 +15,6 @@ import SamsungLogo from "@/assets/images/Logo_BLUE.png";
 import { Input } from "@/components/base/input";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 
-
-
 Modal.setAppElement("#root"); // 모달이 바인딩될 HTML 엘리먼트의 ID를 설정합니다.
 
 function CreatePostModal() {
@@ -27,6 +25,7 @@ function CreatePostModal() {
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [authorError, setAuthorError] = useState("");
 
   const { graphData, isFetching } = useGraphDataStore();
   const togglePasswordVisibility = (event) => {
@@ -43,6 +42,11 @@ function CreatePostModal() {
     return regex.test(password);
   };
 
+  const validateNickname = (author) => {
+    const regex = /^.{1,8}$/; // 모든 문자를 허용하고 글자수가 1자 이상 8자 이하인지 검사
+    return regex.test(author);
+  };
+
   const handlePasswordChange = (e) => {
     const newPassword = e.target.value;
     setPassword(newPassword);
@@ -56,6 +60,17 @@ function CreatePostModal() {
     }
   };
 
+  const handleAuthorChange = (e) => {
+    const newAuthor = e.target.value;
+    setAuthor(newAuthor);
+
+    if (!validateNickname(newAuthor)) {
+      setAuthorError("닉네임은 8자리 이하여야 합니다."); // 에러 메시지 수정
+    } else {
+      setAuthorError("");
+    }
+  };
+
   const closeModal = () => {
     setModalIsOpen(false);
     setTitle(""); // 제목 초기화
@@ -64,6 +79,7 @@ function CreatePostModal() {
     setPassword(""); // 비밀번호 초기화
     setIsPasswordVisible(false); // 비밀번호 가시성 초기화
     setPasswordError(""); // 비밀번호 에러 메시지 초기화
+    setAuthorError("");
   };
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -72,11 +88,15 @@ function CreatePostModal() {
     if (!title || !content || !author || !password) {
       alert("제목, 내용, 이름, 비밀번호를 모두 입력해주세요.");
       return; // 함수를 여기서 종료시켜, 더 이상 진행하지 않도록 합니다.
-  }
-      // 비밀번호 유효성 검사 추가
-      if (!validatePassword(password)) {
-        alert("비밀번호가 유효하지 않습니다.");
-        return; // 비밀번호가 유효하지 않으면 함수 실행 종료
+    }
+    // 비밀번호 유효성 검사 추가
+    if (!validatePassword(password)) {
+      alert("비밀번호가 유효하지 않습니다.");
+      return; // 비밀번호가 유효하지 않으면 함수 실행 종료
+    }
+    if(!validateNickname(author)){
+      alert("닉네임이 유효하지 않습니다.");
+      return;
     }
     // 백엔드로 보낼 데이터 구성
     const postData = {
@@ -196,12 +216,17 @@ function CreatePostModal() {
                 <div style={{ flex: 1, marginRight: "20px" }}>
                   <div className="text-l font-semibold">Nickname</div>
                   <div style={{ padding: "3px" }}></div>
-                  <Input
-                    placeholder="Input Nickname..."
-                    className="flex-1 px-3 py-2 border rounded-md"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                  />
+                  <div className="flex items-center">
+                    <Input
+                      placeholder="Input Nickname..."
+                      className="flex-1 px-3 py-2 border rounded-md"
+                      value={author}
+                      onChange={handleAuthorChange}
+                    />
+                  </div>
+                  {authorError && (
+                    <p style={{ color: "red" }}>{authorError}</p>
+                  )}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div className="text-l font-semibold">Password</div>
@@ -219,7 +244,7 @@ function CreatePostModal() {
                       onClick={togglePasswordVisibility}
                       className="ml-2"
                     >
-                      {isPasswordVisible ? <FaRegEyeSlash/> : <FaRegEye />}
+                      {isPasswordVisible ? <FaRegEyeSlash /> : <FaRegEye />}
                     </button>
                   </div>
                   {passwordError && (
