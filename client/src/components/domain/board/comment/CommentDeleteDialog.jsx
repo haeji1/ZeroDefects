@@ -30,7 +30,8 @@ function CommentDeleteDialog({ commentId, onDelete }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">댓글 삭제</Button>
+        {/* <Button variant="outline">댓글 삭제</Button> */}
+        <button className="text-sm text-gray-500">삭제</button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
