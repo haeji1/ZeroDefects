@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pprint import pprint
 import uvicorn
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from bokeh.embed import json_item
 from fastapi import APIRouter, HTTPException, Body
@@ -61,13 +61,22 @@ async def draw_graph(request_body: GraphQueryRequest):
     # get_step_info_using_facility_name_on_mongoDB(request_body)
     if request_body.queryType == "time":
         sections: List[SectionData] = []
+        
+        # 표준시로 변경
+        start_time = datetime.strptime(request_body.queryCondition.startTime, "%Y-%m-%dT%H:%M:%S.%fZ")
+        start_time += timedelta(hours=9)
+        start_time = start_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        end_time = datetime.strptime(request_body.queryCondition.endTime, "%Y-%m-%dT%H:%M:%S.%fZ")
+        end_time += timedelta(hours=9)
+        end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
         for s in request_body.queryData:
             sections.append(SectionData(
                 facility=s.facility,
                 batchName=s.batchName,
                 parameter=s.parameter,
-                startTime=request_body.queryCondition.startTime,
-                endTime=request_body.queryCondition.endTime
+                startTime=start_time,
+                endTime=end_time
             ))
 
         graph_df = get_datas(sections)
@@ -112,6 +121,7 @@ async def draw_graph(request_body: GraphQueryRequest):
         if not sections:
             raise HTTPException(status_code=404, detail="Sections not found")
         return JSONResponse(status_code=200, content=plot_json)
+
     else:
         raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")
 
