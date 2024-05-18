@@ -1,7 +1,9 @@
 # bokeh
+from pprint import pprint
+
 from bokeh.layouts import column, layout, gridplot
 from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
-                          CheckboxGroup, Dropdown)
+                          CheckboxGroup, Dropdown, TextInput)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -163,8 +165,9 @@ def draw_graph_time_standard(graph_df):
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     # print(graph_df)
     options = extract_setting_values(request)
+    # print(options)
     checkbox_group = CheckboxGroup(labels=options, active=[0])
-    ncols = 10 # 한 줄에 체크박스 4개 배치
+    ncols = 6 # 한 줄에 체크박스 6개 배치
 
     checkboxes = []
 
@@ -176,6 +179,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     # GridBox 레이아웃 생성
     grid = gridplot([[checkboxes[i * ncols + j] for j in range(min(ncols, len(options) - i * ncols))] for i in range((len(options) + ncols - 1) // ncols)],
                     sizing_mode="stretch_width")
+
     # multi_choice = MultiChoice(value=["settings"], options=options, placeholder='Settings')
 
     colors = Category10_10
@@ -203,6 +207,13 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         color = colors[len(p.renderers) % len(colors)]
         df_toggles = []
 
+        # def my_text_input_handler(attr, old, new):
+        #     print("Previous label: " + old)
+        #     print("Updated label: " + new)
+        #
+        # text_input = TextInput(value="default", title="Label:")
+        # text_input.on_change("value", my_text_input_handler)
+
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
             start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
@@ -216,6 +227,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             toggle_label = f"{batch_name} - {step}"
             toggle1 = Toggle(label=toggle_label, button_type="default", active=False)
             toggle1.js_link('active',  box_annotation, 'visible')
+            # multi_choice.js_link("active", box_annotation, "visible")
             df_toggles.append(toggle1)
 
             step_df = df[(df["Time"] >= step_time['startTime']) & (df["Time"] <= step_time['endTime'])]
@@ -256,6 +268,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
+
+
         hover = HoverTool(renderers=[line], tooltips=[
             ('facility', f'{facility}'),
             ('time', '@Time seconds'),
@@ -322,9 +336,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     layout_1 = layout(
     [
                 # [multi_choice],
-                # grid,
+                # [grid],
                 [Tabs(tabs=tabs)],
-                # [toggles],
                 [toggle_gridplot],
                 [data_table_title],
                 [data_table],
@@ -336,6 +349,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     )
 
     # layout = column([Tabs(tabs=tabs), data_table, toggle_column], sizing_mode="stretch_both")
+    # plots.append(text_input)
     plots.append(layout_1)
 
     return plots
@@ -343,12 +357,16 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
 def extract_setting_values(request):
     options = []
     for i in range(len(request)):
+        pprint(request[i])
         step_length = len(request[i]['steps'])
         for j in range(step_length):
-            step_number = f"Step{j + 1}"
+            facility = request[i]['facilityName']
+            # step_number = f"Step{j + 1}"
+            step_number = f"Step{j}"
             step_values = request[i]['steps'][j]
             # 각 steps별 column들
-            step_columns = step_values[f'Step{j + 1}']
+            step_columns = step_values[f'Step{j}']
+            # print(step_values['Step1'])
             # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
             step_column_keys = list(step_columns.keys())
             for k in range(len(step_column_keys)):
@@ -360,7 +378,7 @@ def extract_setting_values(request):
                     step_column_info = list(step_columns[column_key].keys())
                     for l in range(len(step_column_info)):
                         info_name = step_column_info[l]
-                        select_name = (f"{step_number}-{column_key}-{info_name}")
+                        select_name = (f"{facility}-{step_number}-{column_key}-{info_name}")
                         options.append(select_name)
     return options
 
