@@ -8,7 +8,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/base/card";
-import CommentDeleteDialog from './CommentDeleteDialog';
+import CommentDeleteDialog from "./CommentDeleteDialog";
 
 function ReadComments({ postId }) {
   const comments = useCommentStore((state) => state.comments);
@@ -61,22 +61,44 @@ function ReadComments({ postId }) {
   };
   return (
     <div>
+      <div style={{ padding: "10px", borderBottom: "solid 1px" }}>
+        <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+          Comments ({comments.length})
+        </h2>
+      </div>
       {comments.length > 0 ? (
         <ul>
           {comments.map((comment, index) => (
             <li key={index}>
-              <Card>
-                <CardHeader>{comment.author}</CardHeader>
-                <CardContent>{comment.content}</CardContent>
-                <CardFooter>
-                <CommentDeleteDialog commentId={comment.id} onDelete={deletePost} />
-                </CardFooter>
-              </Card>
+              <div
+                style={{
+                  paddingLeft: "20px",
+                  paddingRight: "20px",
+                  paddingTop: "10px",
+                  paddingBottom: "10px",
+                  borderBottom: "solid 1px #e3e3e3",
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <p className="scroll-m-20 text-xl font-semibold tracking-tight">
+                      {comment.author}
+                    </p>
+                    <p className="text-sm text-gray-500">{comment.date}</p>
+                  </div>
+                  <CommentDeleteDialog
+                    commentId={comment.id}
+                    onDelete={deletePost}
+                  />
+                </div>
+                <div style={{ padding: "5px" }}></div>
+                <div>{comment.content}</div>
+              </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p>No comments yet.</p>
+        <p className="text-gray-500" style={{paddingLeft: "10px",paddingTop: "10px"}}>No comments yet.</p>
       )}
     </div>
   );

@@ -17,14 +17,14 @@ function DeletePostDialog({ setAuthor, setPassword, deletePost }) {
   return (
     <AlertDialog style={{ display: "flex", justifyContent: "flex-start" }}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">Delete Post</Button>
+        <button>delete</button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Comment Delete</AlertDialogTitle>
+          <AlertDialogTitle>Post Delete</AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogDescription>
-          If you want to delete the comment, please enter the nickname and
+          If you want to delete the post, please enter the nickname and
           password you used to enter the comment.
         </AlertDialogDescription>
         <Input

@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/base/card";
-
+import { Button } from "react-day-picker";
 
 function Posts() {
   const [posts, setPosts] = useState([]);
@@ -49,62 +49,95 @@ function Posts() {
   };
 
   return (
-    <div>
+    <div style={{ minHeight: "840px" }}>
       <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0">
         게시물 목록
       </h2>
+      
+      <div style={{ padding: "5px" }} />
+      <div className="relative ml-auto flex-1 md:grow-0">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          className="lucide lucide-search absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <input
+          type="search"
+          className="flex h-10 border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+          placeholder="Search..."
+        ></input>
+      </div>
+      <div style={{padding:"5px"}}/>
       <div
         className="posts-container"
         style={{
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          height: "730px",
+          height: "600px",
         }}
       >
         <div
-          className="my-6 w-full overflow-y-auto"
-          style={{ height: "800px" }}
+          className="relative overflow-x-auto"
+          // style={{ height: "800px" }}
         >
-          <table className="w-full">
+          <table className="w-full text-sm text-center rtl:text-center text-gray-900 dark:text-gray-400">
             <colgroup>
-              <col style={{ width: "5%" }} />
+              <col style={{ width: "3%" }} />
               <col style={{ width: "50%" }} />
               <col style={{ width: "15%" }} />
-              <col style={{ width: "30%" }} />
+              <col style={{ width: "20%" }} />
             </colgroup>
-            <thead>
-              <tr className="m-0 border-t p-0 even:bg-muted">
-                <th className="border px-4 py-2 text-center font-bold">ID</th>
-                <th className="border px-4 py-2 text-center font-bold">
-                  게시글 제목
-                </th>
-                <th className="border px-4 py-2 text-center font-bold">
-                  작성자
-                </th>
-                <th className="border px-4 py-2 text-center font-bold">날짜</th>
+            <thead
+              style={{
+                color: "black",
+                backgroundColor: "#fcfcfc", // 아주 연한 회색 배경
+                textTransform: "uppercase",
+                borderTop: "2px solid #333", // 진한 선 (위쪽)
+                borderBottom: "1px solid #ccc", // 일반 표의 선처럼 (아래쪽)
+              }}
+              className="text-l text-gray-900 uppercase dark:bg-gray-700"
+            >
+              <tr>
+                <th className="px-6 py-4"></th>
+                <th className="px-6 py-4">제목</th>
+                <th className="px-6 py-4">작성자</th>
+                <th className="px-6 py-4">작성일</th>
               </tr>
             </thead>
             <tbody>
               {posts.map((post) => (
                 <tr
-                  className="m-0 border-t p-0 even:bg-muted"
+                  className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
                   key={post.id}
                   onClick={() => handleRowClick(post.id)}
                   style={{ cursor: "pointer" }}
                 >
-                  <td className="border px-4 py-2 text-center">{post.id}</td>
-                  <td className="border px-4 py-2 text-center">{post.title}</td>
-                  <td className="border px-4 py-2 text-center">
-                    {post.author}
+                  <td className="px-6 py-4">{post.id}</td>
+                  <td className="px-6 py-4 text-left">
+                    {post.title.length > 30
+                      ? post.title.substring(0, 35) + "..."
+                      : post.title}
                   </td>
-                  <td className="border px-4 py-2 text-center">{post.date}</td>
+                  <td className="px-6 py-4">{post.author}</td>
+                  <td className="px-6 py-4 ">{post.date}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+      <div style={{ padding: "20px" }} />
       <div>
         <Pagination>
           <PaginationContent>
@@ -139,7 +172,7 @@ function Posts() {
                   fetchPosts(Math.min(currentPage + 5, totalPages))
                 }
                 disabled={currentPage + 5 > totalPages}
-                style={{ cursor: "pointer"}}
+                style={{ cursor: "pointer" }}
               />
             </PaginationItem>
           </PaginationContent>
