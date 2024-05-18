@@ -1,5 +1,5 @@
 from typing import List, Optional
-
+from pprint import pprint
 import uvicorn
 from datetime import datetime, timedelta
 
@@ -18,7 +18,7 @@ from app.domain.section.model.step_request import StepsRequest
 from config import settings
 
 from app.domain.section.service.batch_service import get_batches_info, get_sections_info, \
-    get_steps_info, extract_step_times
+    get_steps_info, extract_step_times, get_step_info_using_facility_name_on_mongoDB
 
 url = settings.mongo_furl
 
@@ -53,7 +53,9 @@ async def get_steps(request: StepsRequest):
 
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
-    print("request_body", request_body)
+    request = get_step_info_using_facility_name_on_mongoDB(request_body)
+    # pprint(request)
+    # print("request_body", request_body)
     batch_name_list = []
     steps_times_info = []
     # get_step_info_using_facility_name_on_mongoDB(request_body)
@@ -108,7 +110,7 @@ async def draw_graph(request_body: GraphQueryRequest):
 
         step_times = extract_step_times(steps_times_info)
         graph_df = get_datas(sections_list)
-        plots = draw_dataframe_to_graph("step", graph_df, step_times, batch_name_list)
+        plots = draw_dataframe_to_graph("step", graph_df, step_times, batch_name_list, request)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         # toggle_json = [json_item(toggle, f"my_toggle_{idx}") for idx, toggle in enumerate(toggles)]
 

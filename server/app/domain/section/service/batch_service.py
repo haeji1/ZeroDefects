@@ -231,48 +231,48 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
     return responses
 
 
-# def get_step_info_using_facility_name_on_mongoDB(request_body):
-#     result = []
-#     # mongodb collection setting으로 변경
-#     db = client["setting"]
-#
-#     # 스텝값 구하기
-#     steps = request_body.queryCondition.step
-#
-#     # 딕셔너리 만들기
-#     # facilityName(id느낌), batchName에 대한 key 및 value 넣기
-#     for r in request_body.queryData:
-#         d = {}
-#         for key, val in r:
-#             if key == "facility":
-#                 d["facilityName"] = val
-#             elif key == "batchName":
-#                 d["batchName"] = val
-#         result.append(d)
-#
-#     # 스텝 찾아서 넣기
-#     for val in result:
-#         facility_name = val["facilityName"]
-#         # 가장 최근 레시피 가져오겠다.
-#         collections = list(db[facility_name].find().sort('_id', -1).limit(1))
-#         # 스텝 리스트 넣을 리스트
-#         step_list= []
-#         for item in collections:
-#             for step in steps:
-#                 step_key = f"Step{step}"
-#                 step_list.append({step_key: item[step_key]})
-#         val["steps"] = step_list
-#
-#     # for facility_name in facility_names:
-#     #     result[facility_name].append({"steps": []})
-#     # for name in facility_names:
-#     #     collections = list(db[name].find().sort('_id', -1).limit(1))
-#     #     for i in collections:
-#     #         for step in steps:
-#     #             # = i["steps"][step]
-#     #             print(result[name][1])
-#
-#     return result
+def get_step_info_using_facility_name_on_mongoDB(request_body):
+    result = []
+    # mongodb collection setting으로 변경
+    db = client["setting"]
+
+    # 스텝값 구하기
+    steps = request_body.queryCondition.step
+
+    # 딕셔너리 만들기
+    # facilityName(id느낌), batchName에 대한 key 및 value 넣기
+    for r in request_body.queryData:
+        d = {}
+        for key, val in r:
+            if key == "facility":
+                d["facilityName"] = val
+            elif key == "batchName":
+                d["batchName"] = val
+        result.append(d)
+
+    # 스텝 찾아서 넣기
+    for val in result:
+        facility_name = val["facilityName"]
+        # 가장 최근 레시피 가져오겠다.
+        collections = list(db[facility_name].find().sort('_id', -1).limit(1))
+        # 스텝 리스트 넣을 리스트
+        step_list= []
+        for item in collections:
+            for step in steps:
+                step_key = f"Step{step}"
+                step_list.append({step_key: item[step_key]})
+        val["steps"] = step_list
+
+    # for facility_name in facility_names:
+    #     result[facility_name].append({"steps": []})
+    # for name in facility_names:
+    #     collections = list(db[name].find().sort('_id', -1).limit(1))
+    #     for i in collections:
+    #         for step in steps:
+    #             # = i["steps"][step]
+    #             print(result[name][1])
+
+    return result
 
 def extract_step_times(steps_times_info):
     step_times_by_facility = {}

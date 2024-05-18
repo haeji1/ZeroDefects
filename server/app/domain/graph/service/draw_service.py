@@ -1,6 +1,7 @@
 # bokeh
-from bokeh.layouts import column, layout, row
-from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div)
+from bokeh.layouts import column, layout, gridplot
+from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
+                          CheckboxGroup, Dropdown)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -11,13 +12,14 @@ from bokeh.plotting import figure
 # data frame
 import pandas as pd
 
-def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None):
+
+def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None, request=None):
     # save_graph_data(graph_df)
     # extract_axis_info(graph_df)
     if graph_type == "time":
         return draw_graph_time_standard(graph_df)
     elif graph_type == "step":
-        return draw_graph_step_standard(graph_df, steps_times_info, batch_name_list)
+        return draw_graph_step_standard(graph_df, steps_times_info, batch_name_list, request)
 
 
 def draw_graph_time_standard(graph_df):
@@ -145,9 +147,9 @@ def draw_graph_time_standard(graph_df):
     layout_1 = layout(
         [
                 [Tabs(tabs=tabs)],
-            [data_table_title],
+                [data_table_title],
                 [data_table],
-            [statistics_table_title],
+                [statistics_table_title],
                 [statistics_table],
             ],
 
@@ -158,9 +160,25 @@ def draw_graph_time_standard(graph_df):
     return plots
 
 
-def draw_graph_step_standard(graph_df, step_times, batch_name_list):
-    colors = Category10_10
+def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
+    # print(graph_df)
+    options = extract_setting_values(request)
+    checkbox_group = CheckboxGroup(labels=options, active=[0])
+    ncols = 10 # 한 줄에 체크박스 4개 배치
 
+    checkboxes = []
+
+    for i, option in enumerate(options):
+        checkbox = CheckboxGroup(labels=[option], active=[])
+        checkboxes.append(checkbox)
+
+
+    # GridBox 레이아웃 생성
+    grid = gridplot([[checkboxes[i * ncols + j] for j in range(min(ncols, len(options) - i * ncols))] for i in range((len(options) + ncols - 1) // ncols)],
+                    sizing_mode="stretch_width")
+    # multi_choice = MultiChoice(value=["settings"], options=options, placeholder='Settings')
+
+    colors = Category10_10
     plots = []
     toggles = []
     tabs = []
@@ -223,6 +241,18 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
             data_list.append(data)
 
         toggles.extend(df_toggles)
+
+        # toggle 그리드로 배치
+        tcols = 3
+
+        # Toggle 객체들을 그리드에 배치하기 위한 2차원 배열 생성
+        toggle_grid = [
+            [toggles[i * tcols + j] for j in range(min(tcols, len(toggles) - i * tcols))]
+            for i in range((len(toggles) + tcols - 1) // tcols)
+        ]
+
+        toggle_gridplot = gridplot(toggle_grid, sizing_mode="stretch_width")
+
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
@@ -287,12 +317,15 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
     data_table_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
 
-        # 그래프와 데이터 테이블을 수직으로 배치
+    # 그래프와 데이터 테이블을 수직으로 배치
     # layout = column([Tabs(tabs=tabs), data_table, row(toggles)], sizing_mode="stretch_both")
     layout_1 = layout(
     [
+                # [multi_choice],
+                # grid,
                 [Tabs(tabs=tabs)],
-                [toggles],
+                # [toggles],
+                [toggle_gridplot],
                 [data_table_title],
                 [data_table],
                 [statistics_table_title],
@@ -307,6 +340,29 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list):
 
     return plots
 
+def extract_setting_values(request):
+    options = []
+    for i in range(len(request)):
+        step_length = len(request[i]['steps'])
+        for j in range(step_length):
+            step_number = f"Step{j + 1}"
+            step_values = request[i]['steps'][j]
+            # 각 steps별 column들
+            step_columns = step_values[f'Step{j + 1}']
+            # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
+            step_column_keys = list(step_columns.keys())
+            for k in range(len(step_column_keys)):
+                # step별 column의 key값 리스트에서 뽑은 key값(Step1-ICP, Step1-TG1...)
+                column_key = step_column_keys[k]
+                # column_key가 Time이면 시간 정보만 담겨있음
+                if column_key != "Time":
+                    # 안에 있는 최종 키들 (Step1-ICP-ICP1, Step1-TG1-Power)
+                    step_column_info = list(step_columns[column_key].keys())
+                    for l in range(len(step_column_info)):
+                        info_name = step_column_info[l]
+                        select_name = (f"{step_number}-{column_key}-{info_name}")
+                        options.append(select_name)
+    return options
 
 def draw_detail_section_graph(graph_df, step_times):
     plots = []
