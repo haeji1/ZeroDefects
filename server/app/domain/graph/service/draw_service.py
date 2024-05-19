@@ -1,4 +1,5 @@
 # bokeh
+from bokeh.embed import json_item
 from pprint import pprint
 
 from bokeh.layouts import column, layout, gridplot
@@ -465,3 +466,23 @@ def draw_detail_section_graph(graph_df, step_times):
     plots.append(p)
 
     return plots
+
+def draw_TGLife_default_graph(df, tg_num):
+    print('=======df=======')
+    print(df)
+
+    plots = []
+    p = figure(width=1200, height=600)
+    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df['count'], line_color="red")
+    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}V[V]'], line_color="blue")
+    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}I[A]'], line_color="green")
+
+    # box1 = BoxAnnotation(left=8620, right=8630, fill_color="red", fill_alpha=0.1)
+    # box2 = BoxAnnotation(left=8625, right=8635, fill_color="blue", fill_alpha=0.1)
+    # p.add_layout(box1)
+    # p.add_layout(box2)
+
+    bokeh_layout = column(p, sizing_mode="stretch_both")
+    plots.append(bokeh_layout)
+
+    return json_item(bokeh_layout)
