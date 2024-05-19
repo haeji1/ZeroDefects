@@ -282,7 +282,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         return {'result': dict(facilities)}
 
     # get data by parameter & time from influxdb
-    def read_data(self, conditions: List[SectionData]) -> []:
+    def read_data(self, conditions: List[SectionData], all: bool = False) -> []:
         result_df: [pd.DataFrame] = []
 
         for condition in conditions:
@@ -290,7 +290,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             # query that get data by parameter & time
             query = field_by_time_query(
                 b=self.bucket_name, facility=condition.facility, field=condition.parameter,
-                start_date=condition.startTime, end_date=condition.endTime)
+                start_date=condition.startTime, end_date=condition.endTime, all=all)
+
             try:
                 query_s = time.time()
                 df = execute_query(self.client, query)

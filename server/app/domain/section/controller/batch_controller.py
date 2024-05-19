@@ -64,12 +64,11 @@ async def draw_graph(request_body: GraphQueryRequest):
         end_time = datetime.strptime(request_body.queryCondition.endTime, "%Y-%m-%dT%H:%M:%S.%fZ")
         # end_time += timedelta(hours=9)
         end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-
         for s in request_body.queryData:
             sections.append(SectionData(
                 facility=s.facility,
-                batchName=s.batchName,
                 parameter=s.parameter,
+                batchName=s.batchName,
                 startTime=start_time,
                 endTime=end_time
             ))
