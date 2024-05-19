@@ -16,7 +16,7 @@ from loguru import logger
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
-    info_field_query, TGLife_query
+    info_field_query, TGLife_query, TGLife_query_v2
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
@@ -73,16 +73,16 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         print('total time: ', time.time() - total_time)
 
         # resolve seperated batch files - start
-        check_list = [] # seperated file list
-        idx_list, filename_list = self.checking_writed_files(responses=response)    # checking seperated batch files
+        check_list = []  # seperated file list
+        idx_list, filename_list = self.checking_writed_files(responses=response)  # checking seperated batch files
         for idx in idx_list:
             check_list.append(files[idx])
         print('===========[idx, filename]===========')
         print(idx_list)
         print(filename_list)
-        df_list = await self.assemble_csv(check_list)   # assembling seperated files and return dataframe
+        df_list = await self.assemble_csv(check_list)  # assembling seperated files and return dataframe
 
-        for df, filename in zip(df_list, filename_list):    # rewrite df to influxDB
+        for df, filename in zip(df_list, filename_list):  # rewrite df to influxDB
             response.append(self.write_by_df(df=df, filename=filename, write_api=write_api))
         # resolve seperated batch files - end
 
@@ -293,6 +293,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             try:
                 query_s = time.time()
                 df = execute_query(self.client, query)
+                df['Time'] = pd.to_datetime(df['Time']).dt.tz_convert('Asia/Seoul')
                 print('query time ', time.time() - query_s)
                 print("\n\nbefore df:", df)
                 df['Time'] = pd.to_datetime(df['Time'])
@@ -316,69 +317,210 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
         start_time = time.time()
 
-        # exception not exist facility
-        if condition.facility not in self.read_info()['result'].keys():
-            return None
+        answer_df = self.TG_query_v2(client=self.client, condition=condition, b=self.bucket_name)
 
-        # exception not exist tg_life number
-        if condition.tg_life_num not in ['1', '2', '4', '5']:
-            return None
+        print("==========answer df==========")
+        print(answer_df)
 
-        if condition.statistics_list is None or len(condition.statistics_list) == 0:
-            statistics_list = ["AVG"]
-        else:
-            statistics_list = condition.statistics_list
-
-        # exception statistics elements
-        statistics_list = [statistics for statistics in statistics_list
-                           if statistics in ["AVG", "MAX", "MIN", "STDDEV"]]
-
-        answer_df = pd.DataFrame()
-        for idx, statistics in enumerate(statistics_list):
-
-            # count_flag : flag for get tg_life count column, for performance improve
-            count_flag = False
-            if idx == 0:
-                count_flag = True
-
-            # get tg_life
-            query = TGLife_query(b=self.bucket_name, facility=condition.facility, tg_life_num=condition.tg_life_num,
-                                 start_date=condition.startTime, end_date=condition.endTime, type=statistics,
-                                 count=count_flag)
-            try:
-                result_df = execute_query(self.client, query)
-
-                # rename (ex. P.TG1I[A] -> AVG-P.TG1I[A])
-                result_df.rename(
-                    columns={f'P.TG{condition.tg_life_num}I[A]': f'{statistics}-P.TG{condition.tg_life_num}I[A]',
-                             f'P.TG{condition.tg_life_num}Pwr[kW]': f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
-                             f'P.TG{condition.tg_life_num}V[V]': f'{statistics}-P.TG{condition.tg_life_num}V[V]',
-                             f'TG{condition.tg_life_num}Life[kWh]_TAG': f'TG{condition.tg_life_num}Life[kWh]'},
-                    inplace=True)
-
-                # case classification, for performance improve
-                if idx == 0:
-                    answer_df = pd.concat([answer_df, result_df[[
-                        f'TG{condition.tg_life_num}Life[kWh]',
-                        'count',
-                        f'{statistics}-P.TG{condition.tg_life_num}I[A]',
-                        f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
-                        f'{statistics}-P.TG{condition.tg_life_num}V[V]',
-                    ]]], axis=1)
-                else:
-                    answer_df = pd.concat([answer_df, result_df[[
-                        f'{statistics}-P.TG{condition.tg_life_num}I[A]',
-                        f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
-                        f'{statistics}-P.TG{condition.tg_life_num}V[V]',
-                    ]]], axis=1)
-            except Exception as e:
-                raise HTTPException(500, str(e))
-
-        # sorting by TGLife[kWh]
-        answer_df[f'TG{condition.tg_life_num}Life[kWh]'] \
-            = answer_df[f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
-        answer_df.sort_values(f'TG{condition.tg_life_num}Life[kWh]', axis=0, inplace=True)
         print('time: ', time.time() - start_time)
+        return answer_df
+
+    @classmethod
+    def TG_query_v2(cls, client, condition, b, ) -> pd.DataFrame:
+        try:
+            query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tg_life_num,
+                                    start_date=condition.startTime, end_date=condition.endTime)
+
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
+            result_df = execute_query(client, query)
+            result_df.rename(columns={f'_TG{condition.tg_life_num}Life[kWh]': f'TG{condition.tg_life_num}Life[kWh]'},
+                             inplace=True)
+            result_df[f'TG{condition.tg_life_num}Life[kWh]'] = result_df[
+                f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+            result_df['section'] = result_df['section'].astype(float)
+
+            result_df.sort_values(by=[f'TG{condition.tg_life_num}Life[kWh]', 'section'], ascending=[True, True],
+                                  axis=0, inplace=True)
+            result_df.reset_index(drop=True, inplace=True)
+            print("===========before===========")
+            print(result_df)
+
+            del_list = []
+            count_list = []
+            sum_list = []
+            max_list = []
+            min_list = []
+
+            del_element = 0
+            count_element = 0
+            sum_element = 0
+            max_element = 0
+            min_element = 0
+            for i, row in result_df.iterrows():
+                if i == result_df.shape[0] - 1:
+                    break
+                if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+                    del_element += 1
+                    count_element += result_df.loc[i + 1, 'count']
+                    sum_element += result_df.loc[i + 1, 'sum']
+                    max_element = max(max_element, result_df.loc[i + 1, 'max'])
+                    min_element = min(min_element, result_df.loc[i + 1, 'min'])
+                else:
+                    if count_element != 0:
+                        del_list.append([i + 1 - del_element, del_element])
+                        count_list.append(count_element)
+                        sum_list.append(sum_element)
+                        max_list.append(max_element)
+                        min_list.append(min_element)
+
+                        del_element = 0
+                        count_element = 0
+                        sum_element = 0
+                        max_element = 0
+                        min_element = 0
+
+            for delete, count in zip(del_list, count_list):
+                del_arr = np.arange(delete[0], delete[0] + delete[1])
+                result_df.drop(del_arr, axis=0, inplace=True)
+                result_df.loc[delete[0] - 1, 'count'] += count
+            result_df.reset_index(drop=True, inplace=True)
+
+            result_df['avg'] = result_df['sum'] / result_df['count']
+
+            print("===========after===========")
+            print(result_df)
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
+        return result_df
+
+    @classmethod
+    def TG_query_v1(cls, condition) -> pd.DataFrame:
+        # # exception not exist facility
+        # if condition.facility not in self.read_info()['result'].keys():
+        #     return None
+        #
+        # # exception not exist tg_life number
+        # if condition.tg_life_num not in ['1', '2', '4', '5']:
+        #     return None
+        #
+        # if condition.statistics_list is None or len(condition.statistics_list) == 0:
+        #     statistics_list = ["AVG"]
+        # else:
+        #     statistics_list = condition.statistics_list
+        #
+        # # exception statistics elements
+        # statistics_list = [statistics for statistics in statistics_list
+        #                    if statistics in ["AVG", "MAX", "MIN", "STDDEV"]]
+        # answer_df = pd.DataFrame()
+        # for idx, statistics in enumerate(statistics_list):
+        #
+        #     # count_flag : flag for get tg_life count column, for performance improve
+        #     count_flag = False
+        #     if idx == 0:
+        #         count_flag = True
+        #     print(idx, statistics)
+        #     # get tg_life
+        #
+        #     self.TG_query()
+        #
+        # try:
+        #
+        #     query = TGLife_query_v2(b=self.bucket_name, facility=condition.facility, num=condition.tg_life_num,
+        #                             start_date=condition.startTime, end_date=condition.endTime,
+        #                             statistics_type=statistics)
+        #
+        #     pd.set_option('display.max_rows', None)
+        #     pd.set_option('display.max_columns', None)
+        #     result_df = execute_query(self.client, query)
+        #     result_df.rename(columns={f'_TG{condition.tg_life_num}Life[kWh]': f'TG{condition.tg_life_num}Life[kWh]'}, inplace=True)
+        #     result_df[f'TG{condition.tg_life_num}Life[kWh]'] = result_df[
+        #         f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+        #     result_df['section'] = result_df['section'].astype(float)
+        #
+        #     result_df.sort_values(by=[f'TG{condition.tg_life_num}Life[kWh]', 'section'], ascending=[True, True],
+        #                           axis=0, inplace=True)
+        #     result_df.reset_index(drop=True, inplace=True)
+        #     print("===========before===========")
+        #     print(result_df)
+        #
+        #     del_list = []
+        #     count_list = []
+        #     sum_list = []
+        #     max_list = []
+        #     min_list = []
+        #
+        #     del_element = 0
+        #     count_element = 0
+        #     sum_element = 0
+        #     max_element = 0
+        #     min_element = 0
+        #     for i, row in result_df.iterrows():
+        #         if i == result_df.shape[0] - 1:
+        #             break
+        #         if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+        #             del_element += 1
+        #             count_element += result_df.loc[i + 1, 'count']
+        #             sum_element += result_df.loc[i + 1, 'sum']
+        #             max_element = max(max_element, result_df.loc[i + 1, 'max'])
+        #             min_element = min(min_element, result_df.loc[i + 1, 'min'])
+        #         else:
+        #             if count_element != 0:
+        #                 del_list.append([i + 1 - del_element, del_element])
+        #                 count_list.append(count_element)
+        #                 sum_list.append(sum_element)
+        #                 max_list.append(max_element)
+        #                 min_list.append(min_element)
+        #
+        #                 del_element = 0
+        #                 count_element = 0
+        #                 sum_element = 0
+        #                 max_element = 0
+        #                 min_element = 0
+        #
+        #     for delete, count in zip(del_list, count_list):
+        #         del_arr = np.arange(delete[0], delete[0] + delete[1])
+        #         result_df.drop(del_arr, axis=0, inplace=True)
+        #         result_df.loc[delete[0] - 1, 'count'] += count
+        #     result_df.reset_index(drop=True, inplace=True)
+        #
+        #     result_df['avg'] = result_df['sum'] / result_df['count']
+        #
+        #     print("===========after===========")
+        #     print(result_df)
+        # print(count_list)
+        # rename (ex. P.TG1I[A] -> AVG-P.TG1I[A])
+        # result_df.rename(
+        #     columns={f'P.TG{condition.tg_life_num}I[A]': f'{statistics}-P.TG{condition.tg_life_num}I[A]',
+        #              f'P.TG{condition.tg_life_num}Pwr[kW]': f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
+        #              f'P.TG{condition.tg_life_num}V[V]': f'{statistics}-P.TG{condition.tg_life_num}V[V]',
+        #              f'TG{condition.tg_life_num}Life[kWh]_TAG': f'TG{condition.tg_life_num}Life[kWh]'},
+        #     inplace=True)
+        #
+        # case classification, for performance improve
+        # if idx == 0:
+        #     answer_df = pd.concat([answer_df, result_df[[
+        #         f'TG{condition.tg_life_num}Life[kWh]',
+        #         'count',
+        #         f'{statistics}-P.TG{condition.tg_life_num}I[A]',
+        #         f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
+        #         f'{statistics}-P.TG{condition.tg_life_num}V[V]',
+        #     ]]], axis=1)
+        # else:
+        #     answer_df = pd.concat([answer_df, result_df[[
+        #         f'{statistics}-P.TG{condition.tg_life_num}I[A]',
+        #         f'{statistics}-P.TG{condition.tg_life_num}Pwr[kW]',
+        #         f'{statistics}-P.TG{condition.tg_life_num}V[V]',
+        #     ]]], axis=1)
+        # except Exception as e:
+        #     raise HTTPException(500, str(e))
+        #
+        # sorting by TGLife[kWh]
+        # answer_df[f'TG{condition.tg_life_num}Life[kWh]'] \
+        #     = answer_df[f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+        # answer_df.sort_values(f'TG{condition.tg_life_num}Life[kWh]', axis=0, inplace=True)
+        answer_df = pd.DataFrame()
         return answer_df
 
     @classmethod
@@ -416,7 +558,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             df_list.append(df)
 
             if idx % 2 == 1:
-                answer_df.append(pd.concat([df_list[idx-1], df_list[idx]], ignore_index=True))
+                answer_df.append(pd.concat([df_list[idx - 1], df_list[idx]], ignore_index=True))
 
         return answer_df
 
