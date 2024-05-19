@@ -161,6 +161,7 @@ def draw_graph_time_standard(graph_df):
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     start_second = []
     end_second = []
+    plot_list = []
     setting_options = extract_setting_values(request)
     lines_info, setting_infos = make_setting_lines(request)
     x_range_times_for_lines = []
@@ -174,6 +175,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     toggle_labels = []
     box_annotations = []
     lines = []
+    plot_lines = []
 
     p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
 
@@ -251,10 +253,13 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             ('time', '@Time seconds'),
             ('Value', '$y')
         ])
+
         plot.add_tools(hover2)
         plot.legend.location = "top_left"
         plot.legend.click_policy = "hide"
         plot.toolbar.logo = None
+
+        plot_list.append(plot)
 
         # CrosshairTool 생성
         width = Span(dimension="width", line_dash="dotted", line_width=1)
@@ -285,7 +290,8 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     data_table = DataTable(source=source, columns=columns, editable=False, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
-    # # P에 SetValue 관련 모든 선 추가
+    # # # P에 SetValue 관련 모든 선 추가
+    plot_lines_list = [[] for _ in range(len(plot_list))]
     for i in range(len(setting_infos)):
         start_x_time = start_second[i]
         end_x_time = end_second[i]
@@ -294,7 +300,10 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             step_x_range = pd.Series(step_x_range)
             line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
             line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
-            line2 = plot.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
+            for k in range(len(plot_list)):
+                line2 = plot_list[k].line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
+                plot_lines.append(line2)
+                plot_lines_list[k].append(line2)
             lines.append(line)
 
     p.x_range.start = 0
@@ -310,9 +319,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
 
     data_table_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
-
-    print("toggle_labels:", toggle_labels)
-
     multi_choice = MultiChoice(options=toggle_labels, placeholder='Steps')
     multi_choice_callback = CustomJS(
         args=dict(multi_choice=multi_choice, box_annotations=box_annotations, toggle_labels=toggle_labels), code="""
@@ -340,7 +346,22 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
                 }
             }
     """)
-    setting_multi_choice.js_on_change("value", setting_multi_choice_callback)
+    setting_multi_choice_plots_callback = CustomJS(
+        args=dict(setting_multi_choice=setting_multi_choice, plot_lines_list=plot_lines_list, setting_options=setting_options), code="""
+        const selected = setting_multi_choice.value;
+        for (let i = 0; i < setting_options.length; i++) {
+            for (let j = 0; j < plot_lines_list.length; j++) {
+                const plot_lines = plot_lines_list[j];
+                if (selected.includes(setting_options[i])) {
+                    plot_lines[i].visible = true;
+                } else {
+                    plot_lines[i].visible = false;
+                }
+            }
+        }
+    """
+    )
+    setting_multi_choice.js_on_change("value", setting_multi_choice_callback,setting_multi_choice_plots_callback)
 
     layout_1 = layout(
     [
