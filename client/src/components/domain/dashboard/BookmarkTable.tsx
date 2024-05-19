@@ -164,7 +164,7 @@ function BookmarkTable() {
                                                     setOpen(false);
                                                     console.log(batch.stepsCnt)
                                                 }}>
-                                                {batch.batchName}
+                                                {batch.batchName + ' (step 개수: ' + batch.stepsCnt + ')'}
                                                 <Check
                                                     className={cn(
                                                         "mr-2 h-4 w-4",
