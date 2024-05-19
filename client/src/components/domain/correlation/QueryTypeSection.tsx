@@ -130,6 +130,7 @@ function QueryCorrelationButton() {
     // 시간 및 스텝 선택 유효성 검사 및 조회 버튼 활성화
     useEffect(() => {
         if (selectedParameters.length === 0) setIsButtonEnabled(false)
+        else if (selectedParameters.length > 8) setIsButtonEnabled(false)
         else {
             if (queryType === 'time') {
                 timeValid ? setIsButtonEnabled(true) : setIsButtonEnabled(false)

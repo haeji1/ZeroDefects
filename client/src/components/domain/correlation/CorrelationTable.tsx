@@ -91,7 +91,7 @@ function CorrelationTable() {
     const [rowSelection, setRowSelection] = useState({})
     const [pagination, setPagination] = useState({
         pageIndex: 0,
-        pageSize: 7,
+        pageSize: 8,
     });
 
 
@@ -119,15 +119,16 @@ function CorrelationTable() {
 
 
     useEffect(() => {
+        console.log(rowSelection)
         const parameters = table.getSelectedRowModel().rows.map((row) => row.original.parameter);
         setSelectedParameters(parameters)
     }, [rowSelection])
 
 
-
+    table.getTotalSize
 
     return (
-        <>
+        <div className="gap-0">
             <div className="flex items-center py-4">
                 <Input
                     placeholder="파라미터명으로 검색"
@@ -156,7 +157,7 @@ function CorrelationTable() {
                     </Button>
                 </div>
             </div>
-            <div className='rounded-md border h-[426px]'>
+            <div className='rounded-md border h-[480px]'>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -206,7 +207,17 @@ function CorrelationTable() {
                     </TableBody>
                 </Table>
             </div>
-        </>
+            <div className="flex items-center justify-end space-x-2 py-4">
+                <div className="flex-1 text-sm text-muted-foreground">
+                    {table.getFilteredSelectedRowModel().rows.length} / {table.getFilteredRowModel().rows.length} 개 선택됨.
+                </div>
+                {Object.keys(rowSelection).length > 8 ?
+                    <p className="ml-auto text-sm text-red-500">8개를 초과하여 선택할 수 없습니다.</p>
+                    :
+                    <p className="ml-auto text-sm text-white">null</p>
+                }
+            </div>
+        </div>
     )
 
 }
