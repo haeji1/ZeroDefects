@@ -1,14 +1,60 @@
 import base64
+import os
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 from bokeh.models import Div, TabPanel, Tabs, DataTable, TableColumn, ColumnDataSource
 from bokeh.layouts import column
+from pymongo import MongoClient
 
+from app.domain.correlation.model.batch_and_steps import BatchAndSteps
 from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
 from app.domain.facility.service.facility_function import get_correlation_datas
+
+
+# MongoDB 연결 정보
+url = os.getenv('MONGO_FURL')
+client = MongoClient(url)
+db = client["section"]
+
+
+# 시간 형식 변환 함수 (yyyy-mm-dd hh:mm:ss -> yyyy-mm-ddThh:mm:ss.000000Z)
+def convert_time_format(time_str):
+    #  datetime 객체로 변환
+    dt = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+    # 원하는 시간 형식으로 변환
+    return dt.strftime('%Y-%m-%dT%H:%M:%S.000000Z')
+
+
+def get_section_time(batch_and_steps: BatchAndSteps) -> []:
+    start_time = None
+    end_time = None
+
+    # facility를 기반으로 해당 컬렉션 선택
+    collection = db[batch_and_steps.facility]
+
+    # 컬렉션에서 모든 문서(배치 정보) 조회
+    time_of_steps = list(collection.find({"batchName": batch_and_steps.batchName}))
+
+    # 첫번째와 마지막 스텝 번호
+    first_step_number = batch_and_steps.steps[0]
+    last_step_number = batch_and_steps.steps[-1]
+
+    # 문서의 'steps' 필드를 순회하면서 해당 스텝 번호에 맞는 시작 시간과 끝 시간 찾기
+    for step in time_of_steps[0]['steps']:  # time_of_steps 리스트의 첫 번째 문서에서 'steps' 필드를 순회
+        step_key = list(step.keys())[0]  # 현재 스텝의 키
+        step_number = int(step_key.replace('step', ''))  # 스텝 번호만 추출
+
+        # 첫 번째 스텝의 시작 시간 찾기
+        if step_number == first_step_number:
+            start_time = step[step_key][f'step{step_number}StartTime']
+
+        # 마지막 스텝의 끝 시간 찾기
+        if step_number == last_step_number:
+            end_time = step[step_key][f'step{step_number}EndTime']
+
+    return convert_time_format(start_time), convert_time_format(end_time)
 
 
 # 이미지 파일을 Base64로 인코딩하는 함수
@@ -111,8 +157,6 @@ def analyze_correlation(request_body):
         )
 
         df = get_correlation_datas(section)
-        print("df:", df)
-        print("\n\ndf.columns:", df.columns)
         if len(df) == 0:
             return None
 
@@ -126,4 +170,32 @@ def analyze_correlation(request_body):
         return plots
 
     elif request_body.queryType == 'step':
+        # 조회할 시작 시간, 끝 시간 가져오기
+        batch_and_steps = BatchAndSteps(
+            facility=request_body.queryData.facility,
+            batchName=request_body.queryData.batchName,
+            steps=request_body.queryCondition.step
+        )
+        start_time, end_time = get_section_time(batch_and_steps)
+
+        # request_body.queryData.parameter
+        section = CorrelationSectionData(
+            facility=request_body.queryData.facility,
+            batchName=request_body.queryData.batchName,
+            parameter=request_body.queryData.parameter,
+            startTime=start_time,
+            endTime=end_time
+        )
+
+        df = get_correlation_datas(section)
+        if len(df) == 0:
+            return None
+
+        # 상관 관계
+        df = df.select_dtypes(include=[np.number])
+        df.fillna(0, inplace=True)
+
+        tabs = [create_tab(df, method) for method in ['pearson', 'spearman', 'kendall']]
+        plots.append(Tabs(tabs=tabs))
+
         return plots
