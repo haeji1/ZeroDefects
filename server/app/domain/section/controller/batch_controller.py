@@ -63,10 +63,10 @@ async def draw_graph(request_body: GraphQueryRequest):
         
         # 표준시로 변경
         start_time = datetime.strptime(request_body.queryCondition.startTime, "%Y-%m-%dT%H:%M:%S.%fZ")
-        start_time += timedelta(hours=9)
+        # start_time += timedelta(hours=9)
         start_time = start_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         end_time = datetime.strptime(request_body.queryCondition.endTime, "%Y-%m-%dT%H:%M:%S.%fZ")
-        end_time += timedelta(hours=9)
+        # end_time += timedelta(hours=9)
         end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         for s in request_body.queryData:
