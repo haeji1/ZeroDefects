@@ -36,11 +36,15 @@ async def get_info_test():
 @facility_router.post("/read/tg")
 async def read_tg_influxdb(model: TGLifeModel):
 
-    lifeModel = TGLifeData
-    lifeModel.facility = model.queryData.facility
-    lifeModel.tgLifeNum = model.queryData.tgLifeNum
-    lifeModel.startTime = model.queryCondition.startTime
-    lifeModel.endTime = model.queryCondition.endTime
+    lifeModel = TGLifeData(
+        type=model.queryType,
+        facility=model.queryData.facility,
+        tgLifeNum=model.queryData.tgLifeNum,
+        startTime=model.queryCondition.startTime,
+        endTime=model.queryCondition.endTime,
+        startCnt=model.queryCondition.startCnt,
+        endCnt=model.queryCondition.endCnt
+    )
 
     try:
         contents = get_TG_datas(lifeModel)

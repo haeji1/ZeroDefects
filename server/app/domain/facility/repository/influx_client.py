@@ -17,7 +17,7 @@ from app.domain.correlation.model.correlation_section_data import CorrelationSec
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
-    info_field_query, TGLife_query, TGLife_query_v2, correlation_query
+    info_field_query, TGLife_query, TGLife_query_v2, correlation_query, TGLife_count_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
@@ -297,7 +297,6 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 df['Time'] = pd.to_datetime(df['Time'])
                 print('query time ', time.time() - query_s)
                 print("\n\nbefore df:", df)
-                df['Time'] = pd.to_datetime(df['Time'])
                 df.sort_values(by=['Time'], ascending=True, inplace=True)
                 print("\n\nafter df:", df)
 
@@ -330,9 +329,12 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     @classmethod
     def TG_query_v2(cls, client, condition, b) -> pd.DataFrame:
         try:
-            query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tgLifeNum,
-                                    start_date=condition.startTime, end_date=condition.endTime)
-
+            if condition.type == 'time':
+                query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tgLifeNum,
+                                        start_date=condition.startTime, end_date=condition.endTime)
+            else:
+                query = TGLife_count_query(b=b, facility=condition.facility, num=condition.tgLifeNum,
+                                           start_cnt=condition.startCnt, end_cnt=condition.endCnt)
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             result_df = execute_query(client, query)
@@ -569,7 +571,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         # query that get data by parameter & time
 
         query = correlation_query(
-            b=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime, end_date=condition.endTime
+            b=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime,
+            end_date=condition.endTime
         )
         try:
             query_s = time.time()

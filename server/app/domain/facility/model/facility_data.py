@@ -14,10 +14,13 @@ class FacilityData(BaseModel):
 
 
 class TGLifeData(BaseModel):
+    type: str
     facility: str
     tgLifeNum: str
-    startTime: str
-    endTime: str
+    startTime: Optional[str]
+    endTime: Optional[str]
+    startCnt: Optional[str]
+    endCnt: Optional[str]
 
 
 class TGCondition(BaseModel):

@@ -57,10 +57,10 @@ def field_by_time_query(b: str, facility: str, field: str,
 
     base_query = f'''
             from(bucket: "{b}")
-                |> range(start: time(v: "{start_date}"), st3op: time(v: "{end_date}"))
+                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")\n
             '''
-    window_query = "|> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false\n" if window_size != 0 else "\n"
+    window_query = f"|> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false\n" if window_size != 0 else "\n"
     keep_query = '|> keep(columns: ["_time", "_value"])'
     return base_query + window_query + keep_query
 
@@ -150,6 +150,30 @@ def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: 
               )
               |> keep(columns: ["_TG{num}Life[kWh]", "section", "count", "sum", "max", "min"])
             """
+
+def TGLife_count_query(b: str, facility: str, num: str, start_cnt: str, end_cnt: str):
+    return f"""
+            from(bucket: "{b}")
+              |> range(start: time(v: "1970-01-01T00:00:00.0Z"), stop: time(v: now()))
+              |> filter(fn: (r) => r["_measurement"] == "{facility}")
+              |> filter(fn: (r) => r["_field"] == "P.TG1V[V]")
+              |> filter(fn: (r) => r.section != "-" and int(v: r.section) < 20)
+              |> filter(fn: (r) => float(v: r["TG{num}Life[kWh]_TAG"]) > {start_cnt} and float(v: r["TG{num}Life[kWh]_TAG"]) < {end_cnt})
+              |> group(columns: ["section", "TG{num}Life[kWh]_TAG"])
+              |> reduce(
+                  identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, "_TG1Life[kWh]": 20000.0}},
+                  fn: (r, accumulator) => ({{
+                    count: accumulator.count + 1.0,
+                    max: if accumulator.max > float(v: r._value) then accumulator.max else float(v: r._value),
+                    min: if accumulator.min < float(v: r._value) then accumulator.min else float(v: r._value),
+                    sum: accumulator.sum + r._value,
+                    "_TG{num}Life[kWh]": if accumulator["_TG{num}Life[kWh]"] < float(v: r["TG{num}Life[kWh]_TAG"]) 
+                    then accumulator["_TG{num}Life[kWh]"] else float(v: r["TG{num}Life[kWh]_TAG"])
+                  }})
+              )
+              |> keep(columns: ["_TG{num}Life[kWh]", "count", "sum", "max", "min", "section"])
+    """
+
 
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
