@@ -19,7 +19,7 @@ import TimeSelect from "@/components/common/TimeSelect";
 import useHandleQueryCorrelation from "@/hooks/useHandleQueryCorrelation";
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 import { useEffect, useState } from "react";
-import { getBatches } from "@/apis/api/api";
+import { getBatches } from "@/api/api";
 import { AxiosResponse } from "axios";
 
 function QueryTypeButton() {

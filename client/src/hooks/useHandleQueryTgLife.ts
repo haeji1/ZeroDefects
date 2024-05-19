@@ -1,4 +1,4 @@
-import { getTargetLifeGraph } from "@/apis/api/api";
+import { getTargetLifeGraph } from "@/api/api";
 import { useQueryTypeStore, useQueryDateTimeStore, useQueryLifeCntStore } from "@/stores/QueryCondition";
 import { QueryType } from "@/stores/QueryCondition";
 import { useTargetLifeStore, TgLifeNum } from "@/stores/Targetlife";

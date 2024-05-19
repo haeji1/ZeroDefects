@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/base/popov
 import { useState, useEffect } from "react";
 import { Label } from "@/components/base/label";
 import { useFacilityStore, Facility, useBatchStore } from "@/stores/Facility"
-import { fetchFacilityInfos, getBatches } from "@/apis/api/api";
+import { fetchFacilityInfos, getBatches } from "@/api/api";
 import { Card } from "@/components/base/card";
 import { useBookmarkStore } from "@/stores/Bookmark";
 import { useToast } from "@/hooks/use-toast";

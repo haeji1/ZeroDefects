@@ -1,4 +1,4 @@
-import { getCorrelationGraph } from "@/apis/api/api";
+import { getCorrelationGraph } from "@/api/api";
 import { useCorrelationStore } from "@/stores/Correlation";
 import { useQueryTypeStore, useQueryDateTimeStore, useQueryStepStore } from "@/stores/QueryCondition";
 import { QueryType } from "@/stores/QueryCondition";
