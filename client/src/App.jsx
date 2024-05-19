@@ -70,6 +70,7 @@ function App() {
   )
 }
 
+export default App
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
 )
