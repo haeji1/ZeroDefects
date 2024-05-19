@@ -82,7 +82,7 @@ def plot_scatter(df, corr_feature, method_name):
             ax.annotate(np.round(corr_feature.loc[feature[i], feature[j]], 3), xy=(1, 0),
                         xycoords='axes fraction', fontsize=16,
                         horizontalalignment='right', verticalalignment='bottom')
-    scatter_plot_path = f'scatter_plot_{method_name}.png'
+    scatter_plot_path = f'./correlation_images/scatter_plot_{method_name}.png'
     fig.savefig(scatter_plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
     return scatter_plot_path
@@ -96,7 +96,7 @@ def plot_heatmap(corr_feature, method_name):
     h.xaxis.set_label_position('top')
     plt.xticks(rotation=90)
     plt.yticks(rotation=0)
-    heatmap_path = f'heatmap_{method_name}.png'
+    heatmap_path = f'./correlation_images/heatmap_{method_name}.png'
     plt.savefig(heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
     return heatmap_path
