@@ -498,3 +498,6 @@ $RECYCLE.BIN/
 # pyc
 *.pyc
 __pycache__/
+
+# ignore correlation_images folder
+correlation_images/
