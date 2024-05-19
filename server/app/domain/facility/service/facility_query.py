@@ -1,5 +1,5 @@
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 
@@ -17,6 +17,7 @@ bucket = settings.influx_bucket
 # ignore related pivot warnings
 warnings.simplefilter('ignore', MissingPivotFunction)
 
+
 # query for measurement list
 def measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -24,6 +25,7 @@ def measurement_query(b: str, measurement: str, start_date: str, end_date: str) 
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
             '''
+
 
 # query fields by time
 def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
@@ -36,6 +38,7 @@ def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_dat
             |> filter(fn: (r) => {fields_filter})
             """
 
+
 # query field by time
 def field_by_time_query(b: str, facility: str, field: str,
                         start_date: str = '1970-01-01T00:00:00.0Z',
@@ -44,26 +47,27 @@ def field_by_time_query(b: str, facility: str, field: str,
     start_time = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
     time_difference = end_time - start_time
     window_size = int(int(time_difference.total_seconds()) / 14400)
-    if window_size == 0:
-        window_size = 1
+    # if window_size == 0:
+    #     window_size = 1
 
+    start_date = start_date.replace('Z', '+00:00')
+    end_date = end_date.replace('Z', '+00:00')
     print(start_date)
     print(end_date)
 
-    return f'''
+    base_query = f'''
             from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
-                |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")
-                |> group()
-                |> sort(columns: ["_time"], desc: false)
-                |> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false)
-                |> keep(columns: ["_time", "_value"])
+                |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")\n
             '''
+    window_query = "|> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false\n" if window_size != 0 else "\n"
+    keep_query = '|> keep(columns: ["_time", "_value"])'
+    return base_query + window_query + keep_query
+
 
 # query tg_life by num
 def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, statistics_type: str,
                  count: bool) -> str:
-
     if statistics_type == 'AVG':
         statistics_type = 'mean'
     elif statistics_type == 'MAX':
@@ -147,6 +151,7 @@ def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: 
               |> keep(columns: ["_TG{num}Life[kWh]", "section", "count", "sum", "max", "min"])
             """
 
+
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -158,12 +163,14 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
 
+
 # info facility
 def info_measurements_query(b: str) -> str:
     return f"""
             import "influxdata/influxdb/schema"
             schema.measurements(bucket: "{b}")
             """
+
 
 # info parameter
 def info_field_query(b: str, measurement: str) -> str:
@@ -175,6 +182,7 @@ def info_field_query(b: str, measurement: str) -> str:
             start: -1y,
             )
             """
+
 
 def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, count: bool) -> str:
     # query for count value
@@ -225,6 +233,7 @@ def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_da
                             """
 
     return additional_query
+
 
 # execute query
 def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
