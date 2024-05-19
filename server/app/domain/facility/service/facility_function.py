@@ -38,9 +38,9 @@ def get_facilities_info():
 
 
 # get data
-def get_datas(conditions: List[SectionData]):
+def get_datas(conditions: List[SectionData], all: bool = False):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    contents = client.read_data(conditions)
+    contents = client.read_data(conditions, all=all)
     return contents
 
 
