@@ -290,7 +290,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     data_table = DataTable(source=source, columns=columns, editable=False, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
-    # # # P에 SetValue 관련 모든 선 추가
+    # P에 SetValue 관련 모든 선 추가
     plot_lines_list = [[] for _ in range(len(plot_list))]
     for i in range(len(setting_infos)):
         start_x_time = start_second[i]
@@ -301,10 +301,26 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
             line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
             for k in range(len(plot_list)):
+                plot_info = plot_list[k]
                 line2 = plot_list[k].line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
                 plot_lines.append(line2)
                 plot_lines_list[k].append(line2)
+
+                hover4 = HoverTool(renderers=[line2], tooltips=[
+                    ('Setting', '$y'),
+                    ('Duration', '@Time seconds'),
+                ])
+                plot_info.add_tools(hover4)
             lines.append(line)
+
+            # setvalue hover 추가
+            hover3 = HoverTool(renderers=[line], tooltips=[
+                ('Setting', '$y'),
+                ('Duration', '@Time seconds'),
+            ])
+
+            p.add_tools(hover3)
+
 
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
