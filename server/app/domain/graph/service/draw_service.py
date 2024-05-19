@@ -480,10 +480,69 @@ def make_setting_lines(request):
     return setting_values, setting_step_and_values
 
 
+# def draw_TGLife_default_graph(df, tg_num):
+#     # print('=======df=======')
+#     # print(df)
+#
+#     plots = []
+#     metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
+#     colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
+#     sections = [f'section{i}' for i in range(20)]
+#     scatters = [[] for _ in range(len(sections))]
+#     df_sorted = df.sort_values(by='section', ascending=True)
+#     multi_choice = MultiChoice(options=sections, placeholder='Sections')
+#     p = figure(title="Facility Comparison", sizing_mode="scale_width", min_width=800, height=200)
+#
+#     # 섹션별로 데이터프레임 그룹화
+#     grouped = df_sorted.groupby('section')
+#     for section, group in grouped:
+#         for i, metric in enumerate(metrics[1:], start=1):  # 섹션을 제외한 나머지 메트릭에 대해 반복
+#             source = ColumnDataSource(data={'TG2Life[kWh]': group['TG2Life[kWh]'], metric: group[metric]})
+#             scatter = p.scatter(x='TG2Life[kWh]', y=metric, source=source, color=colors[i - 1], size=10,
+#                                 legend_label=metric)
+#
+#             # hover = HoverTool(renderers=[scatter], tooltips=[
+#             #     # ('Tg', '$x'),
+#             #     ('Value', '$y')
+#             # ])
+#             # p.add_tools(hover)
+#             section_index = int(section)
+#             if section_index < 20:
+#                 scatters[section_index].append(scatter)  # 섹션 번호에 해당하는 리스트에 scatter 추가
+#
+#     p.legend.click_policy = "hide"
+#     p.toolbar.autohide = True
+#     p.toolbar.logo = None
+#
+#     tg_multi_choice_callback = CustomJS(
+#         args=dict(multi_choice=multi_choice, scatters=scatters, sections=sections), code="""
+#             const selected = multi_choice.value;
+#             for (let i = 0; i < sections.length; i++) {
+#                 const section_scatter = scatters[i]
+#                 for (let j = 0; j < section_scatter.length; j++) {
+#                     if (selected.includes(sections[i])) {
+#                         section_scatter[j].visible = false;
+#                     } else {
+#                         section_scatter[j].visible = true;
+#                     }
+#                 }
+#             }
+#     """)
+#
+#     multi_choice.js_on_change("value", tg_multi_choice_callback)
+#
+#     layout1 = layout(
+#         [
+#             [multi_choice],
+#             [p]
+#         ],
+#         sizing_mode="stretch_width",
+#     )
+#
+#     plots.append(layout1)
+#     plot_json = [json_item(plot, f'TG{tg_num}Life[kWh]') for plot in plots]
+#     return JSONResponse(plot_json)
 def draw_TGLife_default_graph(df, tg_num):
-    print('=======df=======')
-    print(df)
-
     plots = []
     metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
     colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
@@ -497,8 +556,8 @@ def draw_TGLife_default_graph(df, tg_num):
     grouped = df_sorted.groupby('section')
     for section, group in grouped:
         for i, metric in enumerate(metrics[1:], start=1):  # 섹션을 제외한 나머지 메트릭에 대해 반복
-            source = ColumnDataSource(data={'TG2Life[kWh]': group['TG2Life[kWh]'], metric: group[metric]})
-            scatter = p.scatter(x='TG2Life[kWh]', y=metric, source=source, color=colors[i - 1], size=10,
+            source = ColumnDataSource(data={f'TG{tg_num}Life[kWh]': group[f'TG{tg_num}Life[kWh]'], metric: group[metric]})
+            scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=metric, source=source, color=colors[i - 1], size=10,
                                 legend_label=metric)
 
             hover = HoverTool(renderers=[scatter], tooltips=[
@@ -531,9 +590,6 @@ def draw_TGLife_default_graph(df, tg_num):
 
     multi_choice.js_on_change("value", tg_multi_choice_callback)
 
-    bokeh_layout = column(p, sizing_mode="stretch_both")
-    plots.append(bokeh_layout)
-
     layout1 = layout(
     [
             [multi_choice],
@@ -544,5 +600,3 @@ def draw_TGLife_default_graph(df, tg_num):
     plots.append(layout1)
     plot_json = [json_item(plot, f'TG{tg_num}Life[kWh]') for plot in plots]
     return JSONResponse(plot_json)
-
-
