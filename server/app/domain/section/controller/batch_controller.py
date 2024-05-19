@@ -53,11 +53,7 @@ async def get_steps(request: StepsRequest):
 
 @section_router.post("/draw-graph")
 async def draw_graph(request_body: GraphQueryRequest):
-    # pprint(request)
-    # print("request_body", request_body)
-    batch_name_list = []
-    steps_times_info = []
-    # get_step_info_using_facility_name_on_mongoDB(request_body)
+    print("\n\nrequest_body: ", request_body)
     if request_body.queryType == "time":
         sections: List[SectionData] = []
         
@@ -79,11 +75,13 @@ async def draw_graph(request_body: GraphQueryRequest):
             ))
 
         graph_df = get_datas(sections)
-        plots = draw_dataframe_to_graph("time", graph_df, steps_times_info, batch_name_list)
+        plots = draw_dataframe_to_graph("time", graph_df, None, None)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
         return JSONResponse(status_code=200, content=plot_json)
 
     elif request_body.queryType == "step":
+        batch_name_list = []
+        steps_times_info = []
         request = get_step_info_using_facility_name_on_mongoDB(request_body)
         for query_data in request_body.queryData:
             batch_name = query_data.batchName
@@ -112,12 +110,6 @@ async def draw_graph(request_body: GraphQueryRequest):
         graph_df = get_datas(sections_list)
         plots = draw_dataframe_to_graph("step", graph_df, step_times, batch_name_list, request)
         plot_json = [json_item(plot, f"my_plot_{idx}") for idx, plot in enumerate(plots)]
-        # toggle_json = [json_item(toggle, f"my_toggle_{idx}") for idx, toggle in enumerate(toggles)]
-
-        # combined_json = plot_json + toggle_json
-        # print("======combined_json=======")
-        # print(combined_json)
-
 
         if not sections:
             raise HTTPException(status_code=404, detail="Sections not found")

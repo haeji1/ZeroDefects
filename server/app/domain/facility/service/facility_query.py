@@ -129,7 +129,7 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
                               start_date=start_date, end_date=end_date, count=count)
 
 
-def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: str) -> object:
+def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: str):
     return f"""
             from(bucket: "{b}")
               |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
@@ -245,3 +245,23 @@ def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
         return None
 
     return df_result
+
+
+def correlation_query(b: str, facility: str, fields: list, start_date: str, end_date: str):
+    end_time = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+    start_time = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+    time_difference = end_time - start_time
+    window_size = int(int(time_difference.total_seconds()) / 14400)
+    if window_size == 0:
+        window_size = 1
+
+    fields_filter = " or ".join([f'r["_field"] == "{field}"' for field in fields])
+
+    return f'''
+            from(bucket: "{b}")
+            |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+            |> filter(fn: (r) => {fields_filter})
+            |> filter(fn: (r) => r["_measurement"] == "{facility}")
+            |> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false)
+            |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+            '''
