@@ -151,7 +151,7 @@ function CorrelationTable() {
                     </Button>
                 </div>
             </div>
-            <div className='rounded-md border'>
+            <div className='rounded-md border h-[426px]'>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

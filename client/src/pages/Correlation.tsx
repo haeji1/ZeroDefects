@@ -1,13 +1,13 @@
 import { Sidebar } from 'react-pro-sidebar';
 import GraphSection from '@/components/domain/correlation/GraphSection';
 import QueryTypeSection from '@/components/domain/correlation/QueryTypeSection';
-import CorrelationTable from '@/components/domain/correlation/CorrelationTable';
+import { useCorrelationStore } from '@/stores/Correlation';
 
 
 
 function Correlation() {
 
-    let isCollapse = false;
+    const { isCollapse } = useCorrelationStore();
 
     return (
         <>

@@ -29,7 +29,6 @@ function QueryTypeButton() {
     });
     return (
         <div className="m-auto max-w-[200px]">
-            <Label>조회 타입</Label>
             <div className="flex flex-rows gap-2">
                 <Button id="time" variant="outline" className="h-full flex-col gap-1" onClick={() => setQueryType('time')}
                     style={buttonStyle('time')} >
@@ -142,7 +141,8 @@ function QueryCorrelationButton() {
 function QueryTypeSection() {
 
     return (
-        <Card className="p-5">
+        <Card className="flex flex-col gap-5 p-5">
+            <Label className="font-bold text-[20px]">조회 조건 선택</Label>
             <QueryTypeButton />
             <div className="grid grid-cols-5 gap-5">
                 <FacilitySelect />

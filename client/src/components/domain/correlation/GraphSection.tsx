@@ -9,15 +9,13 @@ import { Switch } from "@/components/base/switch";
 import { Label } from "@/components/base/label";
 import BokehPlot from "@/components/common/BokehPlot";
 import SamsungLogo from "@/assets/images/Logo_BLUE.png";
-import { useEffect, useState } from "react";
 import ChartLoadingGIF from "@/assets/chartloading.json"
 import { useCorrelationStore } from "@/stores/Correlation";
 
 
 function GraphSection() {
 
-    const { isFetching, graphData } = useCorrelationStore();
-    const [isCollapse, setIsCollapse] = useState(false);
+    const { isFetching, graphData, isCollapse, setIsCollapse } = useCorrelationStore();
 
     return (
         <div className="flex flex-col ">
