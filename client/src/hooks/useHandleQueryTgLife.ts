@@ -13,7 +13,7 @@ type Data = {
     },
     queryData: {
         facility: string,
-        TgLifeNum: undefined | number,
+        tgLifeNum: undefined | number,
     }
 }
 
@@ -35,7 +35,7 @@ const useHandleQueryTgLife = () => {
             },
             queryData: {
                 facility: selectedFacility,
-                TgLifeNum: selectedTgLifeNum,
+                tgLifeNum: selectedTgLifeNum,
             }
         }
 
