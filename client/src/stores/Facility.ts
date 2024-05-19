@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from 'zustand/middleware'
 
-interface Batch {
+export interface Batch {
     batchName: string;
     batchStartTime: string;
     batchEndTime: string;

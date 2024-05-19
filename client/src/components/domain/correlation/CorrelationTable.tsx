@@ -1,8 +1,8 @@
+import { useMemo, useState, useEffect } from "react";
 import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
-    VisibilityState,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -10,24 +10,6 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/base/select";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/base/scroll-area";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/base/popover";
-import { Check, ChevronsUpDown, MoreHorizontal } from "lucide-react";
-import { Checkbox } from "@/components/base/checkbox";
-import { Label } from "@/components/base/label";
 import {
     Table,
     TableBody,
@@ -35,49 +17,34 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/base/table";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/base/dropdown-menu"
-import { Input } from "@/components/base/input"
+} from "@/components/base/table"
+import { Input } from '@/components/base/input'
+import { Checkbox } from '@/components/base/checkbox';
+import { useCorrelationStore } from '@/stores/Correlation';
+import { useFacilityStore } from '@/stores/Facility';
 import { Button } from "@/components/base/button";
-import { useFacilityStore, Facility, useBatchStore } from "@/stores/Facility"
-
-
-export type Payment = {
-    id: string
-    amount: number
-    status: "pending" | "processing" | "success" | "failed"
-    email: string
-}
 
 
 function CorrelationTable() {
+    const { selectedFacility, setSelectedParameters } = useCorrelationStore();
+    const { facilityList } = useFacilityStore();
 
-
-    const [facility, setFacility] = useState();
-    const [selectedFacility, setSelectedFacility] = useState<string>("")
-    const [selectedParameter, setSelectedParameter] = useState<string | null>("")
-    const { facilityList, updateFacilityList } = useFacilityStore();
-    const changeFacility = (value: string) => {
-        setSelectedParameter(null); // 기존 선택되었던 파라미터 값은 이전 설비이었을 때 선택되었던 파라미터이므로 상태를 null 값으로 초기화
-        setSelectedFacility(value); // 선택된 설비의 정보를 변경
-    }
-
-    const data = facilityList[selectedFacility] ? facilityList[selectedFacility].parameters : [];
-
-    const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = useState({})
-    const [pagination, setPagination] = useState({
-        pageIndex: 0,
-        pageSize: 10,
-    });
-
+    const data = useMemo(
+        () => {
+            if (facilityList[selectedFacility]) {
+                const result = facilityList[selectedFacility].parameters.map((parameter, id) => {
+                    const parameterObj = {
+                        id: id,
+                        parameter: parameter
+                    }
+                    return parameterObj
+                })
+                return result
+            }
+            else return []
+        },
+        [selectedFacility]
+    )
     const columns = [
         {
             id: "select",
@@ -102,21 +69,26 @@ function CorrelationTable() {
             enableHiding: false,
         },
         {
-            accessorKey: "email",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        파라미터
-                        {/* <CaretSortIcon className="ml-2 h-4 w-4" /> */}
-                    </Button>
-                )
-            },
-            cell: ({ row }) => < div > {row.original}</div >,
+            accessorKey: "parameter",
+            header: () => <div className="text-center">파라미터</div>,
+            cell: ({ row }) => {
+                const parameter: string = row.getValue("parameter")
+                return <div className="text-center">{parameter}</div>
+            }
         },
+
+
     ]
+
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [columnVisibility, setColumnVisibility] = useState({})
+    const [rowSelection, setRowSelection] = useState({})
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 7,
+    });
+
 
 
     const table = useReactTable({
@@ -140,48 +112,46 @@ function CorrelationTable() {
         },
     })
 
+
+    useEffect(() => {
+        const parameters = table.getSelectedRowModel().rows.map((row) => row.original.parameter);
+        setSelectedParameters(parameters)
+    }, [rowSelection])
+
+
+
+
     return (
-        <div className="w-full">
+        <>
             <div className="flex items-center py-4">
                 <Input
-                    placeholder="Filter emails..."
-                    value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+                    placeholder="파라미터명으로 검색"
+                    value={(table.getColumn("parameter")?.getFilterValue() as string) ?? ""}
                     onChange={(event) =>
-                        table.getColumn("email")?.setFilterValue(event.target.value)
+                        table.getColumn("parameter")?.setFilterValue(event.target.value)
                     }
-                    className="max-w-sm"
+                    className="w-auto"
                 />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                            Columns
-                            {/* <ChevronDownIcon className="ml-2 h-4 w-4" /> */}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {table
-                            .getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => {
-                                return (
-                                    <>
-                                    </>
-                                    // <DropdownMenuCheckboxItem
-                                    //   key={column.id}
-                                    //   className="capitalize"
-                                    //   checked={column.getIsVisible()}
-                                    //   onCheckedChange={(value) =>
-                                    //     column.toggleVisibility(!!value)
-                                    //   }
-                                    // >
-                                    //   {column.id}
-                                    // </DropdownMenuCheckboxItem>
-                                )
-                            })}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="space-x-2 ml-auto">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        이전
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        다음
+                    </Button>
+                </div>
             </div>
-            <div className="rounded-md border h-[590px]">
+            <div className='rounded-md border h-[426px]'>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -224,39 +194,16 @@ function CorrelationTable() {
                                     colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
-                                    No results.
+                                    파라미터가 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
-                </div>
-                <div className="space-x-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        </div>
+        </>
     )
+
 }
 
 export default CorrelationTable;
