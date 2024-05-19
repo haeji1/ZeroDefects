@@ -144,7 +144,6 @@ function BookmarkTable() {
                                 aria-expanded={open}
                                 className="w-full justify-between"
                             >
-                                {/* {bookmark.find((e) => e.id === row.original.id)?.selectedBatchName || "배치를 선택해 주세요."} */}
                                 {bookmark.find((e) => e.id === row.original.id)?.selectedBatchName || "배치를 선택해 주세요."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>

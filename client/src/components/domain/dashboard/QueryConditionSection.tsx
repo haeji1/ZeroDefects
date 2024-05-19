@@ -3,23 +3,21 @@ import { Card } from "@/components/base/card";
 import { ListOrdered as StepIcon, Clock as TimeIcon } from "lucide-react";
 import { Button } from "@/components/base/button";
 import { useEffect, useState } from "react";
-import { useGraphDataStore } from "@/stores/GraphData";
-import { useSelectedRowStore, useBookmarkStore } from "@/stores/Bookmark";
+import { useSelectedRowStore } from "@/stores/Bookmark";
 import { Label } from "@/components/base/label";
-import { getGraph } from "@/apis/api/api";
 import { useQueryDateTimeStore, useQueryStepStore, useQueryTypeStore, QueryType } from "@/stores/QueryCondition";
-import StepSelect from "@/components/domain/dashboard/StepSelect";
-import TimeSelect from "@/components/domain/dashboard/TimeSelect";
-function GetGraph() {
+import StepSelect from "@/components/common/StepSelect";
+import TimeSelect from "@/components/common/TimeSelect";
+import useHandleQueryData from "@/hooks/useHandleQueryData";
+function QueryConditionSection() {
 
     const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-    const { queryStartDate, queryEndDate, timeValid } = useQueryDateTimeStore();
-    const { queryStartStep, queryEndStep, stepValid } = useQueryStepStore();
+    const { timeValid } = useQueryDateTimeStore();
+    const { stepValid } = useQueryStepStore();
     const { queryType, setQueryType } = useQueryTypeStore();
-    const { bookmark } = useBookmarkStore();
     const { selectedRow } = useSelectedRowStore();
-    const { setIsFetching, setGraphData } = useGraphDataStore()
 
+    const handleQueryData = useHandleQueryData();
 
     // 쿼리 타입 버튼 디자인 변경
     const buttonStyle = (buttonName: QueryType) => ({
@@ -40,54 +38,6 @@ function GetGraph() {
             }
         }
     }, [selectedRow, queryType, timeValid, stepValid])
-
-
-    const handleGetGraph = async () => {
-
-        let queryCondition;
-
-        if (queryType === 'time') {
-            queryCondition = {
-                startTime: queryStartDate.toISOString(),
-                endTime: queryEndDate.toISOString(),
-                step: null,
-            }
-        }
-        else if (queryType === 'step') {
-            const step: number[] = [];
-            for (let i = queryStartStep; i <= queryEndStep; i++) {
-                step.push(i);
-            }
-            queryCondition = {
-                startTime: null,
-                endTime: null,
-                step: step,
-            }
-        }
-        const data = {
-            queryType: queryType,
-            queryCondition: queryCondition,
-            queryData: Object.keys(selectedRow).map((idx) => {
-                const val = bookmark.find((obj) => obj.id === Number(idx));
-                if (!val) return
-                return {
-                    facility: val.facility,
-                    parameter: val.parameter,
-                    batchName: queryType === 'time' ? null : val.selectedBatchName,
-                }
-            })
-        }
-
-        setIsFetching(true)
-        const res = await getGraph(data)
-        if (res) {
-            setGraphData(res.data);
-            setIsFetching(false)
-        }
-        else {
-            setIsFetching(false);
-        }
-    }
 
     return (
         <Card className="flex flex-col gap-5 px-5 py-5">
@@ -111,10 +61,10 @@ function GetGraph() {
                 </div>
             </div>
             <div className="ml-auto">
-                <Button disabled={!isButtonEnabled} onClick={handleGetGraph}>조회</Button>
+                <Button disabled={!isButtonEnabled} onClick={handleQueryData}>조회</Button>
             </div>
         </Card>
     )
 }
 
-export default GetGraph;
+export default QueryConditionSection;
