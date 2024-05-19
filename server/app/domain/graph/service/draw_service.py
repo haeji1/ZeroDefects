@@ -469,10 +469,10 @@ def draw_TGLife_default_graph(df, tg_num):
     plots = []
     metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
     colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
-    sections = [f'section{i}' for i in range(20)]
+    sections = [f'step{i}' for i in range(20)]
     scatters = [[] for _ in range(len(sections))]
     df_sorted = df.sort_values(by='section', ascending=True)
-    multi_choice = MultiChoice(options=sections, placeholder='Sections')
+    multi_choice = MultiChoice(options=sections, placeholder='Steps')
     p = figure(title="Facility Comparison", sizing_mode="scale_width", min_width=800, height=200)
 
     # 섹션별로 데이터프레임 그룹화
