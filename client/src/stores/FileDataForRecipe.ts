@@ -1,6 +1,19 @@
 import { create } from "zustand";
 
-const FileDataForSettings = create((set) => ({
+
+interface FileDataForSettingsState {
+  files: any[];
+  fileCount: number;
+  incrementFileCount: () => void;
+  decrementFileCount: () => void;
+  addFiles: (newFiles: any) => void;
+  deleteFile: (fileName: string) => void;
+  clearFiles: () => void;
+  addOrUpdateFiles: (newFiles: any[]) => void;
+}
+
+
+const FileDataForSettings = create<FileDataForSettingsState>((set) => ({
   files: [],
   fileCount: 0,
   incrementFileCount: () => {
@@ -14,7 +27,7 @@ const FileDataForSettings = create((set) => ({
   deleteFile: (fileName) =>
     set((state) => ({
       files: state.files.filter((file) => file.name !== fileName),
-      fileCount: state.fileCount -1,
+      fileCount: state.fileCount - 1,
     })),
   clearFiles: () => set({ files: [], fileCount: 0 }),
   addOrUpdateFiles: (newFiles) =>
