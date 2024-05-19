@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type QueryType = "time" | "step";
+export type QueryType = "time" | "step" | "lifeCnt";
 
 interface QueryDateTime {
     queryStartDate: Date;
@@ -20,6 +20,14 @@ interface QueryStep {
     setStepValid: (valid: boolean) => void;
 }
 
+interface QueryLifeCnt {
+    queryStartCnt: number;
+    setQueryStartCnt: (cnt: number) => void;
+    queryEndCnt: number;
+    setQueryEndCnt: (cnt: number) => void;
+    lifeCntValid: boolean;
+    setLifeCntValid: (valid: boolean) => void;
+}
 
 interface QueryTypeStore {
     queryType: QueryType;
@@ -43,6 +51,15 @@ export const useQueryStepStore = create<QueryStep>((set) => ({
     stepValid: true,
     setStepValid: (valid) => set({ stepValid: valid }),
 }));
+
+export const useQueryLifeCntStore = create<QueryLifeCnt>((set) => ({
+    queryStartCnt: 0,
+    setQueryStartCnt: (cnt) => set({ queryStartCnt: cnt }),
+    queryEndCnt: 0,
+    setQueryEndCnt: (cnt) => set({ queryEndCnt: cnt }),
+    lifeCntValid: true,
+    setLifeCntValid: (valid) => set({ lifeCntValid: valid }),
+}))
 
 export const useQueryTypeStore = create<QueryTypeStore>((set) => ({
     queryType: "time",

@@ -1,7 +1,7 @@
 import Dashboard from '@/pages/Dashboard'
 import Settings from '@/pages/Settings'
 import Correlation from '@/pages/Correlation'
-import Notification from '@/pages/Notification'
+import TargetLife from '@/pages/TargetLife'
 import Board from "@/pages/Board";
 import {
   createBrowserRouter,
@@ -36,8 +36,8 @@ function App() {
           element: <Correlation />,
         },
         {
-          path: "/notification",
-          element: <Notification />,
+          path: "/tglife",
+          element: <TargetLife />,
         },
         {
           path: "/settings",

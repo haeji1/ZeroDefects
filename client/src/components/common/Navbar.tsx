@@ -9,13 +9,13 @@ function Navbar() {
 
     const [activeLink, setActiveLink] = useState('dashboard');
 
-    const selectedLinkClass = (name : string) => {
+    const selectedLinkClass = (name: string) => {
         return activeLink === name ? 'selected' : '';
     };
 
-    const handleClickLink = (e : React.MouseEvent<HTMLParagraphElement, MouseEvent>) => {
-        const {id} = e.target as React.DetailedHTMLProps<React.HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>;
-       setActiveLink(id!);
+    const handleClickLink = (e: React.MouseEvent<HTMLParagraphElement, MouseEvent>) => {
+        const { id } = e.target as React.DetailedHTMLProps<React.HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>;
+        setActiveLink(id!);
     }
 
     return (
@@ -34,10 +34,10 @@ function Navbar() {
                         <p id='correlation' className={`link ${selectedLinkClass('correlation')}`} onClick={handleClickLink}
                         >상관 분석</p>
                     </Link>
-                    <Link to="/notification">
-                        <p id='notification' className={`link ${selectedLinkClass('notification')}`} onClick={handleClickLink}>
-                            이상 탐지
-                            </p>
+                    <Link to="/tglife">
+                        <p id='tglife' className={`link ${selectedLinkClass('tglife')}`} onClick={handleClickLink}>
+                            수명 분석
+                        </p>
                     </Link>
                     <Link to="/board">
                         <p id='board' className={`link ${selectedLinkClass('board')}`} onClick={handleClickLink}>게시판</p>

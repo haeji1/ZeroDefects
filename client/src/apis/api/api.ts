@@ -51,3 +51,15 @@ export const getCorrelationGraph = async (data: object) => {
     // 에러 처리
   }
 }
+
+export const getTargetLifeGraph = async (data: object) => {
+  try {
+    console.log("그래프 데이터를 요청합니다.");
+    const res = await axios.post("http://localhost:8000/facility/read/tg", data)
+    console.log("그래프 데이터를 가져오기 완료");
+    return res;
+  } catch (err) {
+    console.log("그래프 데이터를 가져오는 데에 실패하였습니다.", err);
+    // 에러 처리
+  }
+}
