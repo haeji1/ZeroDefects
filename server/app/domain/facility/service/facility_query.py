@@ -57,7 +57,7 @@ def field_by_time_query(b: str, facility: str, field: str,
 
     base_query = f'''
             from(bucket: "{b}")
-                |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+                |> range(start: time(v: "{start_date}"), st3op: time(v: "{end_date}"))
                 |> filter(fn: (r) => r["_measurement"] == "{facility}" and r["_field"] == "{field}")\n
             '''
     window_query = "|> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false\n" if window_size != 0 else "\n"
