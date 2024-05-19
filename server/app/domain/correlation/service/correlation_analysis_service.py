@@ -31,9 +31,9 @@ def analyze_correlation(request_body):
         end_time = end_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         section = CorrelationSectionData(
-            facility=request_body.queryData[0].facility,
-            batchName=request_body.queryData[0].batchName,
-            parameter=request_body.queryData[0].parameter,
+            facility=request_body.queryData.facility,
+            batchName=request_body.queryData.batchName,
+            parameter=request_body.queryData.parameter,
             startTime=start_time,
             endTime=end_time
         )

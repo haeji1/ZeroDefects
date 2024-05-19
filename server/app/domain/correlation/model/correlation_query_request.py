@@ -9,4 +9,4 @@ from app.domain.correlation.model.correlation_query_data import CorrelationQuery
 class CorrelationQueryRequest(BaseModel):
     queryType: str
     queryCondition: CorrelationQueryCondition
-    queryData: List[CorrelationQueryData]
+    queryData: CorrelationQueryData
