@@ -151,7 +151,6 @@ def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: 
               |> keep(columns: ["_TG{num}Life[kWh]", "section", "count", "sum", "max", "min"])
             """
 
-
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
