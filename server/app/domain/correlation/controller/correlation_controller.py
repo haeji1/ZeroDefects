@@ -2,14 +2,14 @@ from bokeh.embed import json_item
 from fastapi import APIRouter, HTTPException
 from starlette.responses import JSONResponse
 
+from app.domain.correlation.model.correlation_query_request import CorrelationQueryRequest
 from app.domain.correlation.service.correlation_analysis_service import analyze_correlation
-from app.domain.section.model.graph_query_request import GraphQueryRequest
 
 correlation_router = APIRouter(prefix="/api", tags=['correlation'])
 
 
 @correlation_router.post("/correlation")
-async def get_correlation_analysis(request_body: GraphQueryRequest):
+async def get_correlation_analysis(request_body: CorrelationQueryRequest):
     print("\n\nrequest_body:", request_body)
     if request_body.queryType != "time" and request_body.queryType != "step":
         raise HTTPException(status_code=404, detail="queryType must be 'time' or 'step'")

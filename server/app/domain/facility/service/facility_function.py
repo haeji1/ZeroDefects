@@ -7,6 +7,7 @@ import warnings
 from influxdb_client.client.warnings import MissingPivotFunction
 from influxdb_client import InfluxDBClient
 
+from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
 from app.domain.facility.model.facility_data import FacilityData, TGLifeData
 from app.domain.facility.repository.influx_client import InfluxGTRClient
 from app.domain.facility.service.facility_query import section_query, execute_query
@@ -49,7 +50,7 @@ def get_TG_datas(condition: TGLifeData):
     return contents
 
 
-def get_correlation_datas(condition: SectionData):
+def get_correlation_datas(condition: CorrelationSectionData):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
     contents = client.read_correlation_data(condition)
     return contents

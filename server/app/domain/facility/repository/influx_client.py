@@ -13,6 +13,7 @@ from influxdb_client.client.write.dataframe_serializer import data_frame_to_list
 from typing import List
 from loguru import logger
 
+from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
@@ -562,22 +563,22 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
         return answer_df
 
-    def read_correlation_data(self, condition: SectionData):
+    def read_correlation_data(self, condition: CorrelationSectionData):
         print("\n\n\ncondition:", condition)
         # query that get data by parameter & time
 
         query = correlation_query(
-            b=self.bucket_name, facility=condition.facility, start_date=condition.startTime, end_date=condition.endTime
+            b=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime, end_date=condition.endTime
         )
         try:
             query_s = time.time()
             df = execute_query(self.client, query)
             print('query time ', time.time() - query_s)
-            print("\n\nbefore df:", df)
-            df['Time'] = pd.to_datetime(df['Time'])
+            # print("\n\nbefore df:", df)
+            # df['Time'] = pd.to_datetime(df['Time'])
             df = df.drop(columns=['Time', '_start', '_stop', '_measurement', 'batch', 'section',
                                   'TG1Life[kWh]_TAG', 'TG2Life[kWh]_TAG', 'TG4Life[kWh]_TAG', 'TG5Life[kWh]_TAG'])
-            print("\n\nafter df:", df)
+            # print("\n\nafter df:", df)
 
             if df is None:
                 return None
