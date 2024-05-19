@@ -13,7 +13,7 @@ import ChartLoadingGIF from "@/assets/chartloading.json"
 import { useCorrelationStore } from "@/stores/Correlation";
 
 
-function GraphSection() {
+function CorrelationGraphSection() {
 
     const { isFetching, graphData, isCollapse, setIsCollapse } = useCorrelationStore();
 
@@ -47,4 +47,4 @@ function GraphSection() {
     );
 }
 
-export default GraphSection;
+export default CorrelationGraphSection;

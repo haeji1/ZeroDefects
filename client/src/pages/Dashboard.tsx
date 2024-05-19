@@ -1,9 +1,8 @@
-import { Card } from "@/components/base/card";
 import { Sidebar } from 'react-pro-sidebar';
 import GraphSection from "@/components/domain/dashboard/GraphSection";
 import BookmarkTable from "@/components/domain/dashboard/BookmarkTable";
 import Addlist from "@/components/domain/dashboard/AddList";
-import GetGraph from "@/components/domain/dashboard/GetGraph";
+import QueryConditionSection from "@/components/domain/dashboard/QueryConditionSection";
 import { useGraphDataStore } from "@/stores/GraphData";
 
 
@@ -21,7 +20,7 @@ function Dashboard() {
             >
                 <BookmarkTable />
                 <Addlist />
-                <GetGraph />
+                <QueryConditionSection />
             </Sidebar>
             <div className="w-full">
                 <GraphSection />

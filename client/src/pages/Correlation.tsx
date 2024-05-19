@@ -1,5 +1,5 @@
 import { Sidebar } from 'react-pro-sidebar';
-import GraphSection from '@/components/domain/correlation/GraphSection';
+import CorrelationGraphSection from '@/components/domain/correlation/CorrelationGraphSection';
 import QueryTypeSection from '@/components/domain/correlation/QueryTypeSection';
 import { useCorrelationStore } from '@/stores/Correlation';
 
@@ -21,7 +21,7 @@ function Correlation() {
                     <QueryTypeSection />
                 </Sidebar>
                 <div className="w-full">
-                    <GraphSection />
+                    <CorrelationGraphSection />
                 </div>
             </div>
         </>
