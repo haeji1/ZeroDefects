@@ -11,7 +11,7 @@ import {
   TableFooter,
 } from "@/components/base/table";
 import { ScrollArea } from "@/components/base/scroll-area";
-import {formatFileSize} from "@/lib/formatFileSize"
+import { formatFileSize } from "@/lib/formatFileSize";
 
 const FileList = () => {
   const { files, deleteFile } = FileDataForSettings((state) => ({
@@ -20,7 +20,7 @@ const FileList = () => {
   }));
 
   return (
-    <div style={{ width: "100%", height: "300px", textAlign: ""}}>
+    <div style={{ width: "100%", height: "300px", textAlign: "" }}>
       <ScrollArea className="h-[100%] w-[100%] rounded-md border">
         <Table>
           <TableHeader>
@@ -52,6 +52,6 @@ const FileList = () => {
       </ScrollArea>
     </div>
   );
-}; 
+};
 
 export default FileList;
