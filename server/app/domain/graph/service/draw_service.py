@@ -335,6 +335,9 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
 
     data_table_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
     statistics_table_title = Div(text="""<h2>Statistics</h2>""", width=400, height=30)
+    setting_multi_choice_title = Div(text="""<h3>Choose Settings</h3>""", width=400, height=30)
+    multi_choice_title = Div(text="""<h3>Choose Steps</h3>""", width=400, height=30)
+    tab_title =  Div(text="""<h2>Graph</h2>""", width=400, height=40)
     multi_choice = MultiChoice(options=toggle_labels, placeholder='Steps')
     multi_choice_callback = CustomJS(
         args=dict(multi_choice=multi_choice, box_annotations=box_annotations, toggle_labels=toggle_labels), code="""
@@ -381,11 +384,12 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
 
     layout_1 = layout(
     [
+                [setting_multi_choice_title],
                 [setting_multi_choice],
+                [multi_choice_title],
                 [multi_choice],
-                # [grid],
+                [tab_title],
                 [Tabs(tabs=tabs)],
-                # [toggles],
                 [data_table_title],
                 [data_table],
                 [statistics_table_title],
