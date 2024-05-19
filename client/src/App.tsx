@@ -1,21 +1,16 @@
-import Dashboard from '@/pages/Dashboard'
-import Settings from '@/pages/Settings'
-import Correlation from '@/pages/Correlation'
-import Notification from '@/pages/Notification'
+import Dashboard from "@/pages/Dashboard";
+import Settings from "@/pages/Settings";
+import Correlation from "@/pages/Correlation";
+import Notification from "@/pages/Notification";
 import Board from "@/pages/Board";
-import {
-  createBrowserRouter,
-  Navigate,
-  RouterProvider,
-} from 'react-router-dom'
-import Navbar from '@/components/common/Navbar';
-import ReactDOM from 'react-dom/client'
-import "@/app/global.css"
+import TGLifePage from "@/pages/TGLifePage";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import Navbar from "@/components/common/Navbar";
+import ReactDOM from "react-dom/client";
+import "@/app/global.css";
 import { Toaster } from "./components/base/toaster";
 // import BoardDetail from "./components/domain/board/post/DetailedPost";
 import BoardDetail from "./components/domain/board/post/BoardDetail";
-
-
 
 function App() {
   const router = createBrowserRouter([
@@ -25,7 +20,7 @@ function App() {
       children: [
         {
           index: true,
-          element: <Navigate to="/dashboard" replace />
+          element: <Navigate to="/dashboard" replace />,
         },
         {
           path: "/dashboard",
@@ -49,23 +44,22 @@ function App() {
         },
         {
           path: "/board/:ids",
-          element: <BoardDetail />
-        }
+          element: <BoardDetail />,
+        },
+        {
+          path: "/tglife",
+          element: <TGLifePage />,
+        },
       ],
     },
-
-  ])
+  ]);
 
   return (
     <>
       <RouterProvider router={router} />
       <Toaster />
     </>
-
-  )
+  );
 }
 
-export default App
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
-)
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(<App />);
