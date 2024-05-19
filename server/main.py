@@ -1,29 +1,22 @@
 # fastapi
 import uvicorn
 from fastapi import FastAPI
+from fastapi_pagination import add_pagination
 
-from app.dbtest import timescale
-# bokeh
-
-from app.models.influx.influx_models import FacilityData
-
-from app.routers.bokeh import bokeh_router
-from app.routers.influx import influx_router
-from app.routers.mongo import mongo_router
-from app.routers.section import section_router
-from app.dbtest import timescale
-
-# postgreSQL
-
-# data frame
+from app.domain.board.controller import board_controller
+from app.domain.correlation.controller import correlation_controller
+from app.domain.facility.controller import facility_controller
+from app.domain.graph.controller import graph_controller
+from app.domain.recipe.controller import recipe_controller
+from app.domain.section.controller import batch_controller
 
 # cors
 from fastapi.middleware.cors import CORSMiddleware
-
 origins = [
     "*",
 ]
 app = FastAPI()
+add_pagination(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -32,7 +25,9 @@ app.add_middleware(
     allow_headers=["*"],     # cross-origin request에서 허용할 HTTP Header 목록
 )
 
-app.include_router(bokeh_router.router)
-app.include_router(influx_router.influx_router)
-app.include_router(mongo_router.mongo_router)
-app.include_router(section_router.section_router)
+app.include_router(graph_controller.graph_router)
+app.include_router(facility_controller.facility_router)
+app.include_router(batch_controller.section_router)
+app.include_router(recipe_controller.recipe_router)
+app.include_router(board_controller.post_router)
+app.include_router(correlation_controller.correlation_router)
