@@ -1,14 +1,11 @@
-import React from "react";
 import FileDataForSettings from "@/stores/FileDataForSettingStore";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter,
 } from "@/components/base/table";
 import { ScrollArea } from "@/components/base/scroll-area";
 import { formatFileSize } from "@/lib/formatFileSize";

@@ -1,9 +1,7 @@
-import React from "react";
 import FileDataForRecipe from "@/stores/FileDataForRecipe";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
