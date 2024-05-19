@@ -129,7 +129,7 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
                               start_date=start_date, end_date=end_date, count=count)
 
 
-def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: str) -> object:
+def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: str):
     return f"""
             from(bucket: "{b}")
               |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))

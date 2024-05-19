@@ -318,7 +318,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     def read_TG_data(self, condition: TGLifeData) -> object:
 
         start_time = time.time()
-
+        print(' read tg data ... ')
         answer_df = self.TG_query_v2(client=self.client, condition=condition, b=self.bucket_name)
 
         print("==========answer df==========")
@@ -328,7 +328,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         return answer_df
 
     @classmethod
-    def TG_query_v2(cls, client, condition, b, ) -> pd.DataFrame:
+    def TG_query_v2(cls, client, condition, b) -> pd.DataFrame:
         try:
             query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tgLifeNum,
                                     start_date=condition.startTime, end_date=condition.endTime)

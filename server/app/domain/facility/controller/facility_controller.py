@@ -3,7 +3,7 @@ from starlette.responses import JSONResponse
 
 from typing import List
 
-from app.domain.facility.model.facility_data import TGLifeData
+from app.domain.facility.model.facility_data import TGLifeData, TGLifeModel
 from app.domain.facility.repository.influx_client import InfluxGTRClient
 from app.domain.facility.service.facility_function import get_facilities_info, get_TG_datas
 from app.domain.graph.service.draw_service import draw_TGLife_default_graph
@@ -34,14 +34,21 @@ async def get_info_test():
 
 # for test
 @facility_router.post("/read/tg")
-async def read_tg_influxdb(model: TGLifeData):
+async def read_tg_influxdb(model: TGLifeModel):
+
+    lifeModel = TGLifeData
+    lifeModel.facility = model.queryData.facility
+    lifeModel.tgLifeNum = model.queryData.tgLifeNum
+    lifeModel.startTime = model.queryCondition.startTime
+    lifeModel.endTime = model.queryCondition.endTime
+
     try:
-        contents = get_TG_datas(model)
+        contents = get_TG_datas(lifeModel)
         if contents is None:
             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
         else:
-
-            return JSONResponse(status_code=200, content={'msg': draw_TGLife_default_graph(contents, model.tgLifeNum)})
+            return draw_TGLife_default_graph(contents, model.queryData.tgLifeNum)
+            # return JSONResponse(status_code=200, content={'msg': })
     except Exception as e:
         print(e)
         return JSONResponse(status_code=400, content={'msg': str(e)})

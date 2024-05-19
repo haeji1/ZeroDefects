@@ -4,7 +4,7 @@ from pprint import pprint
 
 import numpy as np
 from bokeh.layouts import column, layout
-from bokeh.models import (TableColumn, DataTable, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,CustomJS)
+from bokeh.models import (TableColumn, DataTable, CrosshairTool, Tabs, TabPanel, Div, MultiChoice, CustomJS, LabelSet)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -483,10 +483,22 @@ def draw_TGLife_default_graph(df, tg_num):
     print(df)
 
     plots = []
+    metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
+    colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
+    # colors = ['blue', 'green']
     p = figure(width=1200, height=600)
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df['count'], line_color="red")
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}V[V]'], line_color="blue")
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}I[A]'], line_color="green")
+
+    source = ColumnDataSource(df)
+    for i in range(1, 6):
+        p.scatter(x=df[f'TG{tg_num}Life[kWh]'], y=df[metrics[i]], color=colors[i], size=10, alpha=0.6,
+                  legend_label=metrics[i])
+        labels = LabelSet(x=f'TG{tg_num}Life[kWh]', y=metrics[i], text='section', level='glyph',
+                          x_offset=5, y_offset=5, source=source)
+        p.add_layout(labels)
+
+    p.legend.click_policy = "hide"
+    p.toolbar.autohide = True
+    p.toolbar.logo = None
 
     # box1 = BoxAnnotation(left=8620, right=8630, fill_color="red", fill_alpha=0.1)
     # box2 = BoxAnnotation(left=8625, right=8635, fill_color="blue", fill_alpha=0.1)
