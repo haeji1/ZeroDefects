@@ -16,6 +16,7 @@ import { useQueryTypeStore, QueryType } from "@/stores/QueryCondition";
 import CorrelationTable from "@/components/domain/correlation/CorrelationTable";
 import StepSelect from "./StepSelect";
 import TimeSelect from "../dashboard/TimeSelect";
+import useHandleQueryCorrelation from "@/hooks/useHandleQueryCorrelation";
 
 function QueryTypeButton() {
     const { queryType, setQueryType } = useQueryTypeStore();
@@ -67,7 +68,11 @@ function QueryInput() {
     else if (queryType === 'step') return <StepSelect />
 }
 
+
+
 function QueryTypeSection() {
+
+    const handleQueryCorrelation = useHandleQueryCorrelation();
 
     return (
         <Card className="p-5">
@@ -77,7 +82,8 @@ function QueryTypeSection() {
             <QueryInput />
             <div className="ml-auto">
                 <Button
-                // disabled={!isButtonEnabled} onClick={handleGetGraph}
+                    // disabled={!isButtonEnabled} 
+                    onClick={handleQueryCorrelation}
                 >조회</Button>
             </div>
         </Card>

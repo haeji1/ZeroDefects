@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -30,6 +30,8 @@ function CorrelationTable() {
     const { selectedFacility } = useCorrelationStore();
     const { facilityList } = useFacilityStore();
 
+
+
     const data = useMemo(
         () => {
             if (facilityList[selectedFacility]) {
@@ -39,7 +41,6 @@ function CorrelationTable() {
                     }
                     return parameterObj
                 })
-                console.log(result)
                 return result
             }
             else return []
@@ -92,6 +93,9 @@ function CorrelationTable() {
 
 
 
+    useEffect(() => {
+        console.log(rowSelection);
+    }, [rowSelection])
 
     const table = useReactTable({
         data,
