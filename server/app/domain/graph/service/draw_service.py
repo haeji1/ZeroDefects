@@ -4,7 +4,7 @@ from pprint import pprint
 
 from bokeh.layouts import column, layout, gridplot
 from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
-                          CheckboxGroup, Dropdown, TextInput, CustomJS)
+                          CheckboxGroup, Dropdown, TextInput, CustomJS, LabelSet)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -67,17 +67,16 @@ def draw_graph_time_standard(graph_df):
         time_values = pd.to_datetime(df['Time'], utc=True)
         df["Time"] = pd.to_datetime(df["Time"])
 
-
         color = colors[len(p.renderers) % len(colors)]
         source = ColumnDataSource(data={'Time': time_values, 'Value': df[df.columns[-1]]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
 
         hover = HoverTool(renderers=[line], tooltips=[
-                     ('facility', f'{facility}'),
-                     ('time', '@Time{%F %T}'),
-                     ('Value', '$y')
-                 ], formatters={'@Time': 'datetime'})
+            ('facility', f'{facility}'),
+            ('time', '@Time{%F %T}'),
+            ('Value', '$y')
+        ], formatters={'@Time': 'datetime'})
 
         hover2 = HoverTool(renderers=[line2], tooltips=[
             ('facility', f'{facility}'),
@@ -144,12 +143,12 @@ def draw_graph_time_standard(graph_df):
 
     layout_1 = layout(
         [
-                [Tabs(tabs=tabs)],
-                [data_table_title],
-                [data_table],
-                [statistics_table_title],
-                [statistics_table],
-            ],
+            [Tabs(tabs=tabs)],
+            [data_table_title],
+            [data_table],
+            [statistics_table_title],
+            [statistics_table],
+        ],
 
         sizing_mode="stretch_width",
     )
@@ -172,19 +171,21 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     box_annotations = []
     lines = []
 
-    p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
+    p = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value",
+               min_width=800, height=200)
 
     start_time = min(df["Time"].min() for df in graph_df)
     batch_cnt = 0
     data_list = []
     for df in graph_df:
-        plot = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value", min_width=800, height=200)
+        plot = figure(title="Facility Comparison", sizing_mode="scale_width", x_axis_label="Time", y_axis_label="Value",
+                      min_width=800, height=200)
 
         time_values = (df["Time"] - start_time).dt.total_seconds()
         min_time = time_values.min()
         facility, column_name = df.columns[-1].split('-')
         batch_name = batch_name_list[batch_cnt]
-        facility_step_times = step_times.get(facility+batch_name, {})
+        facility_step_times = step_times.get(facility + batch_name, {})
         batch_cnt += 1
         time_values -= time_values.min()
 
@@ -326,24 +327,24 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     setting_multi_choice.js_on_change("value", setting_multi_choice_callback)
 
     layout_1 = layout(
-    [
-                [setting_multi_choice],
-                [multi_choice],
-                # [grid],
-                [Tabs(tabs=tabs)],
-                # [toggles],
-                [data_table_title],
-                [data_table],
-                [statistics_table_title],
-                [statistics_table],
-            ],
-
+        [
+            [setting_multi_choice],
+            [multi_choice],
+            # [grid],
+            [Tabs(tabs=tabs)],
+            # [toggles],
+            [data_table_title],
+            [data_table],
+            [statistics_table_title],
+            [statistics_table],
+        ],
         sizing_mode="stretch_width",
     )
 
     plots.append(layout_1)
 
     return plots
+
 
 def extract_setting_values(request):
     options = []
@@ -375,6 +376,7 @@ def extract_setting_values(request):
                         select_name = (f"{facility}-{step_number}-{column_key}-{info_name}")
                         options.append(select_name)
     return options
+
 
 def make_setting_lines(request):
     # pprint(request)
@@ -424,7 +426,8 @@ def draw_detail_section_graph(graph_df, step_times):
 
     for df in graph_df:
         colors = Category10_10
-        p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
+        p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value",
+                   max_height=1000)
         start_time = min(df["Time"].min() for df in graph_df)
         time_values = (df["Time"] - start_time).dt.total_seconds()
         facility, column_name = df.columns[-1].split('-')
@@ -455,7 +458,6 @@ def draw_detail_section_graph(graph_df, step_times):
         ])
         p.add_tools(hover)
 
-
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
     p.legend.location = "top_left"
@@ -467,22 +469,51 @@ def draw_detail_section_graph(graph_df, step_times):
 
     return plots
 
+
 def draw_TGLife_default_graph(df, tg_num):
     print('=======df=======')
     print(df)
 
     plots = []
+    # metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
+    metrics = ['section', 'count']
+    # colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
+    colors = ['blue', 'green']
     p = figure(width=1200, height=600)
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df['count'], line_color="red")
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}V[V]'], line_color="blue")
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}I[A]'], line_color="green")
 
-    # box1 = BoxAnnotation(left=8620, right=8630, fill_color="red", fill_alpha=0.1)
-    # box2 = BoxAnnotation(left=8625, right=8635, fill_color="blue", fill_alpha=0.1)
-    # p.add_layout(box1)
-    # p.add_layout(box2)
+    tglife_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
+    statistics_table = DataTable(source=datasource, columns=columns, index_position=0,
+                                 index_header="row", sizing_mode="stretch_width")
+
+    source = ColumnDataSource(df)
+    for i in range(1, 2):
+        p.scatter(x=df[f'TG{tg_num}Life[kWh]'], y=df[metrics[i]], color=colors[i], size=10, alpha=0.6,
+                  legend_label=metrics[i])
+        labels = LabelSet(x=f'TG{tg_num}Life[kWh]', y=metrics[i], text='section', level='glyph',
+                          x_offset=5, y_offset=5, source=source)
+        p.add_layout(labels)
+
+    p.legend.title = 'Metrics'
+    p.legend.location = 'top_left'
+
+    hover = HoverTool()
+    p.add_tools(hover)
 
     bokeh_layout = column(p, sizing_mode="stretch_both")
     plots.append(bokeh_layout)
+
+    layout_1 = layout(
+        [[tglife_title], [tglife_datatable_title], [tglife_datatable]],
+            # [setting_multi_choice],
+            # [multi_choice],
+            # # [grid],
+            # [Tabs(tabs=tabs)],
+            # # [toggles],
+            # [data_table_title],
+            # [data_table],
+            # [statistics_table_title],
+            # [statistics_table],
+        sizing_mode="stretch_width",
+    )
 
     return json_item(bokeh_layout)

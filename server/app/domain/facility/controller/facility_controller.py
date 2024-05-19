@@ -41,7 +41,7 @@ async def read_tg_influxdb(model: TGLifeData):
             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
         else:
 
-            return JSONResponse(status_code=200, content={'msg': draw_TGLife_default_graph(contents, model.tg_life_num)})
+            return JSONResponse(status_code=200, content={'msg': draw_TGLife_default_graph(contents, model.tgLifeNum)})
     except Exception as e:
         print(e)
         return JSONResponse(status_code=400, content={'msg': str(e)})

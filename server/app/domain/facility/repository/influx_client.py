@@ -329,19 +329,19 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     @classmethod
     def TG_query_v2(cls, client, condition, b, ) -> pd.DataFrame:
         try:
-            query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tg_life_num,
+            query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tgLifeNum,
                                     start_date=condition.startTime, end_date=condition.endTime)
 
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             result_df = execute_query(client, query)
-            result_df.rename(columns={f'_TG{condition.tg_life_num}Life[kWh]': f'TG{condition.tg_life_num}Life[kWh]'},
+            result_df.rename(columns={f'_TG{condition.tgLifeNum}Life[kWh]': f'TG{condition.tgLifeNum}Life[kWh]'},
                              inplace=True)
-            result_df[f'TG{condition.tg_life_num}Life[kWh]'] = result_df[
-                f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+            result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = result_df[
+                f'TG{condition.tgLifeNum}Life[kWh]'].astype(float)
             result_df['section'] = result_df['section'].astype(float)
 
-            result_df.sort_values(by=[f'TG{condition.tg_life_num}Life[kWh]', 'section'], ascending=[True, True],
+            result_df.sort_values(by=[f'TG{condition.tgLifeNum}Life[kWh]', 'section'], ascending=[True, True],
                                   axis=0, inplace=True)
             result_df.reset_index(drop=True, inplace=True)
             print("===========before===========")
