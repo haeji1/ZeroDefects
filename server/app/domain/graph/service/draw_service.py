@@ -3,9 +3,8 @@ from bokeh.embed import json_item
 from pprint import pprint
 
 import numpy as np
-from bokeh.layouts import column, layout, gridplot
-from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
-                          CheckboxGroup, Dropdown, TextInput, CustomJS)
+from bokeh.layouts import column, layout
+from bokeh.models import (TableColumn, DataTable, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,CustomJS)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -295,6 +294,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             step_x_range = pd.Series(step_x_range)
             line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
             line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
+            line2 = plot.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
             lines.append(line)
 
     p.x_range.start = 0
@@ -393,8 +393,6 @@ def extract_setting_values(request):
     return options
 
 def make_setting_lines(request):
-    # pprint(request)
-    # pprint(request)
     setting_info = []
     time_info = []
     setting_values = []
@@ -425,75 +423,19 @@ def make_setting_lines(request):
                 if column_key == "Time":
                     step_time = step_columns['Time']
                     time_info.append(step_time)
-                    # print(time_info)
                 else:
                     # 안에 있는 최종 키들 (Step1-ICP-ICP1, Step1-TG1-Power)
                     step_column_info = list(sorted(step_columns[column_key].keys()))
-                    # pprint(step_column_info)
                     for l in range(len(step_column_info)):
                         info_name = step_column_info[l]
-                        # pprint(step_columns[column_key][info_name])
                         value = step_columns[column_key][info_name]
                         setting_values.append(value)
                         setting_info.append({"Time": step_time, "Value": value})
-                        # setting_step_and_values.append(({"Step": step_number, 'Value': value}))
-                        # step_values_list.append({"Step": step_number, 'Value': value})
                         step_values_list.append(value)
             setting_step_and_values.append(step_values_list)
-    # pprint(setting_step_and_values)
-    # print(len(setting_step_and_values))
-    # print(setting_step_and_values[0])
 
     return setting_values, setting_step_and_values
 
-
-def draw_detail_section_graph(graph_df, step_times):
-    plots = []
-
-    for df in graph_df:
-        colors = Category10_10
-        p = figure(title="Facility Graph", sizing_mode="scale_both", x_axis_label="Time", y_axis_label="Value", max_height=1000)
-        start_time = min(df["Time"].min() for df in graph_df)
-        time_values = (df["Time"] - start_time).dt.total_seconds()
-        facility, column_name = df.columns[-1].split('-')
-
-        facility_step_times = step_times.get(facility, {})
-
-        color = colors[len(p.renderers) % len(colors)]
-
-        for step, step_time in facility_step_times.items():
-            start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
-            start_x = (pd.to_datetime(step_time['startTime']) - pd.to_datetime(start_time_str)).total_seconds()
-            end_x = (pd.to_datetime(step_time['endTime']) - pd.to_datetime(start_time_str)).total_seconds()
-            start_x -= time_values.min()
-            end_x -= time_values.min()
-
-            box_annotation = BoxAnnotation(left=start_x, right=end_x, fill_color=color, fill_alpha=0.1)
-            p.add_layout(box_annotation)
-
-        time_values -= time_values.min()
-
-        color = colors[len(p.renderers) % len(colors)]
-        source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
-        line = p.line(x='Time', y='Value', source=source, legend_label=f'{facility} - {column_name}', color=color)
-        hover = HoverTool(renderers=[line], tooltips=[
-            ('facility', f'{facility}'),
-            ('time', '@Time seconds'),
-            ('Value', '$y')
-        ])
-        p.add_tools(hover)
-
-
-    p.x_range.start = 0
-    p.xaxis.formatter = NumeralTickFormatter(format="0")
-    p.legend.location = "top_left"
-    p.legend.click_policy = "hide"
-    p.toolbar.autohide = True
-    p.toolbar.logo = None
-
-    plots.append(p)
-
-    return plots
 
 def draw_TGLife_default_graph(df, tg_num):
     print('=======df=======')
