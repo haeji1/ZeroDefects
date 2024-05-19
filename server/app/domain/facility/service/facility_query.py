@@ -136,7 +136,7 @@ def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: 
               |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
               |> filter(fn: (r) => r["_measurement"] == "{facility}")
               |> filter(fn: (r) => r["_field"] == "P.TG{num}V[V]")
-              |> filter(fn: (r) => r.section != "-")
+              |> filter(fn: (r) => r.section != "-" and int(v: r.section) < 20)
               |> group(columns: ["section", "TG{num}Life[kWh]_TAG"])
               |> reduce(
                   identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, "_TG{num}Life[kWh]": 20000.0}},
