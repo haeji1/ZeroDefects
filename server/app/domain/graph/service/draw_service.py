@@ -14,6 +14,7 @@ from bokeh.plotting import figure
 
 # data frame
 import pandas as pd
+from starlette.responses import JSONResponse
 
 
 def draw_dataframe_to_graph(graph_type, graph_df, steps_times_info=None, batch_name_list=None, request=None):
@@ -403,7 +404,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     plots.append(layout_1)
     return plots
 
-
 def extract_setting_values(request):
     options = []
     for i in range(len(request)):
@@ -434,7 +434,6 @@ def extract_setting_values(request):
                         select_name = (f"{facility}-{step_number}-{column_key}-{info_name}")
                         options.append(select_name)
     return options
-
 
 def make_setting_lines(request):
     setting_info = []
@@ -481,51 +480,69 @@ def make_setting_lines(request):
     return setting_values, setting_step_and_values
 
 
-
 def draw_TGLife_default_graph(df, tg_num):
     print('=======df=======')
     print(df)
 
     plots = []
-    # metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
-    metrics = ['section', 'count']
-    # colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
-    colors = ['blue', 'green']
-    p = figure(width=1200, height=600)
+    metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
+    colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
+    sections = [f'section{i}' for i in range(20)]
+    scatters = [[] for _ in range(len(sections))]
+    df_sorted = df.sort_values(by='section', ascending=True)
+    multi_choice = MultiChoice(options=sections, placeholder='Sections')
+    p = figure(title="Facility Comparison", sizing_mode="scale_width", min_width=800, height=200)
 
-    tglife_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
-    statistics_table = DataTable(source=datasource, columns=columns, index_position=0,
-                                 index_header="row", sizing_mode="stretch_width")
+    # 섹션별로 데이터프레임 그룹화
+    grouped = df_sorted.groupby('section')
+    for section, group in grouped:
+        for i, metric in enumerate(metrics[1:], start=1):  # 섹션을 제외한 나머지 메트릭에 대해 반복
+            source = ColumnDataSource(data={'TG2Life[kWh]': group['TG2Life[kWh]'], metric: group[metric]})
+            scatter = p.scatter(x='TG2Life[kWh]', y=metric, source=source, color=colors[i - 1], size=10,
+                                legend_label=metric)
 
-    source = ColumnDataSource(df)
-    for i in range(1, 2):
-        p.scatter(x=df[f'TG{tg_num}Life[kWh]'], y=df[metrics[i]], color=colors[i], size=10, alpha=0.6,
-                  legend_label=metrics[i])
-        labels = LabelSet(x=f'TG{tg_num}Life[kWh]', y=metrics[i], text='section', level='glyph',
-                          x_offset=5, y_offset=5, source=source)
-        p.add_layout(labels)
+            hover = HoverTool(renderers=[scatter], tooltips=[
+                ('Tg', '$x'),
+                ('Value', '$y')
+            ])
+            p.add_tools(hover)
+            section_index = int(section)
+            if section_index < 20:
+                scatters[section_index].append(scatter)  # 섹션 번호에 해당하는 리스트에 scatter 추가
 
-    p.legend.title = 'Metrics'
-    p.legend.location = 'top_left'
+    p.legend.click_policy = "hide"
+    p.toolbar.autohide = True
+    p.toolbar.logo = None
 
-    hover = HoverTool()
-    p.add_tools(hover)
+    tg_multi_choice_callback = CustomJS(
+        args=dict(multi_choice=multi_choice, scatters=scatters, sections=sections), code="""
+            const selected = multi_choice.value;
+            for (let i = 0; i < sections.length; i++) {
+                const section_scatter = scatters[i]
+                for (let j = 0; j < section_scatter.length; j++) {
+                    if (selected.includes(sections[i])) {
+                        section_scatter[j].visible = false;
+                    } else {
+                        section_scatter[j].visible = true;
+                    }
+                }
+            }
+    """)
+
+    multi_choice.js_on_change("value", tg_multi_choice_callback)
 
     bokeh_layout = column(p, sizing_mode="stretch_both")
     plots.append(bokeh_layout)
 
-    layout_1 = layout(
-        [[tglife_title], [tglife_datatable_title], [tglife_datatable]],
-            # [setting_multi_choice],
-            # [multi_choice],
-            # # [grid],
-            # [Tabs(tabs=tabs)],
-            # # [toggles],
-            # [data_table_title],
-            # [data_table],
-            # [statistics_table_title],
-            # [statistics_table],
+    layout1 = layout(
+    [
+            [multi_choice],
+            [p]
+        ],
         sizing_mode="stretch_width",
     )
+    plots.append(layout1)
+    plot_json = [json_item(plot, f'TG{tg_num}Life[kWh]') for plot in plots]
+    return JSONResponse(plot_json)
 
-    return json_item(bokeh_layout)
+

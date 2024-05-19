@@ -85,7 +85,6 @@ async def draw_graph(request_body: GraphQueryRequest):
         for query_data in request_body.queryData:
             batch_name = query_data.batchName
             batch_name_list.append(batch_name)
-        # setting_value_of_steps = get_step_info_using_facility_name_on_mongoDB(request_body)
         sections = get_sections_info(request_body)
         sections_list: List[SectionData] = []
 
