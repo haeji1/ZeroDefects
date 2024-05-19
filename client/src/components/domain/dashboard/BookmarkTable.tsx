@@ -43,7 +43,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/base/table"
-import { Label } from "@/components/base/label";
 import { useBatchStore } from "@/stores/Facility";
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 
@@ -55,7 +54,7 @@ function BookmarkTable() {
 
 
     // Tanstack Table 세팅에 필요한 Hook 들
-    const data: Bookmark[] = bookmark.sort((a: Bookmark, b: Bookmark) => a.id - b.id)
+    const data: Bookmark[] = bookmark.sort((a: Bookmark, b: Bookmark) => a.id! - b.id!)
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = useState({})
@@ -126,7 +125,6 @@ function BookmarkTable() {
                     parameter: row.original.parameter,
                     selectedBatchName: "",
                 });
-                const [stepsCnt, setStepsCnt] = useState<number>();
                 const batches = batchList[row.original.facility];
 
                 useDidMountEffect(() => {
@@ -159,7 +157,6 @@ function BookmarkTable() {
                                                 key={batch.batchName}
                                                 value={batch.batchName}
                                                 onSelect={() => {
-                                                    setStepsCnt(batch.stepsCnt)
                                                     setSelectedBatchData(prevState => ({
                                                         ...prevState,
                                                         selectedBatchName: batch.batchName,
@@ -181,7 +178,6 @@ function BookmarkTable() {
                             </ScrollArea>
                         </PopoverContent>
                     </Popover>
-                    <Label value={stepsCnt}></Label>
                 </div >
             },
         },
@@ -198,7 +194,7 @@ function BookmarkTable() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => deleteBookmark(row.original.id)}>삭제</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteBookmark(row.original.id!)}>삭제</DropdownMenuItem>
                         </DropdownMenuContent>
 
                     </DropdownMenu >

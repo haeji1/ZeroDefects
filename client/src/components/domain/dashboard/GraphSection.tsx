@@ -48,7 +48,6 @@ function GraphSection() {
                         )) : <div className="flex flex-col items-center my-[100px]">
                             <img src={SamsungLogo} width={800} alt="" />
                             <p className="text-[40px]">GLOBAL TECHNOLOGY RESEARCH</p>
-                            {/* <p className="text-[40px] my-[50px]">그래프를 조회해주세요.</p> */}
                         </div>
                     }
                 </CardContent>
