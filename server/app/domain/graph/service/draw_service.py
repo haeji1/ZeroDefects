@@ -481,7 +481,7 @@ def draw_TGLife_default_graph(df, tg_num):
         for i, metric in enumerate(metrics[1:], start=1):  # 섹션을 제외한 나머지 메트릭에 대해 반복
             source = ColumnDataSource(data={f'TG{tg_num}Life[kWh]': group[f'TG{tg_num}Life[kWh]'], metric: group[metric]})
             scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=metric, source=source, color=colors[i - 1], size=10,
-                                legend_label=metric)
+                                legend_label=metric, visible=False)
 
             hover = HoverTool(renderers=[scatter], tooltips=[
                 ('Tg', '$x'),
@@ -503,9 +503,9 @@ def draw_TGLife_default_graph(df, tg_num):
                 const section_scatter = scatters[i]
                 for (let j = 0; j < section_scatter.length; j++) {
                     if (selected.includes(sections[i])) {
-                        section_scatter[j].visible = false;
-                    } else {
                         section_scatter[j].visible = true;
+                    } else {
+                        section_scatter[j].visible = false;
                     }
                 }
             }
