@@ -2,6 +2,7 @@
 from bokeh.embed import json_item
 from pprint import pprint
 
+import numpy as np
 from bokeh.layouts import column, layout, gridplot
 from bokeh.models import (TableColumn, DataTable, Toggle, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,
                           CheckboxGroup, Dropdown, TextInput, CustomJS)
@@ -159,8 +160,11 @@ def draw_graph_time_standard(graph_df):
 
 
 def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
+    start_second = []
+    end_second = []
     setting_options = extract_setting_values(request)
-    lines_info = make_setting_lines(request)
+    lines_info, setting_infos = make_setting_lines(request)
+    x_range_times_for_lines = []
 
     setting_multi_choice = MultiChoice(value=["settings"], options=setting_options, placeholder='Settings')
 
@@ -185,10 +189,14 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         facility, column_name = df.columns[-1].split('-')
         batch_name = batch_name_list[batch_cnt]
         facility_step_times = step_times.get(facility+batch_name, {})
+        facility_step_total = list(facility_step_times.keys())
+        for i in range (len(facility_step_total)):
+            x_range_times_for_lines.append(facility_step_times[facility_step_total[i]])
         batch_cnt += 1
         time_values -= time_values.min()
 
         color = colors[len(p.renderers) % len(colors)]
+        step_x_range_list = []
 
         for step, step_time in facility_step_times.items():
             start_time_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -200,6 +208,9 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
             p.add_layout(box_annotation)
             plot.add_layout(box_annotation)
             box_annotations.append(box_annotation)
+            step_x_range_list.append({step: step, start_x: start_x, end_x: end_x})
+            start_second.append(start_x)
+            end_second.append(end_x)
 
             toggle_label = f"{batch_name} - {step}"
             toggle_labels.append(toggle_label)
@@ -229,11 +240,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         source = ColumnDataSource(data={'Time': time_values, 'Value': df.iloc[:, -1]})
         line = p.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
         line2 = plot.line(x='Time', y='Value', source=source, legend_label=f'{column_name} - {batch_name}', color=color)
-
-        # P에 SetValue 관련 모든 선 추가
-        for i in range(len(lines_info)):
-            line = p.line(x='Time', y=lines_info[i], source=source, color=color, visible=False)
-            lines.append(line)
 
         hover = HoverTool(renderers=[line], tooltips=[
             ('facility', f'{facility}'),
@@ -279,6 +285,17 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     ]
     data_table = DataTable(source=source, columns=columns, editable=False, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
+
+    # # P에 SetValue 관련 모든 선 추가
+    for i in range(len(setting_infos)):
+        start_x_time = start_second[i]
+        end_x_time = end_second[i]
+        for j in range(len(setting_infos[i])):
+            step_x_range = np.arange(start_x_time, end_x_time + 1)
+            step_x_range = pd.Series(step_x_range)
+            line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
+            line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
+            lines.append(line)
 
     p.x_range.start = 0
     p.xaxis.formatter = NumeralTickFormatter(format="0")
@@ -342,7 +359,6 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     )
 
     plots.append(layout_1)
-
     return plots
 
 def extract_setting_values(request):
@@ -378,9 +394,11 @@ def extract_setting_values(request):
 
 def make_setting_lines(request):
     # pprint(request)
+    # pprint(request)
     setting_info = []
     time_info = []
     setting_values = []
+    setting_step_and_values = []
     step_time = None
     for i in range(len(request)):
         step_length = len(request[i]['steps'])
@@ -398,6 +416,8 @@ def make_setting_lines(request):
             facility = request[i]['facilityName']
             # 각 step별 column들의 key값 (Step1-ICP, Step1-TG1...) 일 때 [ICP, TG1...]
             step_column_keys = list(sorted(step_columns.keys()))
+            # step별로 리스트로 한 번 더 감싸기
+            step_values_list = []
             for k in range(len(step_column_keys)):
                 # step별 column의 key값 리스트에서 뽑은 key값(Step1-ICP, Step1-TG1...)
                 column_key = step_column_keys[k]
@@ -416,7 +436,15 @@ def make_setting_lines(request):
                         value = step_columns[column_key][info_name]
                         setting_values.append(value)
                         setting_info.append({"Time": step_time, "Value": value})
-    return setting_values
+                        # setting_step_and_values.append(({"Step": step_number, 'Value': value}))
+                        # step_values_list.append({"Step": step_number, 'Value': value})
+                        step_values_list.append(value)
+            setting_step_and_values.append(step_values_list)
+    # pprint(setting_step_and_values)
+    # print(len(setting_step_and_values))
+    # print(setting_step_and_values[0])
+
+    return setting_values, setting_step_and_values
 
 
 def draw_detail_section_graph(graph_df, step_times):
