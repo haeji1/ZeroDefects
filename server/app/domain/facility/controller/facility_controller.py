@@ -6,6 +6,7 @@ from typing import List
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.repository.influx_client import InfluxGTRClient
 from app.domain.facility.service.facility_function import get_facilities_info, get_TG_datas
+from app.domain.graph.service.draw_service import draw_TGLife_default_graph
 
 from config import settings
 
@@ -39,8 +40,8 @@ async def read_tg_influxdb(model: TGLifeData):
         if contents is None:
             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
         else:
-            print(contents)
-            return JSONResponse(status_code=200, content={'msg': 'success'})
+
+            return JSONResponse(status_code=200, content={'msg': draw_TGLife_default_graph(contents, model.tg_life_num)})
     except Exception as e:
         print(e)
         return JSONResponse(status_code=400, content={'msg': str(e)})

@@ -17,7 +17,6 @@ bucket = settings.influx_bucket
 # ignore related pivot warnings
 warnings.simplefilter('ignore', MissingPivotFunction)
 
-
 # query for measurement list
 def measurement_query(b: str, measurement: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -25,7 +24,6 @@ def measurement_query(b: str, measurement: str, start_date: str, end_date: str) 
             |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
             |> filter(fn: (r) => r["_measurement"] == "{measurement}") 
             '''
-
 
 # query fields by time
 def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_date: str) -> str:
@@ -38,7 +36,6 @@ def fields_by_time_query(b: str, facility: str, fields, start_date: str, end_dat
             |> filter(fn: (r) => {fields_filter})
             """
 
-
 # query field by time
 def field_by_time_query(b: str, facility: str, field: str,
                         start_date: str = '1970-01-01T00:00:00.0Z',
@@ -50,6 +47,9 @@ def field_by_time_query(b: str, facility: str, field: str,
     if window_size == 0:
         window_size = 1
 
+    print(start_date)
+    print(end_date)
+
     return f'''
             from(bucket: "{b}")
                 |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
@@ -60,21 +60,18 @@ def field_by_time_query(b: str, facility: str, field: str,
                 |> keep(columns: ["_time", "_value"])
             '''
 
-
 # query tg_life by num
-def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, type: str,
+def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, statistics_type: str,
                  count: bool) -> str:
-    statistics_type = 'None'
 
-    if type == 'AVG':
+    if statistics_type == 'AVG':
         statistics_type = 'mean'
-    elif type == 'MAX':
+    elif statistics_type == 'MAX':
         statistics_type = 'max'
-    elif type == 'MIN':
+    elif statistics_type == 'MIN':
         statistics_type = 'min'
-    elif type == 'STDDEV':
+    elif statistics_type == 'STDDEV':
         statistics_type = 'stddev'
-
     return f"""
             import "experimental"
             import "join"
@@ -128,6 +125,28 @@ def TGLife_query(b: str, facility: str, tg_life_num: str, start_date: str, end_d
                               start_date=start_date, end_date=end_date, count=count)
 
 
+def TGLife_query_v2(b: str, facility: str, num: str, start_date: str, end_date: str) -> object:
+    return f"""
+            from(bucket: "{b}")
+              |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+              |> filter(fn: (r) => r["_measurement"] == "{facility}")
+              |> filter(fn: (r) => r["_field"] == "P.TG{num}V[V]")
+              |> filter(fn: (r) => r.section != "-")
+              |> group(columns: ["section", "TG{num}Life[kWh]_TAG"])
+              |> reduce(
+                  identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, "_TG{num}Life[kWh]": 20000.0}},
+                  fn: (r, accumulator) => ({{
+                    count: accumulator.count + 1.0,
+                    sum: accumulator.sum + r._value,
+                    max: if accumulator.max > float(v: r._value) then accumulator.max else float(v: r._value),
+                    min: if accumulator.min < float(v: r._value) then accumulator.min else float(v: r._value),
+                    "_TG{num}Life[kWh]": if accumulator["_TG{num}Life[kWh]"] < float(v: r["TG{num}Life[kWh]_TAG"]) 
+                    then accumulator["_TG{num}Life[kWh]"] else float(v: r["TG{num}Life[kWh]_TAG"])
+                  }})
+              )
+              |> keep(columns: ["_TG{num}Life[kWh]", "section", "count", "sum", "max", "min"])
+            """
+
 # query for get section
 def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
     return f'''
@@ -139,14 +158,12 @@ def section_query(b: str, facility: str, start_date: str, end_date: str) -> str:
             |> keep(columns: ["_time", "RcpReq[]", "CoatingLayerN[Layers]"])
             '''
 
-
 # info facility
 def info_measurements_query(b: str) -> str:
     return f"""
             import "influxdata/influxdb/schema"
             schema.measurements(bucket: "{b}")
             """
-
 
 # info parameter
 def info_field_query(b: str, measurement: str) -> str:
@@ -158,7 +175,6 @@ def info_field_query(b: str, measurement: str) -> str:
             start: -1y,
             )
             """
-
 
 def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_date: str, count: bool) -> str:
     # query for count value
@@ -178,9 +194,9 @@ def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_da
                                 on: (l, r) => l["TG{tg_life_num}Life[kWh]_TAG"] == r["TG{tg_life_num}Life[kWh]_TAG"],
                                 as: (l, r) => ({{
                                     "TG{tg_life_num}Life[kWh]_TAG": l["TG{tg_life_num}Life[kWh]_TAG"],
-                                    "P.TG1V[V]": l["P.TG{tg_life_num}V[V]"],
-                                    "P.TG1I[A]": l["P.TG{tg_life_num}I[A]"],
-                                    "P.TG1Pwr[kW]": l["P.TG{tg_life_num}Pwr[kW]"],
+                                    "P.TG{tg_life_num}V[V]": l["P.TG{tg_life_num}V[V]"],
+                                    "P.TG{tg_life_num}I[A]": l["P.TG{tg_life_num}I[A]"],
+                                    "P.TG{tg_life_num}Pwr[kW]": l["P.TG{tg_life_num}Pwr[kW]"],
                                     "count": r._value,
                                     _start: l._start,
                                     _stop: l._stop
@@ -194,7 +210,7 @@ def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_da
                                 "P.TG{tg_life_num}I[A]", 
                                 "P.TG{tg_life_num}Pwr[kW]", 
                                 "count"])
-                                |> yield(name: "leftJoinResult")
+                                |> yield(name: "TGLife")
                             """
     else:
         # default additional query
@@ -209,7 +225,6 @@ def count_query(b: str, facility: str, tg_life_num: str, start_date: str, end_da
                             """
 
     return additional_query
-
 
 # execute query
 def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
