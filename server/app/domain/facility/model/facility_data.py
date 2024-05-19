@@ -14,8 +14,28 @@ class FacilityData(BaseModel):
 
 
 class TGLifeData(BaseModel):
+    type: str
     facility: str
-    tg_life_num: str
-    startTime: str = '1970-01-01T00:00:00.0Z'
-    endTime: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z"
-    statistics_list: Optional[List[str]] = None
+    tgLifeNum: str
+    startTime: Optional[str]
+    endTime: Optional[str]
+    startCnt: Optional[str]
+    endCnt: Optional[str]
+
+
+class TGCondition(BaseModel):
+    startTime: str = Optional[str]
+    endTime: str = Optional[str]
+    startCnt: Optional[str]
+    endCnt: Optional[str]
+
+
+class TGData(BaseModel):
+    facility: str
+    tgLifeNum: str
+
+
+class TGLifeModel(BaseModel):
+    queryType: str
+    queryCondition: TGCondition
+    queryData: TGData

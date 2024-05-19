@@ -4,7 +4,7 @@ from pprint import pprint
 
 import numpy as np
 from bokeh.layouts import column, layout
-from bokeh.models import (TableColumn, DataTable, CrosshairTool, Tabs, TabPanel, Div, MultiChoice,CustomJS)
+from bokeh.models import (TableColumn, DataTable, CrosshairTool, Tabs, TabPanel, Div, MultiChoice, CustomJS, LabelSet)
 
 from bokeh.models import (DatetimeTickFormatter, HoverTool, ColumnDataSource, Range1d, BoxAnnotation)
 from bokeh.models.formatters import NumeralTickFormatter
@@ -403,6 +403,7 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     plots.append(layout_1)
     return plots
 
+
 def extract_setting_values(request):
     options = []
     for i in range(len(request)):
@@ -433,6 +434,7 @@ def extract_setting_values(request):
                         select_name = (f"{facility}-{step_number}-{column_key}-{info_name}")
                         options.append(select_name)
     return options
+
 
 def make_setting_lines(request):
     setting_info = []
@@ -479,22 +481,51 @@ def make_setting_lines(request):
     return setting_values, setting_step_and_values
 
 
+
 def draw_TGLife_default_graph(df, tg_num):
     print('=======df=======')
     print(df)
 
     plots = []
+    # metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
+    metrics = ['section', 'count']
+    # colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
+    colors = ['blue', 'green']
     p = figure(width=1200, height=600)
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df['count'], line_color="red")
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}V[V]'], line_color="blue")
-    p.line(x=df[f'TG{tg_num}Life[kWh]'], y=df[f'AVG-P.TG{tg_num}I[A]'], line_color="green")
 
-    # box1 = BoxAnnotation(left=8620, right=8630, fill_color="red", fill_alpha=0.1)
-    # box2 = BoxAnnotation(left=8625, right=8635, fill_color="blue", fill_alpha=0.1)
-    # p.add_layout(box1)
-    # p.add_layout(box2)
+    tglife_title = Div(text="""<h2>Raw Data</h2>""", width=400, height=30)
+    statistics_table = DataTable(source=datasource, columns=columns, index_position=0,
+                                 index_header="row", sizing_mode="stretch_width")
+
+    source = ColumnDataSource(df)
+    for i in range(1, 2):
+        p.scatter(x=df[f'TG{tg_num}Life[kWh]'], y=df[metrics[i]], color=colors[i], size=10, alpha=0.6,
+                  legend_label=metrics[i])
+        labels = LabelSet(x=f'TG{tg_num}Life[kWh]', y=metrics[i], text='section', level='glyph',
+                          x_offset=5, y_offset=5, source=source)
+        p.add_layout(labels)
+
+    p.legend.title = 'Metrics'
+    p.legend.location = 'top_left'
+
+    hover = HoverTool()
+    p.add_tools(hover)
 
     bokeh_layout = column(p, sizing_mode="stretch_both")
     plots.append(bokeh_layout)
+
+    layout_1 = layout(
+        [[tglife_title], [tglife_datatable_title], [tglife_datatable]],
+            # [setting_multi_choice],
+            # [multi_choice],
+            # # [grid],
+            # [Tabs(tabs=tabs)],
+            # # [toggles],
+            # [data_table_title],
+            # [data_table],
+            # [statistics_table_title],
+            # [statistics_table],
+        sizing_mode="stretch_width",
+    )
 
     return json_item(bokeh_layout)

@@ -17,7 +17,7 @@ from app.domain.correlation.model.correlation_section_data import CorrelationSec
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
-    info_field_query, TGLife_query, TGLife_query_v2, correlation_query
+    info_field_query, TGLife_query, TGLife_query_v2, correlation_query, TGLife_count_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
@@ -282,7 +282,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         return {'result': dict(facilities)}
 
     # get data by parameter & time from influxdb
-    def read_data(self, conditions: List[SectionData]) -> []:
+    def read_data(self, conditions: List[SectionData], all: bool = False) -> []:
         result_df: [pd.DataFrame] = []
 
         for condition in conditions:
@@ -290,14 +290,14 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             # query that get data by parameter & time
             query = field_by_time_query(
                 b=self.bucket_name, facility=condition.facility, field=condition.parameter,
-                start_date=condition.startTime, end_date=condition.endTime)
+                start_date=condition.startTime, end_date=condition.endTime, all=all)
+
             try:
                 query_s = time.time()
                 df = execute_query(self.client, query)
                 df['Time'] = pd.to_datetime(df['Time'])
                 print('query time ', time.time() - query_s)
                 print("\n\nbefore df:", df)
-                df['Time'] = pd.to_datetime(df['Time'])
                 df.sort_values(by=['Time'], ascending=True, inplace=True)
                 print("\n\nafter df:", df)
 
@@ -318,7 +318,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     def read_TG_data(self, condition: TGLifeData) -> object:
 
         start_time = time.time()
-
+        print(' read tg data ... ')
         answer_df = self.TG_query_v2(client=self.client, condition=condition, b=self.bucket_name)
 
         print("==========answer df==========")
@@ -328,21 +328,24 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         return answer_df
 
     @classmethod
-    def TG_query_v2(cls, client, condition, b, ) -> pd.DataFrame:
+    def TG_query_v2(cls, client, condition, b) -> pd.DataFrame:
         try:
-            query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tg_life_num,
-                                    start_date=condition.startTime, end_date=condition.endTime)
-
+            if condition.type == 'time':
+                query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tgLifeNum,
+                                        start_date=condition.startTime, end_date=condition.endTime)
+            else:
+                query = TGLife_count_query(b=b, facility=condition.facility, num=condition.tgLifeNum,
+                                           start_cnt=condition.startCnt, end_cnt=condition.endCnt)
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             result_df = execute_query(client, query)
-            result_df.rename(columns={f'_TG{condition.tg_life_num}Life[kWh]': f'TG{condition.tg_life_num}Life[kWh]'},
+            result_df.rename(columns={f'_TG{condition.tgLifeNum}Life[kWh]': f'TG{condition.tgLifeNum}Life[kWh]'},
                              inplace=True)
-            result_df[f'TG{condition.tg_life_num}Life[kWh]'] = result_df[
-                f'TG{condition.tg_life_num}Life[kWh]'].astype(float)
+            result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = result_df[
+                f'TG{condition.tgLifeNum}Life[kWh]'].astype(float)
             result_df['section'] = result_df['section'].astype(float)
 
-            result_df.sort_values(by=[f'TG{condition.tg_life_num}Life[kWh]', 'section'], ascending=[True, True],
+            result_df.sort_values(by=[f'TG{condition.tgLifeNum}Life[kWh]', 'section'], ascending=[True, True],
                                   axis=0, inplace=True)
             result_df.reset_index(drop=True, inplace=True)
             print("===========before===========")
@@ -569,7 +572,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         # query that get data by parameter & time
 
         query = correlation_query(
-            b=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime, end_date=condition.endTime
+            b=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime,
+            end_date=condition.endTime
         )
         try:
             query_s = time.time()
