@@ -296,13 +296,14 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
         start_x_time = start_second[i]
         end_x_time = end_second[i]
         for j in range(len(setting_infos[i])):
+            setting_color = colors[len(p.renderers) % len(colors)]
             step_x_range = np.arange(start_x_time, end_x_time + 1)
             step_x_range = pd.Series(step_x_range)
             line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
-            line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
+            line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=setting_color, visible=False)
             for k in range(len(plot_list)):
                 plot_info = plot_list[k]
-                line2 = plot_list[k].line(x='Time', y=setting_infos[i][j], source=line_source, color=color, visible=False)
+                line2 = plot_list[k].line(x='Time', y=setting_infos[i][j], source=line_source, color=setting_color, visible=False)
                 plot_lines.append(line2)
                 plot_lines_list[k].append(line2)
 
