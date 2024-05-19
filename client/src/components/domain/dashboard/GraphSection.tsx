@@ -41,9 +41,11 @@ function GraphSection() {
                         <p className="text-[42px]">그래프를 조회하고 있습니다.</p>
                     </div> : graphData.length !== 0 ?
                         graphData.map((data: any, index: number) => (
-                            <div key={index}>
+                            <div className="flex flex-col" key={index}>
                                 <BokehPlot data={data} />
-                                <CreatePostModal />
+                                <div className="ml-auto">
+                                    <CreatePostModal />
+                                </div>
                             </div>
                         )) : <div className="flex flex-col items-center my-[100px]">
                             <img src={SamsungLogo} width={800} alt="" />
