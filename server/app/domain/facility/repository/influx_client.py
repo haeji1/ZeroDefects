@@ -293,10 +293,11 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             try:
                 query_s = time.time()
                 df = execute_query(self.client, query)
-                df['Time'] = pd.to_datetime(df['Time']).dt.tz_convert('Asia/Seoul')
+                df['Time'] = pd.to_datetime(df['Time'])
                 print('query time ', time.time() - query_s)
                 print("\n\nbefore df:", df)
                 df['Time'] = pd.to_datetime(df['Time'])
+                df.sort_values(by=['Time'], ascending=True, inplace=True)
                 print("\n\nafter df:", df)
 
                 if df is None:
