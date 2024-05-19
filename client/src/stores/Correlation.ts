@@ -1,10 +1,13 @@
 import { create } from "zustand";
+import { Batch } from "./Facility";
 
 interface CorrelationStore {
 
     selectedFacility: string;
     setSelectedFacility: (facility: string) => void;
-    selectedParameters: {};
+    selectedBatch: Batch | null
+    setSelectedBatch: (batch: Batch) => void;
+    selectedParameters: [];
     setSelectedParameters: (parameters: string[]) => void;
     graphData: any[];
     setGraphData: (data: any) => void;
@@ -18,7 +21,9 @@ export const useCorrelationStore = create<CorrelationStore>()((set) => ({
 
     selectedFacility: "",
     setSelectedFacility: (facility) => set({ selectedFacility: facility }),
-    selectedParameters: {},
+    selectedBatch: null,
+    setSelectedBatch: (batch) => set({ selectedBatch: batch }),
+    selectedParameters: [],
     setSelectedParameters: (parameters) => set({ selectedParameters: parameters }),
     graphData: [],
     setGraphData: (val) => set({ graphData: val }),

@@ -26,17 +26,15 @@ import { Button } from "@/components/base/button";
 
 
 function CorrelationTable() {
-    console.log("asdfasf")
-    const { selectedFacility } = useCorrelationStore();
+    const { selectedFacility, setSelectedParameters } = useCorrelationStore();
     const { facilityList } = useFacilityStore();
-
-
 
     const data = useMemo(
         () => {
             if (facilityList[selectedFacility]) {
-                const result = facilityList[selectedFacility].parameters.map((parameter) => {
+                const result = facilityList[selectedFacility].parameters.map((parameter, id) => {
                     const parameterObj = {
+                        id: id,
                         parameter: parameter
                     }
                     return parameterObj
@@ -93,10 +91,6 @@ function CorrelationTable() {
 
 
 
-    useEffect(() => {
-        console.log(rowSelection);
-    }, [rowSelection])
-
     const table = useReactTable({
         data,
         columns,
@@ -117,6 +111,15 @@ function CorrelationTable() {
             pagination,
         },
     })
+
+
+    useEffect(() => {
+        const parameters = table.getSelectedRowModel().rows.map((row) => row.original.parameter);
+        setSelectedParameters(parameters)
+    }, [rowSelection])
+
+
+
 
     return (
         <>
@@ -199,10 +202,6 @@ function CorrelationTable() {
                 </Table>
             </div>
         </>
-
-
-
-
     )
 
 }

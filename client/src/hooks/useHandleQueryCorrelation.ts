@@ -1,17 +1,46 @@
+import { getCorrelationGraph } from "@/apis/api/api";
 import { useCorrelationStore } from "@/stores/Correlation";
 import { useQueryTypeStore, useQueryDateTimeStore, useQueryStepStore } from "@/stores/QueryCondition";
+import { QueryType } from "@/stores/QueryCondition";
+
+type Data = {
+    queryType: QueryType,
+    queryCondition: {
+        startTime: null | string,
+        endTime: null | string,
+        step: null | number[],
+    },
+    queryData: {
+        facility: string,
+        parameter: string[],
+        batchName: null | string,
+    }
+}
 
 const useHandleQueryCorrelation = () => {
     const { queryType } = useQueryTypeStore();
-    const { queryStartDate, queryEndDate, timeValid } = useQueryDateTimeStore();
-    const { queryStartStep, queryEndStep, stepValid } = useQueryStepStore();
-    const { selectedFacility, selectedParameters, setIsFetching } = useCorrelationStore();
+    const { queryStartDate, queryEndDate } = useQueryDateTimeStore();
+    const { queryStartStep, queryEndStep } = useQueryStepStore();
+    const { selectedFacility, selectedParameters, selectedBatch, setIsFetching, setGraphData } = useCorrelationStore();
 
     const handleQueryCorrelation = async () => {
-        let queryCondition;
+
+        const data: Data = {
+            queryType: queryType,
+            queryCondition: {
+                startTime: null,
+                endTime: null,
+                step: [],
+            },
+            queryData: {
+                facility: selectedFacility,
+                parameter: selectedParameters,
+                batchName: null,
+            }
+        }
 
         if (queryType === 'time') {
-            queryCondition = {
+            data.queryCondition = {
                 startTime: queryStartDate.toISOString(),
                 endTime: queryEndDate.toISOString(),
                 step: null,
@@ -21,32 +50,24 @@ const useHandleQueryCorrelation = () => {
             for (let i = queryStartStep; i <= queryEndStep; i++) {
                 step.push(i);
             }
-            queryCondition = {
+            data.queryCondition = {
                 startTime: null,
                 endTime: null,
                 step: step,
             }
-        }
-
-        const data = {
-            queryType: queryType,
-            queryCondition: queryCondition,
-            queryData: {
-                facility: selectedFacility,
-                parameter: selectedParameters,
-            }
+            data.queryData.batchName = selectedBatch!.batchName
         }
 
         console.log(data);
-        // setIsFetching(true)
-        // const res = await getGraph(data)
-        // if (res) {
-        //     setGraphData(res.data);
-        //     setIsFetching(false)
-        // }
-        // else {
-        //     setIsFetching(false);
-        // }
+        setIsFetching(true)
+        const res = await getCorrelationGraph(data)
+        if (res) {
+            setGraphData(res.data);
+            setIsFetching(false)
+        }
+        else {
+            setIsFetching(false);
+        }
     }
 
     return handleQueryCorrelation;

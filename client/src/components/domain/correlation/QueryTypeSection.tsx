@@ -10,13 +10,17 @@ import { Label } from "@/components/base/label";
 import { Button } from "@/components/base/button";
 import { ScrollArea } from "@/components/base/scroll-area";
 import { ListOrdered as StepIcon, Clock as TimeIcon } from "lucide-react";
-import { useFacilityStore } from "@/stores/Facility";
+import { Batch, useBatchStore, useFacilityStore } from "@/stores/Facility";
 import { useCorrelationStore } from "@/stores/Correlation";
-import { useQueryTypeStore, QueryType } from "@/stores/QueryCondition";
+import { useQueryTypeStore, QueryType, useQueryDateTimeStore, useQueryStepStore } from "@/stores/QueryCondition";
 import CorrelationTable from "@/components/domain/correlation/CorrelationTable";
 import StepSelect from "./StepSelect";
 import TimeSelect from "../dashboard/TimeSelect";
 import useHandleQueryCorrelation from "@/hooks/useHandleQueryCorrelation";
+import useDidMountEffect from "@/hooks/useDidMountEffect";
+import { useEffect, useState } from "react";
+import { getBatches } from "@/apis/api/api";
+import { AxiosResponse } from "axios";
 
 function QueryTypeButton() {
     const { queryType, setQueryType } = useQueryTypeStore();
@@ -46,7 +50,7 @@ function FacilitySelect() {
     const { facilityList } = useFacilityStore();
     const { selectedFacility, setSelectedFacility } = useCorrelationStore();
     return (
-        <div className="m-auto gap-1.5 max-w-[200px]">
+        <div className="col-span-2 m-auto gap-1.5 w-full">
             <Label>설비 선택</Label>
             <Select value={selectedFacility} onValueChange={setSelectedFacility} >
                 <SelectTrigger className="self-center">
@@ -62,6 +66,40 @@ function FacilitySelect() {
     )
 }
 
+function BatchSelect() {
+
+    const { selectedFacility, setSelectedBatch } = useCorrelationStore();
+    const [batches, setBatches] = useState<Batch>();
+    const { queryType } = useQueryTypeStore();
+    const { addBatch, batchList } = useBatchStore();
+
+    useDidMountEffect(async () => {
+        if (!batchList[selectedFacility]) {
+            const res: AxiosResponse<any, any> | undefined = await getBatches(selectedFacility); // 추가하고자 하는 설비의 최신 배치 정보 가져오기
+            setBatches(res?.data.batches)
+            addBatch(selectedFacility, res?.data.batches);
+        }
+        else setBatches(batchList[selectedFacility])
+
+    }, [selectedFacility])
+
+    return (
+        <div className="col-span-3 m-auto gap-1.5 w-full">
+            <Label>배치 시작 시간 선택</Label>
+            <Select onValueChange={setSelectedBatch} disabled={queryType !== 'step'}>
+                <SelectTrigger className="self-center">
+                    <SelectValue placeholder="배치 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                    <ScrollArea className="max-h-[400px]">
+                        {batches?.map((batch) => <SelectItem key={batch.batchName} value={batch}>{batch.batchStartTime}</SelectItem>)}\
+                    </ScrollArea>
+                </SelectContent>
+            </Select>
+        </div >
+    )
+}
+
 function QueryInput() {
     const { queryType } = useQueryTypeStore();
     if (queryType === 'time') return <TimeSelect />
@@ -69,22 +107,51 @@ function QueryInput() {
 }
 
 
+function QueryCorrelationButton() {
+
+    const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+    const { selectedParameters } = useCorrelationStore();
+    const { queryType } = useQueryTypeStore();
+    const { timeValid } = useQueryDateTimeStore();
+    const { stepValid } = useQueryStepStore();
+    const handleQueryCorrelation = useHandleQueryCorrelation();
+
+    // 시간 및 스텝 선택 유효성 검사 및 조회 버튼 활성화
+    useEffect(() => {
+        if (selectedParameters.length === 0) setIsButtonEnabled(false)
+        else {
+            if (queryType === 'time') {
+                timeValid ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+            }
+
+            else if (queryType === 'step') {
+                stepValid ? setIsButtonEnabled(true) : setIsButtonEnabled(false)
+            }
+        }
+    }, [selectedParameters, queryType, timeValid, stepValid])
+
+
+    return (
+        <Button disabled={!isButtonEnabled} onClick={handleQueryCorrelation}>
+            조회
+        </Button>
+    )
+}
+
 
 function QueryTypeSection() {
-
-    const handleQueryCorrelation = useHandleQueryCorrelation();
 
     return (
         <Card className="p-5">
             <QueryTypeButton />
-            <FacilitySelect />
+            <div className="grid grid-cols-5 gap-5">
+                <FacilitySelect />
+                <BatchSelect />
+            </div>
             <CorrelationTable />
             <QueryInput />
             <div className="ml-auto">
-                <Button
-                    // disabled={!isButtonEnabled} 
-                    onClick={handleQueryCorrelation}
-                >조회</Button>
+                <QueryCorrelationButton />
             </div>
         </Card>
     )
