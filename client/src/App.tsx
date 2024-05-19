@@ -32,7 +32,7 @@ function App() {
           element: <Dashboard />,
         },
         {
-          path: "/analysis",
+          path: "/correlation",
           element: <Correlation />,
         },
         {
