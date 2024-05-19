@@ -25,6 +25,11 @@ import { useFacilityStore } from '@/stores/Facility';
 import { Button } from "@/components/base/button";
 
 
+type Parameter = {
+    id: number;
+    parameter: string;
+}
+
 function CorrelationTable() {
     const { selectedFacility, setSelectedParameters } = useCorrelationStore();
     const { facilityList } = useFacilityStore();
@@ -45,7 +50,7 @@ function CorrelationTable() {
         },
         [selectedFacility]
     )
-    const columns = [
+    const columns: ColumnDef<Parameter>[] = [
         {
             id: "select",
             header: ({ table }) => (
