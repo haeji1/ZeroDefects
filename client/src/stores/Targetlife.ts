@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type TgLifeNum = "1" | "2" | "4" | "5";
+export type TgLifeNum = "1" | "2" | "4" | "5";
 
 
 interface TargetLifeStore {
