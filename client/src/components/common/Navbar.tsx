@@ -1,11 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import SamsungLogo from '@/assets/images/Logo_WHITE.png';
 import { Link, Outlet } from 'react-router-dom';
 import './Navbar.css'
 
 function Navbar() {
-
-    const defaultLink: string = 'dashboard';
 
     const [activeLink, setActiveLink] = useState('dashboard');
 

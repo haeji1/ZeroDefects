@@ -19,7 +19,7 @@ import TimeSelect from "@/components/common/TimeSelect";
 import useHandleQueryCorrelation from "@/hooks/useHandleQueryCorrelation";
 import useDidMountEffect from "@/hooks/useDidMountEffect";
 import { useEffect, useState } from "react";
-import { getBatches } from "@/apis/api/api";
+import { getBatches } from "@/api/api";
 import { AxiosResponse } from "axios";
 
 function QueryTypeButton() {
@@ -68,7 +68,7 @@ function FacilitySelect() {
 function BatchSelect() {
 
     const { selectedFacility, setSelectedBatch } = useCorrelationStore();
-    const [batches, setBatches] = useState<Batch>();
+    const [batches, setBatches] = useState<Batch[]>();
     const { queryType } = useQueryTypeStore();
     const { addBatch, batchList } = useBatchStore();
 
@@ -82,16 +82,28 @@ function BatchSelect() {
 
     }, [selectedFacility])
 
+
+    const handleBatchChange = (batchStartTime: string) => {
+        const selectedBatch = batches!.find((batch) => batch.batchStartTime === batchStartTime);
+        setSelectedBatch(selectedBatch!);
+    }
+
     return (
         <div className="col-span-3 m-auto gap-1.5 w-full">
             <Label>배치 시작 시간 선택</Label>
-            <Select onValueChange={setSelectedBatch} disabled={queryType !== 'step'}>
+            <Select onValueChange={handleBatchChange} disabled={queryType !== 'step'}>
                 <SelectTrigger className="self-center">
                     <SelectValue placeholder="배치 선택" />
                 </SelectTrigger>
                 <SelectContent>
                     <ScrollArea className="max-h-[400px]">
-                        {batches?.map((batch) => <SelectItem key={batch.batchName} value={batch}>{batch.batchStartTime}</SelectItem>)}\
+                        {batches?.map((batch) =>
+                            <SelectItem
+                                key={batch.batchStartTime}
+                                value={batch.batchStartTime}
+                            >
+                                {batch.batchStartTime}
+                            </SelectItem>)}
                     </ScrollArea>
                 </SelectContent>
             </Select>

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Batch } from "./Facility";
+import { Batch } from "@/stores/Facility";
 
 interface CorrelationStore {
 
@@ -7,7 +7,7 @@ interface CorrelationStore {
     setSelectedFacility: (facility: string) => void;
     selectedBatch: Batch | null
     setSelectedBatch: (batch: Batch) => void;
-    selectedParameters: [];
+    selectedParameters: string[];
     setSelectedParameters: (parameters: string[]) => void;
     graphData: any[];
     setGraphData: (data: any) => void;

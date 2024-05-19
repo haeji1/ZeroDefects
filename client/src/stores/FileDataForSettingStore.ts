@@ -1,14 +1,23 @@
 import { create } from "zustand";
 
-const FileDataForSettings = create((set) => ({
+// 상태 인터페이스 정의
+interface FileDataForSettingsState {
+  files: any[];
+  addFiles: (newFiles: any[]) => void;
+  deleteFile: (fileName: string) => void;
+  clearFiles: () => void;
+  addOrUpdateFiles: (newFiles: any[]) => void;
+}
+
+const FileDataForSettings = create<FileDataForSettingsState>((set) => ({
   files: [],
   addFiles: (newFiles) =>
     set((state) => ({ files: [...state.files, ...newFiles] })),
-  deleteFile: (fileName) =>
+  deleteFile: (fileName: string) =>
     set((state) => ({
       files: state.files.filter((file) => file.name !== fileName),
     })),
-  clearFiles: () => set({ files: []}),
+  clearFiles: () => set({ files: [] }),
   addOrUpdateFiles: (newFiles) =>
     set((state) => {
       const updatedFiles = [...state.files];

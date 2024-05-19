@@ -1,7 +1,7 @@
-import { getTargetLifeGraph } from "@/apis/api/api";
+import { getTargetLifeGraph } from "@/api/api";
 import { useQueryTypeStore, useQueryDateTimeStore, useQueryLifeCntStore } from "@/stores/QueryCondition";
 import { QueryType } from "@/stores/QueryCondition";
-import { useTargetLifeStore } from "@/stores/Targetlife";
+import { useTargetLifeStore, TgLifeNum } from "@/stores/Targetlife";
 
 type Data = {
     queryType: QueryType,
@@ -13,7 +13,7 @@ type Data = {
     },
     queryData: {
         facility: string,
-        tgLifeNum: undefined | number,
+        tgLifeNum: string,
     }
 }
 
@@ -35,7 +35,7 @@ const useHandleQueryTgLife = () => {
             },
             queryData: {
                 facility: selectedFacility,
-                tgLifeNum: selectedTgLifeNum,
+                tgLifeNum: selectedTgLifeNum as TgLifeNum,
             }
         }
 

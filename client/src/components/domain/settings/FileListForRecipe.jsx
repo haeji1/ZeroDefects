@@ -1,16 +1,14 @@
-import React from "react";
 import FileDataForRecipe from "@/stores/FileDataForRecipe";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/base/table";
 import { ScrollArea } from "@/components/base/scroll-area";
-import {formatFileSize} from "@/lib/formatFileSize";
+import { formatFileSize } from "@/lib/formatFileSize";
 
 
 const FileListForRecipe = () => {

@@ -1,4 +1,4 @@
-import { getGraph } from "@/apis/api/api";
+import { getGraph } from "@/api/api";
 import { useQueryTypeStore, useQueryDateTimeStore, useQueryStepStore } from "@/stores/QueryCondition";
 import { useSelectedRowStore } from "@/stores/Bookmark";
 import { useGraphDataStore } from "@/stores/GraphData";
