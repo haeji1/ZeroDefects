@@ -19,7 +19,7 @@ warnings.simplefilter('ignore', MissingPivotFunction)
 
 
 def field_by_time_query(bucket: str, facility: str, field: str, start_date: str = '1970-01-01T00:00:00.0Z',
-                        end_date: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z", all: bool = False):
+                        end_date: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z", isWindowScale: bool = False):
     """
     Query for retrieving the list of field value
 
@@ -28,11 +28,11 @@ def field_by_time_query(bucket: str, facility: str, field: str, start_date: str 
     :param field: field name
     :param start_date: start time
     :param end_date: end time
-    :param all: if True, no down scale
+    :param isWindowScale: if True, no down scale
     :return: string for retrieving the list of field value
     """
 
-    if all:
+    if isWindowScale:
         window_size = 0  # window_size is for down scale
     else:
         end_time = datetime.fromisoformat(end_date.replace("Z", "+00:00"))

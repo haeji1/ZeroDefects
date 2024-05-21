@@ -1,15 +1,13 @@
 from fastapi import UploadFile, File
-from http.client import HTTPException
 from typing import List
 
 import warnings
 
 from influxdb_client.client.warnings import MissingPivotFunction
-from influxdb_client import InfluxDBClient
 
 from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
-from app.domain.facility.model.facility_data import FacilityData, TGLifeData
-from app.domain.facility.repository.influx_client import InfluxGTRClient
+from app.domain.facility.model.facility_data import TGLifeData
+from app.domain.facility.service.influx_client import InfluxGTRClient
 from app.domain.section.model.section_data import SectionData
 
 from config import settings
@@ -32,20 +30,20 @@ async def write_files(files: List[UploadFile] = File(...)):
 
 def get_facilities_info():
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    contents = client.read_info()
+    contents = client.read_facility_info()
     return contents
 
 
 # get data
 def get_datas(conditions: List[SectionData], all: bool = False):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    contents = client.read_data(conditions, all=all)
+    contents = client.read_parameter_df(conditions, isWindowScale=all)
     return contents
 
 
 def get_TG_datas(condition: TGLifeData):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    contents = client.read_TG_data(condition)
+    contents = client.read_TGLife_df_list(condition)
     return contents
 
 

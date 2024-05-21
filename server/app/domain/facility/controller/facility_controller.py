@@ -4,7 +4,7 @@ from starlette.responses import JSONResponse
 from typing import List
 
 from app.domain.facility.model.facility_data import TGLifeData, TGLifeModel
-from app.domain.facility.repository.influx_client import InfluxGTRClient
+from app.domain.facility.service.influx_client import InfluxGTRClient
 from app.domain.facility.service.facility_function import get_facilities_info, get_TG_datas
 from app.domain.graph.service.draw_service import draw_TGLife_default_graph
 
@@ -29,7 +29,11 @@ async def write_influxdb(files: List[UploadFile] = File(...)):
 # for test
 @facility_router.get("/info")
 async def get_info_test():
-    return get_facilities_info()
+    contents = get_facilities_info()
+    if contents is None:
+        return JSONResponse(status_code=404, content={"message": "No facilities info"})
+    else:
+        return JSONResponse(status_code=200, content=contents)
 
 
 # for test
