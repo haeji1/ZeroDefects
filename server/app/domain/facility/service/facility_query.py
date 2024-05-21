@@ -17,6 +17,7 @@ bucket = settings.influx_bucket
 # ignore related pivot warnings
 warnings.simplefilter('ignore', MissingPivotFunction)
 
+
 def field_by_time_query(bucket: str, facility: str, field: str, start_date: str = '1970-01-01T00:00:00.0Z',
                         end_date: str = datetime.now().replace(microsecond=0).isoformat() + ".0Z", all: bool = False):
     """
@@ -51,6 +52,7 @@ def field_by_time_query(bucket: str, facility: str, field: str, start_date: str 
     select_column_query = '|> keep(columns: ["_time", "_value"])'
     return base_query + window_size_query + select_column_query
 
+
 def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end_date: str):
     """
     Query for retrieving the list of tg life value
@@ -83,6 +85,7 @@ def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end
               )
               |> keep(columns: ["_TG{num}Life[kWh]", "section", "count", "sum", "max", "min"])
             """
+
 
 def TGLife_count_query(bucket: str, facility: str, num: str, start_cnt: str, end_cnt: str):
     """
@@ -117,6 +120,7 @@ def TGLife_count_query(bucket: str, facility: str, num: str, start_cnt: str, end
               |> keep(columns: ["_TG{num}Life[kWh]", "count", "sum", "max", "min", "section"])
     """
 
+
 def measurement_list_query(bucket: str):
     """
     Query for retrieving the list of measurement name
@@ -132,6 +136,7 @@ def measurement_list_query(bucket: str):
             import "influxdata/influxdb/schema"
             schema.measurements(bucket: "{bucket}")
             """
+
 
 def field_list_query(bucket: str, measurement: str):
     """
@@ -154,7 +159,18 @@ def field_list_query(bucket: str, measurement: str):
             )
             """
 
+
 def correlation_query(bucket: str, facility: str, fields: list, start_date: str, end_date: str):
+    """
+    Query for retrieving the list of fields value
+
+    :param bucket: bucket name
+    :param facility: facility name
+    :param fields: field names to correlation analysis
+    :param start_date: start time
+    :param end_date: end time
+    :return: string for retrieving the list of fields value
+    """
     end_time = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
     start_time = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
     time_difference = end_time - start_time
@@ -172,6 +188,7 @@ def correlation_query(bucket: str, facility: str, fields: list, start_date: str,
             |> aggregateWindow(every: {window_size}s, fn: mean, createEmpty: false)
             |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
             '''
+
 
 def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
     """
