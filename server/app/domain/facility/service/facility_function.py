@@ -10,7 +10,6 @@ from influxdb_client import InfluxDBClient
 from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
 from app.domain.facility.model.facility_data import FacilityData, TGLifeData
 from app.domain.facility.repository.influx_client import InfluxGTRClient
-from app.domain.facility.service.facility_query import section_query, execute_query
 from app.domain.section.model.section_data import SectionData
 
 from config import settings
@@ -54,25 +53,3 @@ def get_correlation_datas(condition: CorrelationSectionData):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
     contents = client.read_correlation_data(condition)
     return contents
-
-
-# get df TRC
-def get_df_TRC(condition: FacilityData):
-    client = InfluxDBClient(url=url, token=token, org=organization)
-    query = section_query(bucket, facility=condition.facility,
-                          start_date=condition.startTime, end_date=condition.endTime)
-    try:
-        return execute_query(client, query)
-    except Exception as e:
-        raise HTTPException(500, str(e))
-
-
-# get section information by FacilityData
-def get_section(condition: FacilityData):
-    client = InfluxDBClient(url=url, token=token, org=organization)
-    query = section_query(bucket, facility=condition.facility,
-                          start_date=condition.startTime, end_date=condition.endTime)
-    try:
-        return execute_query(client, query)
-    except Exception as e:
-        raise HTTPException(500, str(e))
