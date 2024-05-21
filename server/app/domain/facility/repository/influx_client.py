@@ -12,12 +12,13 @@ from influxdb_client.client.write.dataframe_serializer import data_frame_to_list
 
 from typing import List
 from loguru import logger
+from starlette.responses import JSONResponse
 
 from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
 from app.domain.facility.model.facility_data import TGLifeData
 from app.domain.facility.service.facility_utils import get_measurement_code
-from app.domain.facility.service.facility_query import field_by_time_query, execute_query, info_measurements_query, \
-    info_field_query, TGLife_query, TGLife_query_v2, correlation_query, TGLife_count_query
+from app.domain.facility.service.facility_query import field_by_time_query, execute_query, measurement_list_query, \
+    field_list_query, TGLife_time_query, correlation_query, TGLife_count_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
@@ -33,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 class InfluxGTRClient:  # GTR: Global Technology Research
 
-    # constructor
     def __init__(self, url: str, token: str, org: str, bucket_name: str) -> None:
         self.bucket_name = bucket_name
         self.client = InfluxDBClient(url=url, token=token, org=org, timeout=120000)  # timeout: 2 minute
@@ -264,20 +264,23 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
     # facility info
     def read_info(self):
-        # facility list (ex. MASS09, MASS 10)
-        answer_measurements = execute_query(self.client, info_measurements_query(b=self.bucket_name))
+
+        # facility list (ex. MASS09, MASS10)
+        facility_df = execute_query(self.client, measurement_list_query(bucket=self.bucket_name))
+        if facility_df is None:
+            return JSONResponse(status_code=404, content={'message': 'facility info not found'})
 
         facilities = defaultdict(list)
-        for measurement in answer_measurements['_value']:
-            # column list (ex. volt, press ...)
-            answer_fields = self.client.query_api().query_data_frame(
-                info_field_query(b=self.bucket_name, measurement=measurement))
+        for facility in facility_df['_value']:
+
+            # field list
+            field_df = execute_query(self.client, field_list_query(bucket=self.bucket_name, measurement=facility))
 
             # answer_fields to list
-            fields = [field for field in answer_fields['_value']]
+            fields = [field for field in field_df['_value']]
 
-            # key: measurement, value: fields
-            facilities[measurement] = fields
+            # key: facility, value: fields
+            facilities[facility] = fields
 
         return {'result': dict(facilities)}
 
@@ -289,7 +292,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             print("\n\n\ncondition:", condition)
             # query that get data by parameter & time
             query = field_by_time_query(
-                b=self.bucket_name, facility=condition.facility, field=condition.parameter,
+                bucket=self.bucket_name, facility=condition.facility, field=condition.parameter,
                 start_date=condition.startTime, end_date=condition.endTime, all=all)
 
             try:
@@ -331,10 +334,10 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     def TG_query_v2(cls, client, condition, b) -> pd.DataFrame:
         try:
             if condition.type == 'time':
-                query = TGLife_query_v2(b=b, facility=condition.facility, num=condition.tgLifeNum,
-                                        start_date=condition.startTime, end_date=condition.endTime)
+                query = TGLife_time_query(bucket=b, facility=condition.facility, num=condition.tgLifeNum,
+                                          start_date=condition.startTime, end_date=condition.endTime)
             else:
-                query = TGLife_count_query(b=b, facility=condition.facility, num=condition.tgLifeNum,
+                query = TGLife_count_query(bucket=b, facility=condition.facility, num=condition.tgLifeNum,
                                            start_cnt=condition.startCnt, end_cnt=condition.endCnt)
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
@@ -572,7 +575,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         # query that get data by parameter & time
 
         query = correlation_query(
-            b=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime,
+            bucket=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime,
             end_date=condition.endTime
         )
         try:
