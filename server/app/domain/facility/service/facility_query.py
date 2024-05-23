@@ -87,15 +87,15 @@ def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end
             """
 
 
-def TGLife_count_query(bucket: str, facility: str, num: str, start_cnt: str, end_cnt: str):
+def TGLife_count_query(bucket: str, facility: str, num: str, start_cnt: int, end_cnt: int):
     """
     Query for retrieving the list of tg life value
 
     :param bucket: bucket name
     :param facility: measurement name
     :param num: tg life number
-    :param start_cnt: start time
-    :param end_cnt: end time
+    :param start_cnt: start cnt
+    :param end_cnt: end cnt
     :return: string for retrieving the list of tg life value
     """
     return f"""

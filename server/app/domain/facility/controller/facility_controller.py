@@ -40,7 +40,7 @@ async def get_info_test():
 @facility_router.post("/read/tg")
 async def read_tg_influxdb(model: TGLifeModel):
 
-    lifeModel = TGLifeData(
+    life_model = TGLifeData(
         type=model.queryType,
         facility=model.queryData.facility,
         tgLifeNum=model.queryData.tgLifeNum,
@@ -51,7 +51,7 @@ async def read_tg_influxdb(model: TGLifeModel):
     )
 
     try:
-        contents = get_TG_datas(lifeModel)
+        contents = get_TG_datas(life_model)
         if contents is None:
             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
         else:

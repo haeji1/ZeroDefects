@@ -17,17 +17,17 @@ class TGLifeData(BaseModel):
     type: str
     facility: str
     tgLifeNum: str
-    startTime: Optional[str]
-    endTime: Optional[str]
-    startCnt: Optional[str]
-    endCnt: Optional[str]
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
+    startCnt: Optional[int] = None
+    endCnt: Optional[int] = None
 
 
 class TGCondition(BaseModel):
-    startTime: str = Optional[str]
-    endTime: str = Optional[str]
-    startCnt: Optional[str]
-    endCnt: Optional[str]
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
+    startCnt: Optional[int] = None
+    endCnt: Optional[int] = None
 
 
 class TGData(BaseModel):
