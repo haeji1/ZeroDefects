@@ -52,6 +52,15 @@ def field_by_time_query(bucket: str, facility: str, field: str, start_date: str 
     select_column_query = '|> keep(columns: ["_time", "_value"])'
     return base_query + window_size_query + select_column_query
 
+def TGLife_cycle_query(bucket: str, facility: str, num: str, parameter: str):
+    return f"""
+            from(bucket: "{bucket}")
+              |> range(start: time(v: "1970-01-01T00:00:00.0Z"), stop: time(v: now()))
+              |> filter(fn: (r) => r["_measurement"] == "{facility}")
+              |> filter(fn: (r) => r["_field"] == "{parameter}")
+              |> filter(fn: (r) => r["TG{num}Life[kWh]_TAG"] == "0.0" and r.section != "-")
+              |> keep(columns: ["_time"])
+    """
 
 def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end_date: str):
     """

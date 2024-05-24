@@ -3,9 +3,9 @@ from starlette.responses import JSONResponse
 
 from typing import List
 
-from app.domain.facility.model.facility_data import TGLifeData, TGLifeModel
+from app.domain.facility.model.facility_data import TGLifeData, TGLifeModel, RequestTGLifeInfo
 from app.domain.facility.service.influx_client import InfluxGTRClient
-from app.domain.facility.service.facility_function import get_facilities_info, get_TG_datas
+from app.domain.facility.service.facility_function import get_facilities_info, get_TG_datas, get_TG_cycles_info
 from app.domain.graph.service.draw_service import draw_TGLife_default_graph
 
 from config import settings
@@ -35,6 +35,13 @@ async def get_info_test():
     else:
         return JSONResponse(status_code=200, content=contents)
 
+@facility_router.post("/tg/info")
+async def get_TG_info(condition: RequestTGLifeInfo):
+    contents = get_TG_cycles_info(condition)
+    if contents is None:
+        return JSONResponse(status_code=404, content={"message": "No facilities info"})
+    else:
+        return JSONResponse(status_code=200, content=contents)
 
 # for test
 @facility_router.post("/read/tg")

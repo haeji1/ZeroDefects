@@ -22,6 +22,11 @@ class TGLifeData(BaseModel):
     startCnt: Optional[int] = None
     endCnt: Optional[int] = None
 
+class RequestTGLifeInfo(BaseModel):
+    facility: str
+    tgLifeNum: str
+    parameter: str
+
 
 class TGCondition(BaseModel):
     startTime: Optional[str] = None
