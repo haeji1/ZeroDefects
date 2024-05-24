@@ -52,6 +52,15 @@ def field_by_time_query(bucket: str, facility: str, field: str, start_date: str 
     select_column_query = '|> keep(columns: ["_time", "_value"])'
     return base_query + window_size_query + select_column_query
 
+def TGLife_cycle_query(bucket: str, facility: str, num: str, parameter: str):
+    return f"""
+            from(bucket: "{bucket}")
+              |> range(start: time(v: "1970-01-01T00:00:00.0Z"), stop: time(v: now()))
+              |> filter(fn: (r) => r["_measurement"] == "{facility}")
+              |> filter(fn: (r) => r["_field"] == "{parameter}")
+              |> filter(fn: (r) => r["TG{num}Life[kWh]_TAG"] == "0.0" and r.section != "-")
+              |> keep(columns: ["_time"])
+    """
 
 def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end_date: str):
     """
@@ -73,17 +82,16 @@ def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end
               |> filter(fn: (r) => r.section != "-" and int(v: r.section) < 20)
               |> group(columns: ["section", "TG{num}Life[kWh]_TAG"])
               |> reduce(
-                  identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, "_TG{num}Life[kWh]": 20000.0}},
+                  identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, time: now()}},
                   fn: (r, accumulator) => ({{
                     count: accumulator.count + 1.0,
                     sum: accumulator.sum + r._value,
                     max: if accumulator.max > float(v: r._value) then accumulator.max else float(v: r._value),
                     min: if accumulator.min < float(v: r._value) then accumulator.min else float(v: r._value),
-                    "_TG{num}Life[kWh]": if accumulator["_TG{num}Life[kWh]"] < float(v: r["TG{num}Life[kWh]_TAG"]) 
-                    then accumulator["_TG{num}Life[kWh]"] else float(v: r["TG{num}Life[kWh]_TAG"])
+                    time: r._time
                   }})
               )
-              |> keep(columns: ["_TG{num}Life[kWh]", "section", "count", "sum", "max", "min"])
+              |> keep(columns: ["TG{num}Life[kWh]_TAG", "section", "count", "sum", "max", "min", "time"])
             """
 
 
@@ -107,17 +115,16 @@ def TGLife_count_query(bucket: str, facility: str, num: str, start_cnt: int, end
               |> filter(fn: (r) => float(v: r["TG{num}Life[kWh]_TAG"]) > {start_cnt} and float(v: r["TG{num}Life[kWh]_TAG"]) < {end_cnt})
               |> group(columns: ["section", "TG{num}Life[kWh]_TAG"])
               |> reduce(
-                  identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, "_TG1Life[kWh]": 20000.0}},
+                  identity: {{count: 0.0, sum: 0.0, max: 0.0, min: 100000.0, time: now()}},
                   fn: (r, accumulator) => ({{
                     count: accumulator.count + 1.0,
                     max: if accumulator.max > float(v: r._value) then accumulator.max else float(v: r._value),
                     min: if accumulator.min < float(v: r._value) then accumulator.min else float(v: r._value),
                     sum: accumulator.sum + r._value,
-                    "_TG{num}Life[kWh]": if accumulator["_TG{num}Life[kWh]"] < float(v: r["TG{num}Life[kWh]_TAG"]) 
-                    then accumulator["_TG{num}Life[kWh]"] else float(v: r["TG{num}Life[kWh]_TAG"])
+                    time: r._time
                   }})
               )
-              |> keep(columns: ["_TG{num}Life[kWh]", "count", "sum", "max", "min", "section"])
+              |> keep(columns: ["TG{num}Life[kWh]_TAG", "count", "sum", "max", "min", "section", "time"])
     """
 
 

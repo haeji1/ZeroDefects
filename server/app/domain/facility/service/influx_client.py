@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytz
 from fastapi import UploadFile, File
 from collections import defaultdict
 from http.client import HTTPException
@@ -13,16 +16,17 @@ from influxdb_client.client.write.dataframe_serializer import data_frame_to_list
 from typing import List
 
 from app.domain.correlation.model.correlation_section_data import CorrelationSectionData
-from app.domain.facility.model.facility_data import TGLifeData
+from app.domain.facility.model.facility_data import TGLifeData, RequestTGLifeInfo
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, measurement_list_query, \
-    field_list_query, TGLife_time_query, correlation_query, TGLife_count_query
+    field_list_query, TGLife_time_query, correlation_query, TGLife_count_query, TGLife_cycle_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
 from config import settings
 
 import logging
+
 
 class InfluxGTRClient:  # GTR: Global Technology Research
 
@@ -204,7 +208,6 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
         facilities = defaultdict(list)
         for facility in facility_df['_value']:
-
             # field list
             field_df = execute_query(self.client, field_list_query(bucket=self.bucket_name, measurement=facility))
 
@@ -253,6 +256,58 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
         return result_df
 
+    def read_TGLife_cycles_info(self, condition: RequestTGLifeInfo):
+        df = self.read_TGLife_cycle_info(client=self.client, condition=condition, bucket=self.bucket_name)
+        return df
+
+    @classmethod
+    def read_TGLife_cycle_info(cls, client, condition: RequestTGLifeInfo, bucket: str):
+        try:
+            query = TGLife_cycle_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum, parameter=condition.parameter)
+            df = execute_query(client=client, query=query)
+
+            df.sort_values(by='Time', ascending=True, inplace=True)
+            df.reset_index(drop=True, inplace=True)
+
+            # first row
+            first_row = df.iloc[:1]
+
+            # check next tg life cycle start point
+            df_startpoint = df[df['Time'].diff() >= pd.Timedelta(days=30)]
+
+            # check tg life cycle end point
+            df_endpoint = df_startpoint.copy()
+            df_endpoint['Time'] = df_endpoint['Time'] - pd.Timedelta(seconds=1)
+            df_endpoint.loc[len(df.index)] = [datetime.now(pytz.utc).replace(microsecond=0)]
+
+            # concat first row, start point, end point
+            r_df = pd.concat([first_row, df_startpoint, df_endpoint])
+
+            # sorting
+            r_df.sort_values(by='Time', ascending=True, inplace=True)
+            r_df.reset_index(drop=True, inplace=True)
+
+            # print('====== result df ======')
+            # print(r_df)
+
+            answer = []
+            for i in range(0, r_df.shape[0] - 1, 2):
+                time_str_i = r_df['Time'].iloc[i].strftime('%Y-%m-%d %H:%M:%S')
+                time_str_i1 = r_df['Time'].iloc[i + 1].strftime('%Y-%m-%d %H:%M:%S')
+
+                answer.append({
+                    'cycleName': f'cycle-{condition.facility}-{time_str_i}',
+                    'tgLifeNum': f'{condition.tgLifeNum}',
+                    'parameter': f'{condition.parameter}',
+                    'startTime': f'{time_str_i[:10]}T{time_str_i[11:]}.000Z',
+                    'endTime': f'{time_str_i1[:10]}T{time_str_i1[11:]}.000Z'
+                })
+            return answer
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
+        return None
+
     def read_TGLife_df_list(self, condition: TGLifeData) -> object:
         """
         Retrieving TG data
@@ -281,20 +336,22 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 query = TGLife_count_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum,
                                            start_cnt=condition.startCnt, end_cnt=condition.endCnt)
 
-            pd.set_option('display.max_rows', None)     # option that print all row for dataframe
-            pd.set_option('display.max_columns', None)  # option that print all col for dataframe
+            pd.set_option('display.max_rows', None)  # option that print all row for dataframe
+            # pd.set_option('display.max_columns', None)  # option that print all col for dataframe
 
             result_df = execute_query(client, query)
-            result_df.rename(columns={f'_TG{condition.tgLifeNum}Life[kWh]': f'TG{condition.tgLifeNum}Life[kWh]'},
+            result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
                              inplace=True)
 
-            result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = result_df[
-                f'TG{condition.tgLifeNum}Life[kWh]'].astype(float)
-            result_df['section'] = result_df['section'].astype(float)
+            # result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = pd.to_numeric(result_df[
+            #     f'TG{condition.tgLifeNum}Life[kWh]'], errors='coerce')
+            # result_df['section'] = pd.to_numeric(result_df['section'], errors='coerce')
 
-            result_df.sort_values(by=[f'TG{condition.tgLifeNum}Life[kWh]', 'section'], ascending=[True, True],
-                                  axis=0, inplace=True)
+            result_df.sort_values(by='time', ascending=True, inplace=True)
             result_df.reset_index(drop=True, inplace=True)
+
+            print('========== before df ==========')
+            print(result_df)
 
             del_list = []
             count_list = []
@@ -330,6 +387,13 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                         max_element = 0
                         min_element = 0
 
+            if del_element != 0:
+                del_list.append([result_df.shape[0] - del_element, del_element])
+                count_list.append(count_element)
+                sum_list.append(sum_element)
+                max_list.append(max_element)
+                min_list.append(min_element)
+
             for delete, count in zip(del_list, count_list):
                 del_arr = np.arange(delete[0], delete[0] + delete[1])
                 result_df.drop(del_arr, axis=0, inplace=True)
@@ -337,6 +401,9 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             result_df.reset_index(drop=True, inplace=True)
 
             result_df['avg'] = result_df['sum'] / result_df['count']
+
+            print('========== sorted df / add avg column ==========')
+            print(result_df)
         except Exception as e:
             raise HTTPException(500, str(e))
 
@@ -360,7 +427,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         result_idx_list = []
         for i in range(len(idx_list) - 1):
             if idx_list[i] + 1 == idx_list[i + 1]:
-                filename_list.append(f"{responses[idx_list[i]]['filename']} and {responses[idx_list[i + 1]]['filename']}")
+                filename_list.append(
+                    f"{responses[idx_list[i]]['filename']} and {responses[idx_list[i + 1]]['filename']}")
                 result_idx_list.extend([idx_list[i], idx_list[i + 1]])
 
         return result_idx_list, filename_list
@@ -392,7 +460,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         # query that get data by parameter & time
 
         query = correlation_query(
-            bucket=self.bucket_name, facility=condition.facility, fields=condition.parameter, start_date=condition.startTime,
+            bucket=self.bucket_name, facility=condition.facility, fields=condition.parameter,
+            start_date=condition.startTime,
             end_date=condition.endTime
         )
         try:
