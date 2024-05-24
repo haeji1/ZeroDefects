@@ -481,7 +481,7 @@ def draw_TGLife_default_graph(df, tg_num):
     scatters = [[] for _ in range(len(sections))]
     df_sorted = df.sort_values(by='section', ascending=True)
     multi_choice = MultiChoice(options=sections, placeholder='Steps')
-    p = figure(title="Facility Comparison", sizing_mode="scale_width", min_width=800, height=200)
+    p = figure(title="TGLife Cycle Comparison", sizing_mode="scale_width", min_width=800, height=200)
 
     # 섹션별로 데이터프레임 그룹화
     grouped = df_sorted.groupby('section')
