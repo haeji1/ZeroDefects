@@ -36,7 +36,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
         self.bucket_name = bucket_name
-        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=120000)  # timeout: 2 minute
+        self.client = InfluxDBClient(url=url, token=token, org=org, timeout=600000)  # timeout: 2 minute
 
     async def write_csv(self, files: List[UploadFile] = File(...), batch_size=5000) -> []:
         """
@@ -341,9 +341,9 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
                              inplace=True)
 
-            # result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = pd.to_numeric(result_df[
-            #     f'TG{condition.tgLifeNum}Life[kWh]'], errors='coerce')
-            # result_df['section'] = pd.to_numeric(result_df['section'], errors='coerce')
+            result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = pd.to_numeric(result_df[
+                f'TG{condition.tgLifeNum}Life[kWh]'], errors='coerce')
+            result_df['section'] = pd.to_numeric(result_df['section'], errors='coerce')
 
             result_df.sort_values(by='time', ascending=True, inplace=True)
             result_df.reset_index(drop=True, inplace=True)

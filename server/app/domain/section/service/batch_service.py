@@ -37,7 +37,6 @@ def save_section_data(facility: str, df):
     step_starts = []  # 각 스텝의 시작 인덱스
     step_ends = []  # 각 스텝의 끝 인덱스
 
-    step_number = 0  # 스텝 번호
     equipment_name = facility
     section_list = []
     batch_steps_cnt = {}
@@ -49,12 +48,10 @@ def save_section_data(facility: str, df):
             if i > 0 and df['RcpReq[]'][i - 1] == 0:
                 batch_starts.append(i)
                 step_starts.append(i)  # 스텝 시작 인덱스 추가
-                step_number = 0  # 스텝 번호를 0으로 초기화
             # 스텝 변경 검사 (CoatingLayerN[Layers] 값의 변화를 기준으로 스텝 구분)
             elif df['CoatingLayerN[Layers]'][i] != df['CoatingLayerN[Layers]'][i - 1]:
                 step_ends.append(i - 1)  # 이전 스텝의 끝 인덱스를 추가
                 step_starts.append(i)  # 새로운 스텝의 시작 인덱스를 추가
-                step_number += 1  # 스텝 번호 증가
         else:
             if i > 0 and df['RcpReq[]'][i - 1] == 1:
                 # 배치가 끝나는 지점 처리
@@ -71,7 +68,7 @@ def save_section_data(facility: str, df):
             "steps": []
         }
 
-        # 해당 배치 내의 스텝들 출력
+        # 해당 배치 내의 스텝들
         step_index = 0
         steps_dict = []
         for start, end in zip(step_starts, step_ends):
@@ -180,6 +177,7 @@ def read_from_section(request_body: List[FacilityData]):
 
     return JSONResponse(status_code=200, content=results)
 
+
 def get_sections_info(request_body: GraphQueryRequest) -> []:
     responses = []
 
@@ -216,7 +214,8 @@ def get_sections_info(request_body: GraphQueryRequest) -> []:
                         raise HTTPException(status_code=404, detail="No step in batch")
 
                     # 각 스텝별로 시간 정보를 딕셔너리에 저장합니다.
-                    steps_times[step_key] = {f"{step_key}startTime": current_start_time, f"{step_key}endTime": current_end_time}
+                    steps_times[step_key] = {f"{step_key}startTime": current_start_time,
+                                             f"{step_key}endTime": current_end_time}
 
         response = {
             "facility": data.facility,
@@ -256,7 +255,7 @@ def get_step_info_using_facility_name_on_mongoDB(request_body):
         # 가장 최근 레시피 가져오겠다.
         collections = list(db[facility_name].find().sort('_id', -1).limit(1))
         # 스텝 리스트 넣을 리스트
-        step_list= []
+        step_list = []
         for item in collections:
             for step in steps:
                 step_key = f"Step{step}"
@@ -274,6 +273,7 @@ def get_step_info_using_facility_name_on_mongoDB(request_body):
 
     return result
 
+
 def extract_step_times(steps_times_info):
     step_times_by_facility = {}
 
@@ -288,6 +288,6 @@ def extract_step_times(steps_times_info):
             end_time = times[f"{step}endTime"]
             step_times[step] = {'startTime': start_time, 'endTime': end_time}
 
-        step_times_by_facility[facility+batch_name] = step_times
+        step_times_by_facility[facility + batch_name] = step_times
 
     return step_times_by_facility
