@@ -282,19 +282,21 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                                            start_cnt=condition.startCnt, end_cnt=condition.endCnt)
 
             pd.set_option('display.max_rows', None)     # option that print all row for dataframe
-            pd.set_option('display.max_columns', None)  # option that print all col for dataframe
+            # pd.set_option('display.max_columns', None)  # option that print all col for dataframe
 
             result_df = execute_query(client, query)
-            result_df.rename(columns={f'_TG{condition.tgLifeNum}Life[kWh]': f'TG{condition.tgLifeNum}Life[kWh]'},
+            result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
                              inplace=True)
 
-            result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = result_df[
-                f'TG{condition.tgLifeNum}Life[kWh]'].astype(float)
-            result_df['section'] = result_df['section'].astype(float)
+            # result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = pd.to_numeric(result_df[
+            #     f'TG{condition.tgLifeNum}Life[kWh]'], errors='coerce')
+            # result_df['section'] = pd.to_numeric(result_df['section'], errors='coerce')
 
-            result_df.sort_values(by=[f'TG{condition.tgLifeNum}Life[kWh]', 'section'], ascending=[True, True],
-                                  axis=0, inplace=True)
+            result_df.sort_values(by='time', ascending=True, inplace=True)
             result_df.reset_index(drop=True, inplace=True)
+
+            print('========== before df ==========')
+            print(result_df)
 
             del_list = []
             count_list = []
@@ -330,6 +332,13 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                         max_element = 0
                         min_element = 0
 
+            if del_element != 0:
+                del_list.append([result_df.shape[0] - del_element, del_element])
+                count_list.append(count_element)
+                sum_list.append(sum_element)
+                max_list.append(max_element)
+                min_list.append(min_element)
+
             for delete, count in zip(del_list, count_list):
                 del_arr = np.arange(delete[0], delete[0] + delete[1])
                 result_df.drop(del_arr, axis=0, inplace=True)
@@ -337,6 +346,9 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             result_df.reset_index(drop=True, inplace=True)
 
             result_df['avg'] = result_df['sum'] / result_df['count']
+
+            print('========== sorted df / add avg column ==========')
+            print(result_df)
         except Exception as e:
             raise HTTPException(500, str(e))
 
