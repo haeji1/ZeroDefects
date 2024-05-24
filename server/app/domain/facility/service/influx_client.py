@@ -263,7 +263,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     @classmethod
     def read_TGLife_cycle_info(cls, client, condition: RequestTGLifeInfo, bucket: str):
         try:
-            query = TGLife_cycle_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum, parameter=condition.parameter)
+            query = TGLife_cycle_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum)
             df = execute_query(client=client, query=query)
 
             df.sort_values(by='Time', ascending=True, inplace=True)
@@ -297,8 +297,6 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
                 answer.append({
                     'cycleName': f'cycle-{condition.facility}-{time_str_i}',
-                    'tgLifeNum': f'{condition.tgLifeNum}',
-                    'parameter': f'{condition.parameter}',
                     'startTime': f'{time_str_i[:10]}T{time_str_i[11:]}.000Z',
                     'endTime': f'{time_str_i1[:10]}T{time_str_i1[11:]}.000Z'
                 })

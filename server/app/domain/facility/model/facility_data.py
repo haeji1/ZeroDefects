@@ -24,8 +24,7 @@ class TGLifeData(BaseModel):
 
 class RequestTGLifeInfo(BaseModel):
     facility: str
-    tgLifeNum: str
-    parameter: str
+    tgLifeNum: Optional[str] = '1'
 
 
 class TGCondition(BaseModel):
