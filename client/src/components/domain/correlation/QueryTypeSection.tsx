@@ -102,7 +102,7 @@ function BatchSelect() {
                                 key={batch.batchStartTime}
                                 value={batch.batchStartTime}
                             >
-                                {batch.batchStartTime}
+                                {batch.batchStartTime + ' (step 개수: ' + batch.stepsCnt + ')'}
                             </SelectItem>)}
                     </ScrollArea>
                 </SelectContent>
