@@ -466,11 +466,12 @@ def make_setting_lines(request):
     return setting_step_and_values
 
 
-def draw_TGLife_default_graph(df, tg_num):
+def draw_TGLife_default_graph(df, tg_num, stat):
+    df = df[0]
+    df[stat] = df[stat].astype(int)
+
     plots = []
-    # metrics = ['section', 'count', 'sum', 'avg', 'max', 'min']
-    # colors = ['skyblue', 'green', 'red', 'purple', 'orange', 'brown']
-    metrics = ['section', 'avg']
+
     colors = [
         '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
@@ -487,25 +488,24 @@ def draw_TGLife_default_graph(df, tg_num):
     grouped = df_sorted.groupby('section')
     for section, group in grouped:
         section_index = int(section) # 섹션 인덱스를 정수로 변환
-        for i, metric in enumerate(metrics[1:], start=1):  # 섹션을 제외한 나머지 메트릭에 대해 반복
-            source = ColumnDataSource(data={f'TG{tg_num}Life[kWh]': group[f'TG{tg_num}Life[kWh]'], metric: group[metric]})
-            # scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=metric, source=source, color=colors[i - 1], size=10,
-            #                     legend_label=metric, visible=False)
-            scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=metric, source=source, color=colors[section_index],
-                                alpha=0.7, size=10, legend_label=metric, visible=True)
+        source = ColumnDataSource(data={f'TG{tg_num}Life[kWh]': group[f'TG{tg_num}Life[kWh]'], stat: group[stat]})
+        # scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=stat, source=source, color=colors[section_index],
+        #                     alpha=0.7, size=10, legend_label=stat, visible=True)
+        scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=stat, source=source,
+                            alpha=0.7, size=10, legend_label=stat, visible=True)
 
-            hover = HoverTool(renderers=[scatter], tooltips=[
-                ('Tg', '$x'),
-                ('Value', '$y')
-            ])
-            p.add_tools(hover)
-            if section_index < 20:
-                scatters[section_index].append(scatter)  # 섹션 번호에 해당하는 리스트에 scatter 추가
+        hover = HoverTool(renderers=[scatter], tooltips=[
+            (f"TG{tg_num}Life[kWh]", f'@{f"TG{tg_num}Life[kWh]"}'),
+            (stat, f'@{stat}')
+        ])
+        p.add_tools(hover)
+        if section_index < 20:
+            scatters[section_index].append(scatter)  # 섹션 번호에 해당하는 리스트에 scatter 추가
 
-            # CrosshairTool 생성
-            width = Span(dimension="width", line_dash="dotted", line_width=1)
-            height = Span(dimension="height", line_dash="dotted", line_width=1)
-            p.add_tools(CrosshairTool(overlay=[width, height]))
+        # CrosshairTool 생성
+        width = Span(dimension="width", line_dash="dotted", line_width=1)
+        height = Span(dimension="height", line_dash="dotted", line_width=1)
+        p.add_tools(CrosshairTool(overlay=[width, height]))
 
     # p.legend.click_policy = "hide"
     p.toolbar.autohide = True
@@ -517,13 +517,10 @@ def draw_TGLife_default_graph(df, tg_num):
             const noSelected = selected.length === 0;
             
             for (let i = 0; i < sections.length; i++) {
-                const section_scatter = scatters[i]
+                const section_scatter = scatters[i];
+                const isVisible = noSelected || selected.includes(sections[i]);
                 for (let j = 0; j < section_scatter.length; j++) {
-                    if (noSelected || selected.includes(sections[i])) {
-                        section_scatter[j].visible = true;
-                    } else {
-                        section_scatter[j].visible = false;
-                    }
+                    section_scatter[j].visible = isVisible;
                 }
             }
     """)

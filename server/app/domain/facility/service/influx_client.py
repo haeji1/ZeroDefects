@@ -461,10 +461,10 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 result_df.reset_index(drop=True, inplace=True)
 
                 if condition.statistics == 'mean':
-                    result_df['avg'] = result_df['sum'] / result_df['count']
+                    result_df['mean'] = result_df['sum'] / result_df['count']
                     result_df.drop(['count', 'sum'], axis=1, inplace=True)
                 elif condition.statistics == 'variation':
-                    result_df['avg_variation'] = result_df['variation'] / result_df['count']
+                    result_df['mean_variation'] = result_df['variation'] / result_df['count']
                     result_df.drop(['variation', 'count'], axis=1, inplace=True)
 
                 # print('========== sorted df / add avg column ==========')
@@ -475,8 +475,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             except Exception as e:
                 raise HTTPException(500, str(e))
 
-        print('========== answer ==========')
-        print(answer)
+        # print('========== answer ==========')
+        # print(answer)
         return answer
 
     # def read_TGLife_df_list(self, condition: TGLifeData) -> object:
