@@ -120,16 +120,17 @@ function GetTargetLifeCycleButton() {
     // 유효성 검사 및 조회 버튼 활성화
     useEffect(() => {
         if (!selectedFacility) setIsButtonEnabled(false)
+        else if (!selectedTgLifeNum) setIsButtonEnabled(false)
         else setIsButtonEnabled(true)
-    }, [selectedFacility])
+    }, [selectedFacility, selectedTgLifeNum])
 
     const handleAddButton = async () => {
         console.log("selectedFacility:", selectedFacility)
         console.log("selectedTgLifeNum:", selectedTgLifeNum)
 
         const data = {
-                facility: selectedFacility,
-                tgLifeNum: selectedTgLifeNum
+            facility: selectedFacility,
+            tgLifeNum: selectedTgLifeNum
         }
         
         const res: AxiosResponse<any, any> | undefined = await getTargetLifeCycle(data);
@@ -151,9 +152,11 @@ function GetTargetLifeCycleButton() {
     }
 
     return (
-        <Button disabled={!isButtonEnabled} onClick={handleAddButton}>
-            불러오기
-        </Button>
+        <div className="mt-6">
+            <Button disabled={!isButtonEnabled} onClick={handleAddButton}>
+                불러오기
+            </Button>
+        </div>
     )
 }
 
@@ -194,8 +197,6 @@ export default function QueryTypeSection() {
                 <div className="flex flex-row gap-5">
                     <FacilitySelect />
                     <TgLifeNumSelect />
-                </div>
-                <div className="ml-auto">
                     <GetTargetLifeCycleButton />
                 </div>
                 <TGLifeTable />

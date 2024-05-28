@@ -133,7 +133,7 @@ function TGLifeTable() {
                     </Button>
                 </div>
             </div>
-            <div className='rounded-md border h-[480px]'>
+            <div className='rounded-md border h-[360px]'>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
