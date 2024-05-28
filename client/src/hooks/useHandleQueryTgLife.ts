@@ -1,60 +1,55 @@
 import { getTargetLifeGraph } from "@/api/api";
-import { useQueryTypeStore, useQueryDateTimeStore, useQueryLifeCntStore } from "@/stores/QueryCondition";
-import { QueryType } from "@/stores/QueryCondition";
 import { useTargetLifeStore, TgLifeNum } from "@/stores/Targetlife";
 
+const parameterMap: { [key: string]: string } = {
+    "전압 V [V]": "V",
+    "전류 I [A]": "I",
+    "전력 Pwr [kW]": "P",
+};
+
+const statisticsMap: { [key: string]: string } = {
+    "평균": "mean",
+    "최대": "max",
+    "최소": "min",
+    "분산": "variance",
+    "표준편차": "standard_deviation",
+};
+
 type Data = {
-    queryType: QueryType,
-    queryCondition: {
-        startTime: null | string,
-        endTime: null | string,
-        startCnt: null | number,
-        endCnt: null | number,
-    },
+    queryCondition: any[],
     queryData: {
         facility: string,
         tgLifeNum: string,
+        parameter: string,
+        statistics: string,
     }
 }
 
 const useHandleQueryTgLife = () => {
-    const { queryType } = useQueryTypeStore();
-    const { queryStartDate, queryEndDate } = useQueryDateTimeStore();
-    const { queryStartCnt, queryEndCnt } = useQueryLifeCntStore();
-    const { selectedFacility, selectedTgLifeNum, setIsFetching, setGraphData } = useTargetLifeStore();
+    const { selectedFacility, selectedTgLifeNum, selectedParam, selectedStat, selectedCycleList, setIsFetching, setGraphData } = useTargetLifeStore();
 
     const handleQueryTgLife = async () => {
+        // Transform the parameter and statistics values using the mapping objects
+        const transformedParameter = parameterMap[selectedParam] || selectedParam;
+        const transformedStatistics = statisticsMap[selectedStat] || selectedStat;
 
         const data: Data = {
-            queryType: queryType,
-            queryCondition: {
-                startTime: null,
-                endTime: null,
-                startCnt: null,
-                endCnt: null,
-            },
+            queryCondition: selectedCycleList,
             queryData: {
                 facility: selectedFacility,
                 tgLifeNum: selectedTgLifeNum as TgLifeNum,
+                parameter: transformedParameter,
+                statistics: transformedStatistics,
             }
         }
 
-        if (queryType === 'time') {
-            data.queryCondition.startTime = queryStartDate.toISOString();
-            data.queryCondition.endTime = queryEndDate.toISOString();
-        } else if (queryType === 'lifeCnt') {
-            data.queryCondition.startCnt = queryStartCnt;
-            data.queryCondition.endCnt = queryEndCnt;
-        }
-
         console.log(data);
-        setIsFetching(true)
-        const res = await getTargetLifeGraph(data)
+        setIsFetching(true);
+        const res = await getTargetLifeGraph(data);
         if (res) {
             setGraphData(res.data);
-            setIsFetching(false)
-        }
-        else {
+            setIsFetching(false);
+        } else {
             setIsFetching(false);
         }
     }

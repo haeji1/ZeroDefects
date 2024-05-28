@@ -5,6 +5,14 @@ export type TgLifeNum = "1" | "2" | "4" | "5";
 
 interface TargetLifeStore {
 
+    cycleList: any[];
+    setCycleList: (cycle: any) => void;
+    selectedParam: string;
+    setSelectedParam: (param: string) => void;
+    selectedCycleList: any[];
+    setSelectedCycleList: (selectedCycles: any[]) => void;
+    selectedStat: string;
+    setSelectedStat: (stat: string) => void;
     selectedFacility: string;
     setSelectedFacility: (facility: string) => void;
     selectedTgLifeNum?: TgLifeNum
@@ -19,6 +27,14 @@ interface TargetLifeStore {
 
 export const useTargetLifeStore = create<TargetLifeStore>()((set) => ({
 
+    cycleList: [],
+    setCycleList: (val) => set({ cycleList: val }),
+    selectedCycleList: [],
+    setSelectedCycleList: (selectedCycles) => set({ selectedCycleList: selectedCycles }),
+    selectedParam: "",
+    setSelectedParam: (param) => set({ selectedParam: param }),
+    selectedStat: "",
+    setSelectedStat: (stat) => set({ selectedStat: stat }),
     selectedFacility: "",
     setSelectedFacility: (facility) => set({ selectedFacility: facility }),
     selectedTgLifeNum: undefined,
