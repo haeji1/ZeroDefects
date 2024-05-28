@@ -16,7 +16,7 @@ const statisticsMap: { [key: string]: string } = {
 };
 
 type Data = {
-    queryCondition: any[],
+    queryConditions: any[],
     queryData: {
         facility: string,
         tgLifeNum: string,
@@ -34,7 +34,7 @@ const useHandleQueryTgLife = () => {
         const transformedStatistics = statisticsMap[selectedStat] || selectedStat;
 
         const data: Data = {
-            queryCondition: selectedCycleList,
+            queryConditions: selectedCycleList,
             queryData: {
                 facility: selectedFacility,
                 tgLifeNum: selectedTgLifeNum as TgLifeNum,
