@@ -44,6 +44,16 @@ export const getCorrelationGraph = async (data: object) => {
   }
 }
 
+export const getTargetLifeCycle = async (data: object) => {
+  try {
+    const res = await axios.post("http://localhost:8000/facility/tg/info", data)
+    return res;
+  } catch (err) {
+    console.log("사이클 데이터를 가져오는 데에 실패하였습니다.", err);
+    // 에러 처리
+  }
+}
+
 export const getTargetLifeGraph = async (data: object) => {
   try {
     const res = await axios.post("http://localhost:8000/facility/read/tg", data)
