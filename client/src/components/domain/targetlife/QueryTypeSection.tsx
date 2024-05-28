@@ -200,8 +200,6 @@ export default function QueryTypeSection() {
                     <GetTargetLifeCycleButton />
                 </div>
                 <TGLifeTable />
-            </Card>
-            <Card className="flex flex-col gap-5 p-5">
                 <Label className="font-bold text-[20px]">조회</Label>
                 <div className="flex flex-row gap-5">
                     <ParamSelect />
