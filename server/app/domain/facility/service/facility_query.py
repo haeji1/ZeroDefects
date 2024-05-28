@@ -62,6 +62,90 @@ def TGLife_cycle_query(bucket: str, facility: str, num: str):
               |> keep(columns: ["_time"])
     """
 
+def TGLife_query(bucket: str, facility: str, num: str, start_date: str, end_date: str, parameter: str, statistics: str):
+
+    field = ""
+    if parameter == "V":
+        field = f"P.TG{num}V[V]"
+    elif parameter == "I":
+        field = f"P.TG{num}I[A]"
+    elif parameter == "P":
+        field = f"P.TG{num}Pwr[kW]"
+
+    """
+    mean, 
+    max, 
+    min, 
+    variance, 
+    standard_deviation, 
+    """
+    statistics_query = ""
+    if statistics == "mean":
+        statistics_query = f"""
+          |> reduce(
+              identity: {{count: 0.0, sum: 0.0, time: now()}},
+              fn: (r, accumulator) => ({{
+                count: accumulator.count + 1.0,
+                sum: accumulator.sum + r._value,
+                time: r._time
+              }})
+          )
+          |> keep(columns: ["TG{num}Life[kWh]_TAG", "section", "count", "sum", "time"])
+        """
+    elif statistics == "max":
+        statistics_query = f"""
+          |> reduce(
+              identity: {{max: 0.0, time: now()}},
+              fn: (r, accumulator) => ({{
+                max: if accumulator.max > float(v: r._value) then accumulator.max else float(v: r._value),
+                time: r._time
+              }})
+          )
+          |> keep(columns: ["TG{num}Life[kWh]_TAG", "section", "max", "time"])
+        """
+    elif statistics == "min":
+        statistics_query = f"""
+          |> reduce(
+              identity: {{min: 100000.0, time: now()}},
+              fn: (r, accumulator) => ({{
+                min: if accumulator.min < float(v: r._value) then accumulator.min else float(v: r._value),
+                time: r._time
+              }})
+          )
+          |> keep(columns: ["TG{num}Life[kWh]_TAG", "section", "min", "time"])
+        """
+    elif statistics == "variance":
+        statistics_query = f"""
+                              |> map(fn: (r) => ({{ r with _valueSquared: r._value * r._value }}))
+                              |> reduce(
+                                identity: {{count: 0.0, sum: 0.0, sumSquares: 0.0, time: now()}},
+                                fn: (r, accumulator) => ({{
+                                  count: accumulator.count + 1.0,
+                                  sum: accumulator.sum + r._value,
+                                  sumSquares: accumulator.sumSquares + r._valueSquared,
+                                  time: r._time
+                                }})
+                              )
+                              |> map(fn: (r) => ({{
+                                  count: r.count,
+                                  variance: (r.sumSquares - (r.sum * r.sum / r.count)) / r.count,
+                                  section: r.section,
+                                  "TG{num}Life[kWh]_TAG": r["TG{num}Life[kWh]_TAG"],
+                                  time: r.time
+                                }}))
+                              |> keep(columns: ["TG{num}Life[kWh]_TAG", "section", "count", "variance", "time"])
+                            """
+
+    return f"""
+            from(bucket: "{bucket}")
+              |> range(start: time(v: "{start_date}"), stop: time(v: "{end_date}"))
+              |> filter(fn: (r) => r["_measurement"] == "{facility}")
+              |> filter(fn: (r) => r["_field"] == "{field}")
+              |> filter(fn: (r) => r.section != "-" and int(v: r.section) < 20)
+              |> group(columns: ["section", "TG{num}Life[kWh]_TAG"])
+              {statistics_query}
+            """
+
 def TGLife_time_query(bucket: str, facility: str, num: str, start_date: str, end_date: str):
     """
     Query for retrieving the list of tg life value

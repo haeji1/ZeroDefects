@@ -19,7 +19,7 @@ from app.domain.correlation.model.correlation_section_data import CorrelationSec
 from app.domain.facility.model.facility_data import TGLifeData, RequestTGLifeInfo
 from app.domain.facility.service.facility_utils import get_measurement_code
 from app.domain.facility.service.facility_query import field_by_time_query, execute_query, measurement_list_query, \
-    field_list_query, TGLife_time_query, correlation_query, TGLife_count_query, TGLife_cycle_query
+    field_list_query, TGLife_time_query, correlation_query, TGLife_count_query, TGLife_cycle_query, TGLife_query
 from app.domain.section.model.section_data import SectionData
 from app.domain.section.service.batch_service import save_section_data
 
@@ -306,106 +306,279 @@ class InfluxGTRClient:  # GTR: Global Technology Research
 
         return None
 
-    def read_TGLife_df_list(self, condition: TGLifeData) -> object:
+    def read_TGLife_df_list(self, conditions: [TGLifeData]) -> object:
         """
         Retrieving TG data
 
         :param condition: condition
         :return: dataframe
         """
-        df = self.TGLife_df(client=self.client, condition=condition, bucket=self.bucket_name)
+        df = self.TGLife_df(client=self.client, conditions=conditions, bucket=self.bucket_name)
         return df
 
     @classmethod
-    def TGLife_df(cls, client, condition, bucket) -> pd.DataFrame:
+    def TGLife_df(cls, client, conditions: [TGLifeData], bucket: str) -> [pd.DataFrame]:
         """
-        Retrieving TGLife dataframe from influxdb
-
-        :param client: influxdb client
-        :param condition: tg life condition
-        :param bucket: bucket
-        :return: dataframe
+        type: str
+        facility: str
+        tgLifeNum: str
+        startTime: str
+        endTime: str
         """
-        try:
-            if condition.type == 'time':
-                query = TGLife_time_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum,
-                                          start_date=condition.startTime, end_date=condition.endTime)
-            else:
-                query = TGLife_count_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum,
-                                           start_cnt=condition.startCnt, end_cnt=condition.endCnt)
+        answer = []
+        for condition in conditions:
+            try:
+                query = TGLife_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum,
+                                     start_date=condition.startTime, end_date=condition.endTime,
+                                     parameter=condition.parameter, statistics=condition.statistics)
+                # print(query)
+                pd.set_option('display.max_rows', None)  # option that print all row for dataframe
+                # pd.set_option('display.max_columns', None)  # option that print all col for dataframe
 
-            pd.set_option('display.max_rows', None)  # option that print all row for dataframe
-            # pd.set_option('display.max_columns', None)  # option that print all col for dataframe
+                result_df = execute_query(client, query)
+                # print(result_df)
+                result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
+                                 inplace=True)
 
-            result_df = execute_query(client, query)
-            result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
-                             inplace=True)
+                result_df.sort_values(by='time', ascending=True, inplace=True)
+                result_df.reset_index(drop=True, inplace=True)
 
-            result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = pd.to_numeric(result_df[
-                f'TG{condition.tgLifeNum}Life[kWh]'], errors='coerce')
-            result_df['section'] = pd.to_numeric(result_df['section'], errors='coerce')
+                # print('========== before df ==========')
+                # print(result_df)
 
-            result_df.sort_values(by='time', ascending=True, inplace=True)
-            result_df.reset_index(drop=True, inplace=True)
+                del_list = []
+                count_list = []
+                sum_list = []
+                variance_sum_list = []
+                max_list = []
+                min_list = []
 
-            print('========== before df ==========')
-            print(result_df)
+                del_element = 0
+                count_element = 0
+                sum_element = 0
+                variance_sum_element = 0
+                max_element = 0
+                min_element = 0
 
-            del_list = []
-            count_list = []
-            sum_list = []
-            max_list = []
-            min_list = []
+                if condition.statistics == 'mean':
+                    for i, row in result_df.iterrows():
+                        if i == result_df.shape[0] - 1:
+                            break
+                        if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+                            del_element += 1
+                            count_element += result_df.loc[i + 1, 'count']
+                            sum_element += result_df.loc[i + 1, 'sum']
+                        else:
+                            if count_element != 0:
+                                del_list.append([i + 1 - del_element, del_element])
+                                count_list.append(count_element)
+                                sum_list.append(sum_element)
 
-            del_element = 0
-            count_element = 0
-            sum_element = 0
-            max_element = 0
-            min_element = 0
-            for i, row in result_df.iterrows():
-                if i == result_df.shape[0] - 1:
-                    break
-                if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
-                    del_element += 1
-                    count_element += result_df.loc[i + 1, 'count']
-                    sum_element += result_df.loc[i + 1, 'sum']
-                    max_element = max(max_element, result_df.loc[i + 1, 'max'])
-                    min_element = min(min_element, result_df.loc[i + 1, 'min'])
-                else:
-                    if count_element != 0:
-                        del_list.append([i + 1 - del_element, del_element])
+                                del_element = 0
+                                count_element = 0
+                                sum_element = 0
+
+                    if del_element != 0:
+                        del_list.append([result_df.shape[0] - del_element, del_element])
                         count_list.append(count_element)
                         sum_list.append(sum_element)
+
+                elif condition.statistics == 'max':
+                    for i, row in result_df.iterrows():
+                        if i == result_df.shape[0] - 1:
+                            break
+                        if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+                            del_element += 1
+                            max_element = max(max_element, result_df.loc[i + 1, 'max'])
+                            # min_element = min(min_element, result_df.loc[i + 1, 'min'])
+                        else:
+                            if count_element != 0:
+                                del_list.append([i + 1 - del_element, del_element])
+                                max_list.append(max_element)
+                                # min_list.append(min_element)
+
+                                del_element = 0
+                                max_element = 0
+                                # min_element = 0
+
+                    if del_element != 0:
+                        del_list.append([result_df.shape[0] - del_element, del_element])
                         max_list.append(max_element)
+                        # min_list.append(min_element)
+
+                elif condition.statistics == 'min':
+                    for i, row in result_df.iterrows():
+                        if i == result_df.shape[0] - 1:
+                            break
+                        if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+                            del_element += 1
+                            # max_element = max(max_element, result_df.loc[i + 1, 'max'])
+                            min_element = min(min_element, result_df.loc[i + 1, 'min'])
+                        else:
+                            if count_element != 0:
+                                del_list.append([i + 1 - del_element, del_element])
+                                # max_list.append(max_element)
+                                min_list.append(min_element)
+
+                                del_element = 0
+                                # max_element = 0
+                                min_element = 0
+
+                    if del_element != 0:
+                        del_list.append([result_df.shape[0] - del_element, del_element])
+                        # max_list.append(max_element)
                         min_list.append(min_element)
 
-                        del_element = 0
-                        count_element = 0
-                        sum_element = 0
-                        max_element = 0
-                        min_element = 0
+                elif condition.statistics == 'variance':
+                    for i, row in result_df.iterrows():
+                        if i == result_df.shape[0] - 1:
+                            break
+                        if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+                            del_element += 1
+                            count_element += result_df.loc[i + 1, 'count']
+                            variance_sum_element += result_df.loc[i + 1, 'sum']
 
-            if del_element != 0:
-                del_list.append([result_df.shape[0] - del_element, del_element])
-                count_list.append(count_element)
-                sum_list.append(sum_element)
-                max_list.append(max_element)
-                min_list.append(min_element)
+                        else:
+                            if count_element != 0:
+                                del_list.append([i + 1 - del_element, del_element])
+                                count_list.append(count_element)
+    #                           variance_sum_list.append(variance_sum_element)
 
-            for delete, count in zip(del_list, count_list):
-                del_arr = np.arange(delete[0], delete[0] + delete[1])
-                result_df.drop(del_arr, axis=0, inplace=True)
-                result_df.loc[delete[0] - 1, 'count'] += count
-            result_df.reset_index(drop=True, inplace=True)
+                                del_element = 0
+                                count_element = 0
+                                variance_sum_element = 0
 
-            result_df['avg'] = result_df['sum'] / result_df['count']
+                    if del_element != 0:
+                        del_list.append([result_df.shape[0] - del_element, del_element])
+                        count_list.append(count_element)
+                        variance_sum_list.append(variance_sum_element)
 
-            print('========== sorted df / add avg column ==========')
-            print(result_df)
-        except Exception as e:
-            raise HTTPException(500, str(e))
+                for delete, count in zip(del_list, count_list):
+                    del_arr = np.arange(delete[0], delete[0] + delete[1])
+                    result_df.drop(del_arr, axis=0, inplace=True)
+                    result_df.loc[delete[0] - 1, 'count'] += count
 
-        return result_df
+                result_df.reset_index(drop=True, inplace=True)
+
+                if condition.statistics == 'mean':
+                    result_df['avg'] = result_df['sum'] / result_df['count']
+                    result_df.drop(['count', 'sum'], axis=1, inplace=True)
+                elif condition.statistics == 'variation':
+                    result_df['avg_variation'] = result_df['variation'] / result_df['count']
+                    result_df.drop(['variation', 'count'], axis=1, inplace=True)
+
+                # print('========== sorted df / add avg column ==========')
+                # print(result_df)
+
+                answer.append(result_df)
+
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+        print('========== answer ==========')
+        print(answer)
+        return answer
+
+    # def read_TGLife_df_list(self, condition: TGLifeData) -> object:
+    #     """
+    #     Retrieving TG data
+    #
+    #     :param condition: condition
+    #     :return: dataframe
+    #     """
+    #     df = self.TGLife_df(client=self.client, condition=condition, bucket=self.bucket_name)
+    #     return df
+
+    # @classmethod
+    # def TGLife_df(cls, client, condition, bucket) -> pd.DataFrame:
+    #     """
+    #     Retrieving TGLife dataframe from influxdb
+    #
+    #     :param client: influxdb client
+    #     :param condition: tg life condition
+    #     :param bucket: bucket
+    #     :return: dataframe
+    #     """
+    #     try:
+    #         if condition.type == 'time':
+    #             query = TGLife_time_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum,
+    #                                       start_date=condition.startTime, end_date=condition.endTime)
+    #         else:
+    #             query = TGLife_count_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum,
+    #                                        start_cnt=condition.startCnt, end_cnt=condition.endCnt)
+    #
+    #         pd.set_option('display.max_rows', None)  # option that print all row for dataframe
+    #         # pd.set_option('display.max_columns', None)  # option that print all col for dataframe
+    #
+    #         result_df = execute_query(client, query)
+    #         result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
+    #                          inplace=True)
+    #
+    #         result_df[f'TG{condition.tgLifeNum}Life[kWh]'] = pd.to_numeric(result_df[
+    #             f'TG{condition.tgLifeNum}Life[kWh]'], errors='coerce')
+    #         result_df['section'] = pd.to_numeric(result_df['section'], errors='coerce')
+    #
+    #         result_df.sort_values(by='time', ascending=True, inplace=True)
+    #         result_df.reset_index(drop=True, inplace=True)
+    #
+    #         print('========== before df ==========')
+    #         print(result_df)
+    #
+    #         del_list = []
+    #         count_list = []
+    #         sum_list = []
+    #         max_list = []
+    #         min_list = []
+    #
+    #         del_element = 0
+    #         count_element = 0
+    #         sum_element = 0
+    #         max_element = 0
+    #         min_element = 0
+    #         for i, row in result_df.iterrows():
+    #             if i == result_df.shape[0] - 1:
+    #                 break
+    #             if result_df.loc[i, 'section'] == result_df.loc[i + 1, 'section']:
+    #                 del_element += 1
+    #                 count_element += result_df.loc[i + 1, 'count']
+    #                 sum_element += result_df.loc[i + 1, 'sum']
+    #                 max_element = max(max_element, result_df.loc[i + 1, 'max'])
+    #                 min_element = min(min_element, result_df.loc[i + 1, 'min'])
+    #             else:
+    #                 if count_element != 0:
+    #                     del_list.append([i + 1 - del_element, del_element])
+    #                     count_list.append(count_element)
+    #                     sum_list.append(sum_element)
+    #                     max_list.append(max_element)
+    #                     min_list.append(min_element)
+    #
+    #                     del_element = 0
+    #                     count_element = 0
+    #                     sum_element = 0
+    #                     max_element = 0
+    #                     min_element = 0
+    #
+    #         if del_element != 0:
+    #             del_list.append([result_df.shape[0] - del_element, del_element])
+    #             count_list.append(count_element)
+    #             sum_list.append(sum_element)
+    #             max_list.append(max_element)
+    #             min_list.append(min_element)
+    #
+    #         for delete, count in zip(del_list, count_list):
+    #             del_arr = np.arange(delete[0], delete[0] + delete[1])
+    #             result_df.drop(del_arr, axis=0, inplace=True)
+    #             result_df.loc[delete[0] - 1, 'count'] += count
+    #         result_df.reset_index(drop=True, inplace=True)
+    #
+    #         result_df['avg'] = result_df['sum'] / result_df['count']
+    #
+    #         print('========== sorted df / add avg column ==========')
+    #         print(result_df)
+    #     except Exception as e:
+    #         raise HTTPException(500, str(e))
+    #
+    #     return result_df
 
     @classmethod
     def checking_write_files(cls, responses: []) -> []:
