@@ -3,7 +3,7 @@ from starlette.responses import JSONResponse
 
 from typing import List
 
-from app.domain.facility.model.facility_data import TGLifeData, TGLifeModel, RequestTGLifeInfo
+from app.domain.facility.model.facility_data import TGLifeData, TGLifeModel, RequestTGLifeInfo, RequestTGConditions
 from app.domain.facility.service.influx_client import InfluxGTRClient
 from app.domain.facility.service.facility_function import get_facilities_info, get_TG_datas, get_TG_cycles_info
 from app.domain.graph.service.draw_service import draw_TGLife_default_graph
@@ -43,22 +43,24 @@ async def get_TG_info(condition: RequestTGLifeInfo):
     else:
         return JSONResponse(status_code=200, content=contents)
 
-# for test
 @facility_router.post("/read/tg")
-async def read_tg_influxdb(model: TGLifeModel):
+async def read_tg_influxdb(model: RequestTGConditions):
 
-    life_model = TGLifeData(
-        type=model.queryType,
-        facility=model.queryData.facility,
-        tgLifeNum=model.queryData.tgLifeNum,
-        startTime=model.queryCondition.startTime,
-        endTime=model.queryCondition.endTime,
-        startCnt=model.queryCondition.startCnt,
-        endCnt=model.queryCondition.endCnt
-    )
+    life_models = []
+    for queryCondition in model.queryConditions:
+        life_model = TGLifeData(
+            type='time',
+            facility=model.queryData.facility,
+            tgLifeNum=model.queryData.tgLifeNum,
+            parameter=model.queryData.parameter,
+            statistics=model.queryData.statistics,
+            startTime=queryCondition.startTime,
+            endTime=queryCondition.endTime
+        )
+        life_models.append(life_model)
 
     try:
-        contents = get_TG_datas(life_model)
+        contents = get_TG_datas(life_models)
         if contents is None:
             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
         else:
@@ -67,3 +69,28 @@ async def read_tg_influxdb(model: TGLifeModel):
     except Exception as e:
         print(e)
         return JSONResponse(status_code=400, content={'msg': str(e)})
+
+# for test
+# @facility_router.post("/read/tg")
+# async def read_tg_influxdb(model: TGLifeModel):
+#
+#     life_model = TGLifeData(
+#         type=model.queryType,
+#         facility=model.queryData.facility,
+#         tgLifeNum=model.queryData.tgLifeNum,
+#         startTime=model.queryCondition.startTime,
+#         endTime=model.queryCondition.endTime,
+#         startCnt=model.queryCondition.startCnt,
+#         endCnt=model.queryCondition.endCnt
+#     )
+#
+#     try:
+#         contents = get_TG_datas(life_model)
+#         if contents is None:
+#             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
+#         else:
+#             return draw_TGLife_default_graph(contents, model.queryData.tgLifeNum)
+#             # return JSONResponse(status_code=200, content={'msg': })
+#     except Exception as e:
+#         print(e)
+#         return JSONResponse(status_code=400, content={'msg': str(e)})

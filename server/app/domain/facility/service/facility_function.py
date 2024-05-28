@@ -45,10 +45,15 @@ def get_TG_cycles_info(condition: RequestTGLifeInfo):
     contents = client.read_TGLife_cycles_info(condition)
     return contents
 
-def get_TG_datas(condition: TGLifeData):
+def get_TG_datas(conditions: [TGLifeData]):
     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
-    contents = client.read_TGLife_df_list(condition)
+    contents = client.read_TGLife_df_list(conditions)
     return contents
+
+# def get_TG_datas(condition: TGLifeData):
+#     client = InfluxGTRClient(url=url, token=token, org=organization, bucket_name=bucket)
+#     contents = client.read_TGLife_df_list(condition)
+#     return contents
 
 
 def get_correlation_datas(condition: CorrelationSectionData):
