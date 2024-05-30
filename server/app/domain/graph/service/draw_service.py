@@ -285,37 +285,37 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     data_table = DataTable(source=source, columns=columns, editable=False, index_position=0, index_header="row",
                            sizing_mode="stretch_width")
 
-    # P에 SetValue 관련 모든 선 추가
-    plot_lines_list = [[] for _ in range(len(plot_list))]
-    for i in range(len(setting_infos)):
-        start_x_time = start_second[i]
-        end_x_time = end_second[i]
-        for j in range(len(setting_infos[i])):
-            setting_color = colors[len(p.renderers) % len(colors)]
-            step_x_range = np.arange(start_x_time, end_x_time + 1)
-            step_x_range = pd.Series(step_x_range)
-            line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
-            line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=setting_color, visible=False)
-            for k in range(len(plot_list)):
-                plot_info = plot_list[k]
-                line2 = plot_list[k].line(x='Time', y=setting_infos[i][j], source=line_source, color=setting_color, visible=False)
-                plot_lines.append(line2)
-                plot_lines_list[k].append(line2)
-
-                hover4 = HoverTool(renderers=[line2], tooltips=[
-                    ('Setting', '$y'),
-                    ('Duration', '@Time seconds'),
-                ])
-                plot_info.add_tools(hover4)
-            lines.append(line)
-
-            # setvalue hover 추가
-            hover3 = HoverTool(renderers=[line], tooltips=[
-                ('Setting', '$y'),
-                ('Duration', '@Time seconds'),
-            ])
-
-            p.add_tools(hover3)
+    # # P에 SetValue 관련 모든 선 추가
+    # plot_lines_list = [[] for _ in range(len(plot_list))]
+    # for i in range(len(setting_infos)):
+    #     start_x_time = start_second[i]
+    #     end_x_time = end_second[i]
+    #     for j in range(len(setting_infos[i])):
+    #         setting_color = colors[len(p.renderers) % len(colors)]
+    #         step_x_range = np.arange(start_x_time, end_x_time + 1)
+    #         step_x_range = pd.Series(step_x_range)
+    #         line_source = ColumnDataSource(data={'Time': step_x_range, 'Value': step_x_range})
+    #         line = p.line(x='Time', y=setting_infos[i][j], source=line_source, color=setting_color, visible=False)
+    #         for k in range(len(plot_list)):
+    #             plot_info = plot_list[k]
+    #             line2 = plot_list[k].line(x='Time', y=setting_infos[i][j], source=line_source, color=setting_color, visible=False)
+    #             plot_lines.append(line2)
+    #             plot_lines_list[k].append(line2)
+    #
+    #             hover4 = HoverTool(renderers=[line2], tooltips=[
+    #                 ('Setting', '$y'),
+    #                 ('Duration', '@Time seconds'),
+    #             ])
+    #             plot_info.add_tools(hover4)
+    #         lines.append(line)
+    #
+    #         # setvalue hover 추가
+    #         hover3 = HoverTool(renderers=[line], tooltips=[
+    #             ('Setting', '$y'),
+    #             ('Duration', '@Time seconds'),
+    #         ])
+    #
+    #         p.add_tools(hover3)
 
 
     p.x_range.start = 0
@@ -349,39 +349,39 @@ def draw_graph_step_standard(graph_df, step_times, batch_name_list, request):
     """)
     multi_choice.js_on_change("value", multi_choice_callback)
 
-    setting_multi_choice_callback = CustomJS(
-        args=dict(setting_multi_choice=setting_multi_choice, lines=lines, setting_options=setting_options), code="""
-        const selected = setting_multi_choice.value;
-        for (let i = 0; i < setting_options.length; i++) {
-            if (selected.includes(setting_options[i])) {
-                console.log(setting_options[i]);
-                lines[i].visible = true;
-                } else {
-                    lines[i].visible = false;
-                }
-            }
-    """)
-    setting_multi_choice_plots_callback = CustomJS(
-        args=dict(setting_multi_choice=setting_multi_choice, plot_lines_list=plot_lines_list, setting_options=setting_options), code="""
-        const selected = setting_multi_choice.value;
-        for (let i = 0; i < setting_options.length; i++) {
-            for (let j = 0; j < plot_lines_list.length; j++) {
-                const plot_lines = plot_lines_list[j];
-                if (selected.includes(setting_options[i])) {
-                    plot_lines[i].visible = true;
-                } else {
-                    plot_lines[i].visible = false;
-                }
-            }
-        }
-    """
-    )
-    setting_multi_choice.js_on_change("value", setting_multi_choice_callback,setting_multi_choice_plots_callback)
+    # setting_multi_choice_callback = CustomJS(
+    #     args=dict(setting_multi_choice=setting_multi_choice, lines=lines, setting_options=setting_options), code="""
+    #     const selected = setting_multi_choice.value;
+    #     for (let i = 0; i < setting_options.length; i++) {
+    #         if (selected.includes(setting_options[i])) {
+    #             console.log(setting_options[i]);
+    #             lines[i].visible = true;
+    #             } else {
+    #                 lines[i].visible = false;
+    #             }
+    #         }
+    # """)
+    # setting_multi_choice_plots_callback = CustomJS(
+    #     args=dict(setting_multi_choice=setting_multi_choice, plot_lines_list=plot_lines_list, setting_options=setting_options), code="""
+    #     const selected = setting_multi_choice.value;
+    #     for (let i = 0; i < setting_options.length; i++) {
+    #         for (let j = 0; j < plot_lines_list.length; j++) {
+    #             const plot_lines = plot_lines_list[j];
+    #             if (selected.includes(setting_options[i])) {
+    #                 plot_lines[i].visible = true;
+    #             } else {
+    #                 plot_lines[i].visible = false;
+    #             }
+    #         }
+    #     }
+    # """
+    # )
+    # setting_multi_choice.js_on_change("value", setting_multi_choice_callback,setting_multi_choice_plots_callback)
 
     layout_1 = layout(
     [
-                [setting_multi_choice_title],
-                [setting_multi_choice],
+                # [setting_multi_choice_title],
+                # [setting_multi_choice],
                 [multi_choice_title],
                 [multi_choice],
                 [tab_title],
@@ -466,9 +466,9 @@ def make_setting_lines(request):
     return setting_step_and_values
 
 
-def draw_TGLife_default_graph(df, tg_num, stat):
-    df = df[0]
-    df[stat] = df[stat].astype(int)
+def draw_TGLife_default_graph(df_list, model):
+    tg_num = model.queryData.tgLifeNum
+    stat = model.queryData.statistics
 
     plots = []
 
@@ -478,44 +478,48 @@ def draw_TGLife_default_graph(df, tg_num, stat):
         '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
         '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5'
     ]
+
     sections = [f'step{i}' for i in range(20)]
     scatters = [[] for _ in range(len(sections))]
-    df_sorted = df.sort_values(by='section', ascending=True)
     multi_choice = MultiChoice(options=sections, placeholder='Steps')
     p = figure(title="TGLife Cycle Comparison", sizing_mode="scale_width", min_width=800, height=200)
 
-    # 섹션별로 데이터프레임 그룹화
-    grouped = df_sorted.groupby('section')
-    for section, group in grouped:
-        section_index = int(section) # 섹션 인덱스를 정수로 변환
-        source = ColumnDataSource(data={f'TG{tg_num}Life[kWh]': group[f'TG{tg_num}Life[kWh]'], stat: group[stat]})
-        # scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=stat, source=source, color=colors[section_index],
-        #                     alpha=0.7, size=10, legend_label=stat, visible=True)
-        scatter = p.scatter(x=f'TG{tg_num}Life[kWh]', y=stat, source=source,
-                            alpha=0.7, size=10, legend_label=stat, visible=True)
+    for df_index, df in enumerate(df_list):  # df 리스트를 반복
+        df[stat] = df[stat].astype(int)
+        df_sorted = df.sort_values(by='section', ascending=True)
 
-        hover = HoverTool(renderers=[scatter], tooltips=[
-            (f"TG{tg_num}Life[kWh]", f'@{f"TG{tg_num}Life[kWh]"}'),
-            (stat, f'@{stat}')
-        ])
-        p.add_tools(hover)
-        if section_index < 20:
-            scatters[section_index].append(scatter)  # 섹션 번호에 해당하는 리스트에 scatter 추가
+        # 섹션별로 데이터프레임 그룹화
+        grouped = df_sorted.groupby('section')
+        for section, group in grouped:
+            section_index = int(section)  # 섹션 인덱스를 정수로 변환
+            source = ColumnDataSource(data={'tg_life': group[f'TG{tg_num}Life[kWh]'], stat: group[stat]})
+            # 색상 팔레트에서 색상 선택
+            color = colors[df_index % len(colors)]  # df 리스트의 길이가 10을 넘지 않는다고 가정
+            scatter = p.scatter(x='tg_life', y=stat, source=source, color=color,
+                                alpha=0.7, size=10, legend_label=f'{model.queryConditions[df_index].cycleName} ({stat})', visible=True)
 
-        # CrosshairTool 생성
-        width = Span(dimension="width", line_dash="dotted", line_width=1)
-        height = Span(dimension="height", line_dash="dotted", line_width=1)
-        p.add_tools(CrosshairTool(overlay=[width, height]))
+            hover = HoverTool(renderers=[scatter], tooltips=[
+                (f'TG{tg_num}Life[kWh]', '@tg_life'),
+                (stat, f'@{stat}')
+            ])
+            p.add_tools(hover)
+            if section_index < 20:
+                scatters[section_index].append(scatter)  # 섹션 번호에 해당하는 리스트에 scatter 추가
 
-    # p.legend.click_policy = "hide"
+    # CrosshairTool 및 기타 설정 추가
+    width = Span(dimension="width", line_dash="dotted", line_width=1)
+    height = Span(dimension="height", line_dash="dotted", line_width=1)
+    p.add_tools(CrosshairTool(overlay=[width, height]))
+    p.legend.click_policy = "hide"
     p.toolbar.autohide = True
     p.toolbar.logo = None
 
+    # JavaScript 콜백 함수
     tg_multi_choice_callback = CustomJS(
         args=dict(multi_choice=multi_choice, scatters=scatters, sections=sections), code="""
             const selected = multi_choice.value;
             const noSelected = selected.length === 0;
-            
+
             for (let i = 0; i < sections.length; i++) {
                 const section_scatter = scatters[i];
                 const isVisible = noSelected || selected.includes(sections[i]);
@@ -523,12 +527,12 @@ def draw_TGLife_default_graph(df, tg_num, stat):
                     section_scatter[j].visible = isVisible;
                 }
             }
-    """)
+        """)
 
     multi_choice.js_on_change("value", tg_multi_choice_callback)
 
     layout1 = layout(
-    [
+        [
             [p],
             [multi_choice]
         ],

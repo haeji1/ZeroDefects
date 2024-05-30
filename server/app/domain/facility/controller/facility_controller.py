@@ -45,7 +45,6 @@ async def get_TG_info(condition: RequestTGLifeInfo):
 
 @facility_router.post("/read/tg")
 async def read_tg_influxdb(model: RequestTGConditions):
-
     life_models = []
     for queryCondition in model.queryConditions:
         life_model = TGLifeData(
@@ -54,6 +53,7 @@ async def read_tg_influxdb(model: RequestTGConditions):
             tgLifeNum=model.queryData.tgLifeNum,
             parameter=model.queryData.parameter,
             statistics=model.queryData.statistics,
+            cycleName=queryCondition.cycleName,
             startTime=queryCondition.startTime,
             endTime=queryCondition.endTime
         )
@@ -64,7 +64,7 @@ async def read_tg_influxdb(model: RequestTGConditions):
         if contents is None:
             return JSONResponse(status_code=400, content={'msg': 'not exist data'})
         else:
-            return draw_TGLife_default_graph(contents, model.queryData.tgLifeNum, model.queryData.statistics)
+            return draw_TGLife_default_graph(contents, model)
             # return JSONResponse(status_code=200, content={'msg': })
     except Exception as e:
         print(e)

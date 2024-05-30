@@ -18,6 +18,7 @@ class TGLifeData(BaseModel):
     tgLifeNum: str
     parameter: str
     statistics: str
+    cycleName: str
     startTime: Optional[str] = None
     endTime: Optional[str] = None
     startCnt: Optional[int] = None
