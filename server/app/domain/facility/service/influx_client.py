@@ -263,32 +263,66 @@ class InfluxGTRClient:  # GTR: Global Technology Research
     @classmethod
     def read_TGLife_cycle_info(cls, client, condition: RequestTGLifeInfo, bucket: str):
         try:
+
+            pd.set_option('display.max_rows', None)  # option that print all row for dataframe
+            pd.set_option('display.max_columns', None)  # option that print all col for dataframe
+
             query = TGLife_cycle_query(bucket=bucket, facility=condition.facility, num=condition.tgLifeNum)
             df = execute_query(client=client, query=query)
 
             df.sort_values(by='Time', ascending=True, inplace=True)
             df.reset_index(drop=True, inplace=True)
 
+            print('====== df ======')
+            print(df)
+
             # first row
             first_row = df.iloc[:1]
 
             # check next tg life cycle start point
-            df_startpoint = df[df['Time'].diff() >= pd.Timedelta(days=30)]
+            # df_startpoint = df[df['Time'].diff() >= pd.Timedelta(days=30)]
+            df['next_value'] = df[f'TG{condition.tgLifeNum}Life[kWh]_TAG'].shift(-1)
+            df['before_value'] = df[f'TG{condition.tgLifeNum}Life[kWh]_TAG'].shift(1)
+            df[f'TG{condition.tgLifeNum}Life[kWh]_TAG'] = pd.to_numeric(df[f'TG{condition.tgLifeNum}Life[kWh]_TAG'])
+
+            df['next_value'] = pd.to_numeric(df['next_value'])
+            df['before_value'] = pd.to_numeric(df['before_value'])
+
+            df_startpoint = df[df[f'TG{condition.tgLifeNum}Life[kWh]_TAG'] > df['next_value']]
+            df_endpoint = df[df[f'TG{condition.tgLifeNum}Life[kWh]_TAG'] < df['before_value']]
+
+            df_startpoint.drop(columns=['before_value', 'next_value'], inplace=True)
+            df_endpoint.drop(columns=['before_value', 'next_value'], inplace=True)
+
+            print('====== first row ======')
+            print(first_row)
+
+            print('====== df startpoint ======')
+            print(df_startpoint)
 
             # check tg life cycle end point
-            df_endpoint = df_startpoint.copy()
-            df_endpoint['Time'] = df_endpoint['Time'] - pd.Timedelta(seconds=1)
-            df_endpoint.loc[len(df.index)] = [datetime.now(pytz.utc).replace(microsecond=0)]
+            # df_endpoint = df_startpoint.copy()
+            # df_endpoint['Time'] = df_endpoint['Time'] + pd.Timedelta(seconds=1)
+            # df_endpoint.loc[len(df_endpoint.index)] = [datetime.now(pytz.utc).replace(microsecond=0)]
+
+            print('====== df endpoint ======')
+            print(df_endpoint)
+
+            print('====== df_endpoint ======')
+            print([first_row, df_startpoint, df_endpoint])
+
+            new_row = pd.DataFrame({'TG1Life[kWh]_TAG': [10000.0], 'Time': [datetime.now(pytz.utc).replace(microsecond=0)]}, index=[df_endpoint.index[-1] + 1])
+            # df_endpoint = pd.concat([df_endpointnew_row])
 
             # concat first row, start point, end point
-            r_df = pd.concat([first_row, df_startpoint, df_endpoint])
+            r_df = pd.concat([first_row, df_startpoint, df_endpoint, new_row])
 
             # sorting
             r_df.sort_values(by='Time', ascending=True, inplace=True)
             r_df.reset_index(drop=True, inplace=True)
 
-            # print('====== result df ======')
-            # print(r_df)
+            print('====== result df ======')
+            print(r_df)
 
             answer = []
             for i in range(0, r_df.shape[0] - 1, 2):
