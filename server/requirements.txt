@@ -31,7 +31,6 @@ pandas==2.2.2
 parso==0.8.4
 pillow==10.3.0
 prompt-toolkit==3.0.43
-psycopg2==2.9.9
 pure-eval==0.2.2
 pydantic==2.7.0
 pydantic_core==2.18.1

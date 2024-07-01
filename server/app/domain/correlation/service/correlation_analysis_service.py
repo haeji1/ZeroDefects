@@ -65,6 +65,9 @@ def encode_image_to_base64(image_path):
 
 # 산점도 함수
 def plot_scatter(df, corr_feature, method_name):
+    if not os.path.exists('./correlation_images'):
+        os.makedirs('./correlation_images')
+
     feature = df.columns.tolist()
     n_feature = len(feature)
     fig = plt.figure(figsize=(20, 20))
@@ -90,6 +93,9 @@ def plot_scatter(df, corr_feature, method_name):
 
 # 히트맵 함수
 def plot_heatmap(corr_feature, method_name):
+    if not os.path.exists('./correlation_images'):
+        os.makedirs('./correlation_images')
+
     plt.figure(figsize=(10, 8))
     h = sns.heatmap(corr_feature, annot=True, fmt=".4f", cmap='coolwarm', cbar=True, vmin=-1, vmax=1)
     h.xaxis.tick_top()
