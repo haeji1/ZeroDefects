@@ -1,0 +1,21 @@
+.link {
+    position: relative;
+    color: #CBD5E1;
+}
+
+.link.selected {
+    color: #FFFFFF;
+}
+
+.link.selected::before {
+    content: '';
+    position: absolute;
+    top: -5%;
+    /* 글자 위로 위치 조정 */
+    left: 105%;
+    transform: translateX(0%);
+    width: 10px;
+    height: 10px;
+    background-color: rgb(242, 242, 9);
+    border-radius: 50%;
+}
