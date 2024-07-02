@@ -273,9 +273,6 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             df.sort_values(by='Time', ascending=True, inplace=True)
             df.reset_index(drop=True, inplace=True)
 
-            print('====== df ======')
-            print(df)
-
             # first row
             first_row = df.iloc[:1]
 
@@ -321,8 +318,8 @@ class InfluxGTRClient:  # GTR: Global Technology Research
             r_df.sort_values(by='Time', ascending=True, inplace=True)
             r_df.reset_index(drop=True, inplace=True)
 
-            print('====== result df ======')
-            print(r_df)
+            # print('====== result df ======')
+            # print(r_df)
 
             answer = []
             for i in range(0, r_df.shape[0] - 1, 2):

@@ -17,8 +17,6 @@ class DevSettings(BaseSettings):
 
 
 # environment = os.getenv('ENVIRONMENT')
-
-
 environment = 'dev'
 
 
