@@ -371,7 +371,7 @@ class InfluxGTRClient:  # GTR: Global Technology Research
                 result_df.rename(columns={f'TG{condition.tgLifeNum}Life[kWh]_TAG': f'TG{condition.tgLifeNum}Life[kWh]'},
                                  inplace=True)
 
-                result_df.sort_values(by='time', ascending=True, inplace=True)
+                result_df.sort_values(by='Time', ascending=True, inplace=True)
                 result_df.reset_index(drop=True, inplace=True)
 
                 # print('========== before df ==========')

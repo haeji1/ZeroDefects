@@ -16,7 +16,8 @@ class DevSettings(BaseSettings):
     mongo_furl: str = os.getenv("MONGO_FURL")
 
 
-environment = os.getenv('ENVIRONMENT')
+# environment = os.getenv('ENVIRONMENT')
+environment = 'dev'
 
 
 class ProdSettings:
