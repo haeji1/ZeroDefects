@@ -58,9 +58,24 @@ def TGLife_cycle_query(bucket: str, facility: str, num: str):
               |> range(start: time(v: "1970-01-01T00:00:00.0Z"), stop: time(v: now()))
               |> filter(fn: (r) => r["_measurement"] == "{facility}")
               |> filter(fn: (r) => r["_field"] == "P.TG{num}V[V]")
-              |> filter(fn: (r) => r["TG{num}Life[kWh]_TAG"] == "0.0" and r.section != "-")
-              |> keep(columns: ["_time"])
-    """
+              |> filter(fn: (r) => r["section"] != "-")
+              |> group(columns: ["TG{num}Life[kWh]_TAG"])
+              |> reduce(
+                identity: {{time: now()}},
+                fn: (r, accumulator) => ({{
+                  time: if r._time < accumulator.time then r._time else accumulator.time
+                }})
+              )
+              |> keep(columns: ["time", "TG{num}Life[kWh]_TAG"])
+            """
+    # return f"""
+    #         from(bucket: "{bucket}")
+    #           |> range(start: time(v: "1970-01-01T00:00:00.0Z"), stop: time(v: now()))
+    #           |> filter(fn: (r) => r["_measurement"] == "{facility}")
+    #           |> filter(fn: (r) => r["_field"] == "P.TG{num}V[V]")
+    #           |> filter(fn: (r) => r["TG{num}Life[kWh]_TAG"] == "0.0" and r.section != "-")
+    #           |> keep(columns: ["_time"])
+    #         """
 
 def TGLife_query(bucket: str, facility: str, num: str, start_date: str, end_date: str, parameter: str, statistics: str):
 
@@ -72,13 +87,6 @@ def TGLife_query(bucket: str, facility: str, num: str, start_date: str, end_date
     elif parameter == "P":
         field = f"P.TG{num}Pwr[kW]"
 
-    """
-    mean, 
-    max, 
-    min, 
-    variance, 
-    standard_deviation, 
-    """
     statistics_query = ""
     if statistics == "mean":
         statistics_query = f"""
@@ -292,7 +300,7 @@ def execute_query(client: InfluxDBClient, query: str) -> pd.DataFrame | None:
     try:
         df = client.query_api().query_data_frame(org=settings.influx_org, query=query)
         df.drop(columns=['result', 'table'], inplace=True)
-        df.rename(columns={"_time": "Time"}, inplace=True)
+        df.rename(columns={"_time": "Time", "time": "Time"}, inplace=True)
     except KeyError as e:
         return None
 
