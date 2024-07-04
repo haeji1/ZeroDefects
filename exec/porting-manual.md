@@ -106,9 +106,12 @@ http://localhost:8086/
 ### 8.1. Connect Backend Container
 ```
 $ sudo docker exec -it backend bash
+```
+### 8.2. Create .env File
+```
 # vim .env
 ```
-### 8.2. .env
+### 8.3. .env File Contents
 ```
 ENVIRONMENT=dev
 
@@ -119,7 +122,7 @@ INFLUXDB_ORG=ssafy
 INFLUXDB_BUCKET=facility
 INFLUXDB_TOKEN=[Copied API Token]
 ```
-### 8.3. Restart Backend Container
+### 8.4. Restart Backend Container
 ```
 # exit
 $ sudo docker restart backend
