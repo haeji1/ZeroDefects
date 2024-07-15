@@ -25,27 +25,27 @@
 
 # 2. 세부 기능
 2.1. 설비 데이터 그래프 시각화  
-![S107-1](/uploads/34bcc4bcee35e843128ff067cdf2b77b/S107-1.gif)
+![S107-1](https://github.com/user-attachments/assets/21edd72d-4dc6-4c28-873d-bf3b1b12a6f9)
 
 <br>
 
 2.2. 그래프 저장 및 공유  
-![S107-2](/uploads/90f3024d875acf03f3b39129560a926f/S107-2.gif)
+![S107-2](https://github.com/user-attachments/assets/9b7194dc-d1bb-4f06-8810-7fd4d4e2a595)
 
 <br>
 
 2.3. 설비 파라미터 간 상관 분석  
-![S107-3](/uploads/4468dfa6dc2ae269059de52c35e04f56/S107-3.gif)
+![S107-3](https://github.com/user-attachments/assets/10093123-530d-4029-b7af-d80073241047)
 
 <br>
 
 2.4. 설비 데이터의 수명 분석  
-![S107-4](/uploads/f954c5993b4cadee7058e8e2b00c6c16/S107-4.gif)
+![S107-4](https://github.com/user-attachments/assets/effbef93-f26b-4463-b874-033dae5a559a)
 
 <br>
 
 2.5. 설비 데이터, 세팅 데이터 입출력  
-![S107-5](/uploads/ea4f6e83e9786b09710fe8627a9a8e92/S107-5.gif)
+![S107-5](https://github.com/user-attachments/assets/e32f419d-f06c-47ef-898c-25be0750570d)
 
 <br>
 
