@@ -1,5 +1,5 @@
 # 불량제로
-![image](/uploads/0050ef8ee97d977cc1cd288980dccfaf/image.png)
+![image](https://github.com/user-attachments/assets/83df6581-3e94-4fc1-881d-2af37986e09a)
 > 삼성전자 생산기술연구소 기업 연계 프로젝트  
 > 주제: 다양한 설비 인자, 생산 품질 등의 Data 분석 솔루션  
 > 일정: 2024.04.08. ~ 2024.05.17. (총 6주)  
@@ -50,17 +50,17 @@
 <br>
 
 2.6. 설비 데이터의 이상 탐지  
-![image](/uploads/c8d1ae5530b1950ca864957b2ef371cd/image.png)
+![image](https://github.com/user-attachments/assets/177819c9-382a-4759-8a9d-0e548c83c958)
 
 <br>
 
 # 3. 시스템 아키텍처
-![image](/uploads/3baee3b1779a8a120f0419dacae77519/image.png)
+![image](https://github.com/user-attachments/assets/1295ae3e-fca7-4e0b-93ca-7090e91d0e00)
 
 <br>
 
 # 4. 설치
-- [포팅 매뉴얼](https://lab.ssafy.com/s10-final/S10P31S107/-/blob/master/exec/porting-manual.md?ref_type=heads)
+- [포팅 매뉴얼](https://github.com/imkhkim/zerodefects/blob/master/exec/porting-manual.md)
 
 <br>
 
