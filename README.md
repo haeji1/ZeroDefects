@@ -24,6 +24,13 @@
 <br>
 
 # 2. 세부 기능
+
+[![이미지 텍스트](https://github.com/user-attachments/assets/e8f7ee2b-ada5-4837-814c-0297612715b1)](https://drive.google.com/file/d/1SJU6Ch4CDbP2Jxsn1EoScSd_GbLUs1ZN/view?usp=sharing)  
+_위의 사진을 클릭하면 영상 링크로 이동합니다._
+
+<br>
+<br>
+
 2.1. 설비 데이터 그래프 시각화  
 ![S107-1](/uploads/34bcc4bcee35e843128ff067cdf2b77b/S107-1.gif)
 
