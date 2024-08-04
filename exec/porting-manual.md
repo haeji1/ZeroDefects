@@ -89,16 +89,16 @@ http://localhost:8086/
 ### 7.2. Create API Token and copy
 
 #### 7.2.1.<br>
-![image](/uploads/4476cbce85e33c153e43a9e4cdcf1bf7/image.png)
+![image](https://github.com/user-attachments/assets/73be1c4b-7bab-450c-998a-643a24ebc672)
 
 #### 7.2.2.<br>
-![image](/uploads/b47173b8000d32f4b2a489be59dadfe3/image.png)
+![image](https://github.com/user-attachments/assets/23fd3b65-7ab8-4586-a939-4c1f786d32b7)
 
 #### 7.2.3.<br>
-![image](/uploads/c12f9b18791ce76de0e0cd29c9f3ad19/image.png)
+![image](https://github.com/user-attachments/assets/f37abf0d-0942-4d06-be03-8791f05c2ea6)
 
 #### 7.2.4.<br>
-![image](/uploads/7abfa5204b71e79688619c526bdef406/image.png)
+![image](https://github.com/user-attachments/assets/4253912c-7ee6-4c8e-8f72-b5caccc95f68)
 
 <br>
 
